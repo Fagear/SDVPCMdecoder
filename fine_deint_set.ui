@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>fine_deint_set</class>
+ <widget class="QDialog" name="fine_deint_set">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>685</width>
+    <height>296</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Тонкие настройки деинтерливера</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <widget class="QGroupBox" name="gbxGeneral">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Общее</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <property name="topMargin">
+       <number>3</number>
+      </property>
+      <property name="spacing">
+       <number>9</number>
+      </property>
+      <item row="1" column="0">
+       <widget class="QLabel" name="lblUseECC">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Ошибки, обнаруженные по не совпавшим CRC, будут исправлены при помощи P и/или Q слов, либо замаскированы</string>
+        </property>
+        <property name="whatsThis">
+         <string>Ошибки, обнаруженные по не совпавшим CRC, будут исправлены при помощи P и/или Q слов, либо замаскированы</string>
+        </property>
+        <property name="text">
+         <string>Обнаружение ошибок по CRC:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="cbxUseECC">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Ошибки, обнаруженные по не совпавшим CRC, будут исправлены при помощи P и/или Q слов, либо замаскированы</string>
+        </property>
+        <property name="whatsThis">
+         <string>Ошибки, обнаруженные по не совпавшим CRC, будут исправлены при помощи P и/или Q слов, либо замаскированы</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="gbxSTC007PCM16x0">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Для STC-007/PCM-16x0</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <property name="topMargin">
+       <number>3</number>
+      </property>
+      <property name="spacing">
+       <number>9</number>
+      </property>
+      <item row="5" column="1">
+       <widget class="QSpinBox" name="spbBrokeMask">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Отключить исправление CRC-ошибок на заданное число строк после обнаружения сломанного (некорректно собранного из-за помех или непроверенной сшивки полей) блока данных для избежания некорректной работы коррекции ошибок и возможных щелчков в звуке</string>
+        </property>
+        <property name="whatsThis">
+         <string>Отключить исправление CRC-ошибок на заданное число строк после обнаружения сломанного (некорректно собранного из-за помех или непроверенной сшивки полей) блока данных для избежания некорректной работы коррекции ошибок и возможных щелчков в звуке</string>
+        </property>
+        <property name="suffix">
+         <string> строк</string>
+        </property>
+        <property name="minimum">
+         <number>0</number>
+        </property>
+        <property name="maximum">
+         <number>128</number>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="lblBrokeMask">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Отключить исправление CRC-ошибок на заданное число строк после обнаружения сломанного (некорректно собранного из-за помех или непроверенной сшивки полей) блока данных для избежания некорректной работы коррекции ошибок и возможных щелчков в звуке</string>
+        </property>
+        <property name="whatsThis">
+         <string>Отключить исправление CRC-ошибок на заданное число строк после обнаружения сломанного (некорректно собранного из-за помех или непроверенной сшивки полей) блока данных для избежания некорректной работы коррекции ошибок и возможных щелчков в звуке</string>
+        </property>
+        <property name="text">
+         <string>Маскировать (не исправлять по ECC) CRC-ошибки после сломанных блоков данных:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QCheckBox" name="cbxMaskSeams">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Отключить исправление CRC-ошибок на непроверенных сшивках полей кадров для избежания некорректной работы коррекции ошибок и возможных щелчков в звуке</string>
+        </property>
+        <property name="whatsThis">
+         <string>Отключить исправление CRC-ошибок на непроверенных сшивках полей кадров для избежания некорректной работы коррекции ошибок и возможных щелчков в звуке</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblMaskSeams">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Отключить исправление CRC-ошибок на непроверенных сшивках полей кадров для избежания некорректной работы коррекции ошибок и возможных щелчков в звуке</string>
+        </property>
+        <property name="whatsThis">
+         <string>Отключить исправление CRC-ошибок на непроверенных сшивках полей кадров для избежания некорректной работы коррекции ошибок и возможных щелчков в звуке</string>
+        </property>
+        <property name="text">
+         <string>Маскировка (не исправление по ECC) CRC-ошибок на непроверенных сшивках полей:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="gbxSTC007">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Для STC-007</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <property name="topMargin">
+       <number>3</number>
+      </property>
+      <property name="spacing">
+       <number>9</number>
+      </property>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="spbMaxUnch16">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Максимальное число последовательных блоков данных на стыке между полями, для которых невозможно проверить правильность сборки</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Максимальное число последовательных блоков данных на стыке между полями, для которых невозможно проверить правильность сборки.&lt;/p&gt;&lt;p&gt;Чем меньше число - тем меньше риск спонтанных щелчков на искажённых исходниках, однако тем выше риск излишнего маскирования и потери ВЧ в аудио на непроверяемых сшивках полей.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="suffix">
+         <string> блоков</string>
+        </property>
+        <property name="minimum">
+         <number>5</number>
+        </property>
+        <property name="maximum">
+         <number>16</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="spbMaxUnch14">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Максимальное число последовательных блоков данных на стыке между полями, для которых невозможно проверить правильность сборки</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Максимальное число последовательных блоков данных на стыке между полями, для которых невозможно проверить правильность сборки.&lt;/p&gt;&lt;p&gt;Чем меньше число - тем меньше риск спонтанных щелчков на искажённых исходниках, однако тем выше риск излишнего маскирования и потери ВЧ в аудио на непроверяемых сшивках полей.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="suffix">
+         <string> блоков</string>
+        </property>
+        <property name="minimum">
+         <number>5</number>
+        </property>
+        <property name="maximum">
+         <number>32</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="lblMaxUnch14">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Максимальное число последовательных блоков данных на стыке между полями, для которых невозможно проверить правильность сборки</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Максимальное число последовательных блоков данных на стыке между полями, для которых невозможно проверить правильность сборки.&lt;/p&gt;&lt;p&gt;Чем меньше число - тем меньше риск спонтанных щелчков на искажённых исходниках, однако тем выше риск излишнего маскирования и потери ВЧ в аудио на непроверяемых сшивках полей.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Максимальное число непроверяемых блоков данных при сшивке полей (для 14-бит):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="lblMaxUnch16">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Максимальное число последовательных блоков данных на стыке между полями, для которых невозможно проверить правильность сборки</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Максимальное число последовательных блоков данных на стыке между полями, для которых невозможно проверить правильность сборки.&lt;/p&gt;&lt;p&gt;Чем меньше число - тем меньше риск спонтанных щелчков на искажённых исходниках, однако тем выше риск излишнего маскирования и потери ВЧ в аудио на непроверяемых сшивках полей.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Максимальное число непроверяемых блоков данных при сшивке полей (для 16-бит):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblInsertAbove">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Добавлять пустую строку в начале собранного кадра (может устранить треск при воспроизведении файлов с большим числом незахваченных строк)</string>
+        </property>
+        <property name="whatsThis">
+         <string>Добавлять пустую строку в начале собранного кадра (может устранить треск при воспроизведении файлов с большим числом незахваченных строк)</string>
+        </property>
+        <property name="text">
+         <string>Смещение кадра на строку вниз (может убрать треск, когда сшивки полей не могут быть проверены):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QCheckBox" name="cbxInsertAbove">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Добавлять пустую строку в начале собранного кадра (может устранить треск при воспроизведении файлов с большим числом незахваченных строк)</string>
+        </property>
+        <property name="whatsThis">
+         <string>Добавлять пустую строку в начале собранного кадра (может устранить треск при воспроизведении файлов с большим числом незахваченных строк)</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="hlButtons">
+     <property name="spacing">
+      <number>10</number>
+     </property>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Maximum</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnDefaults">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Сброс настроек к оптимальным (по умолчанию)</string>
+       </property>
+       <property name="whatsThis">
+        <string>Сброс настроек к оптимальным (по умолчанию)</string>
+       </property>
+       <property name="text">
+        <string>По умолчанию</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnRevert">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Вернуть настройки на момент открытия окна настроек</string>
+       </property>
+       <property name="whatsThis">
+        <string>Вернуть настройки на момент открытия окна настроек</string>
+       </property>
+       <property name="text">
+        <string>Отменить изменения</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnSave">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Применить все настройки из окна к деинтерливеру</string>
+       </property>
+       <property name="whatsThis">
+        <string>Применить все настройки из окна к деинтерливеру</string>
+       </property>
+       <property name="text">
+        <string>Сохранить</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnClose">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Закрыть окно настроек</string>
+       </property>
+       <property name="whatsThis">
+        <string>Закрыть окно настроек</string>
+       </property>
+       <property name="text">
+        <string>Закрыть</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>cbxUseECC</tabstop>
+  <tabstop>cbxMaskSeams</tabstop>
+  <tabstop>spbBrokeMask</tabstop>
+  <tabstop>cbxInsertAbove</tabstop>
+  <tabstop>spbMaxUnch14</tabstop>
+  <tabstop>spbMaxUnch16</tabstop>
+  <tabstop>btnClose</tabstop>
+  <tabstop>btnSave</tabstop>
+  <tabstop>btnRevert</tabstop>
+  <tabstop>btnDefaults</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

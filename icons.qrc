@@ -1,0 +1,19 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>pcm.png</file>
+        <file>pcm_ico.ico</file>
+        <file>binary.ico</file>
+        <file>doorexit.ico</file>
+        <file>Language.ico</file>
+        <file>notefl.ico</file>
+        <file>Play32.ico</file>
+        <file>tree.ico</file>
+        <file>help.ico</file>
+        <file>filmscore.ico</file>
+        <file>calc.ico</file>
+        <file>stop.ico</file>
+        <file>filmreel.ico</file>
+        <file>queue.ico</file>
+        <file>wrench.ico</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,693 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>fine_bin_set</class>
+ <widget class="QDialog" name="fine_bin_set">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>374</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Тонкие настройки бинаризатора</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="gbxAGC">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Автоматическая Регулировка Усиления (АРУ)</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <property name="horizontalSpacing">
+       <number>9</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>5</number>
+      </property>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="spbMinContrast">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Минимальная разница между обнаруженными уровнями &quot;белого&quot; (1) и &quot;чёрного&quot; (0) для признания найденных уровней яркости валидными</string>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальная разница между обнаруженными уровнями &quot;белого&quot; (1) и &quot;чёрного&quot; (0) для признания найденных уровней яркости валидными</string>
+        </property>
+        <property name="minimum">
+         <number>5</number>
+        </property>
+        <property name="maximum">
+         <number>64</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="spbMinWhite">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Минимальный уровень яркости в исходном файле, который может быть принят за уровень &quot;белого&quot; (1) в процессе обнаружения уровней &quot;0&quot; и &quot;1&quot;</string>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальный уровень яркости в исходном файле, который может быть принят за уровень &quot;белого&quot; (1) в процессе обнаружения уровней &quot;0&quot; и &quot;1&quot;</string>
+        </property>
+        <property name="minimum">
+         <number>10</number>
+        </property>
+        <property name="maximum">
+         <number>250</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="lblMinWhite">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Минимальный уровень яркости в исходном файле, который может быть принят за уровень &quot;белого&quot; (1) в процессе обнаружения уровней &quot;0&quot; и &quot;1&quot;</string>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальный уровень яркости в исходном файле, который может быть принят за уровень &quot;белого&quot; (1) в процессе обнаружения уровней &quot;0&quot; и &quot;1&quot;</string>
+        </property>
+        <property name="text">
+         <string>Минимально допустимый уровень &quot;белого&quot; (8 бит):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QSpinBox" name="spbMinRef">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Минимальный уровень яркости в исходном файле, который может быть принят за пороговый уровень (уровень разграничения &quot;0&quot; и &quot;1&quot;) в процессе подбора уровня бинаризации</string>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальный уровень яркости в исходном файле, который может быть принят за пороговый уровень (уровень разграничения &quot;0&quot; и &quot;1&quot;) в процессе подбора уровня бинаризации</string>
+        </property>
+        <property name="minimum">
+         <number>5</number>
+        </property>
+        <property name="maximum">
+         <number>112</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblMaxBlack">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Максимальный уровень яркости в исходном файле, который может быть принят за уровень &quot;чёрного&quot; (0) в процессе обнаружения уровней &quot;0&quot; и &quot;1&quot;</string>
+        </property>
+        <property name="whatsThis">
+         <string>Максимальный уровень яркости в исходном файле, который может быть принят за уровень &quot;чёрного&quot; (0) в процессе обнаружения уровней &quot;0&quot; и &quot;1&quot;</string>
+        </property>
+        <property name="text">
+         <string>Максимально допустимый уровень &quot;чёрного&quot; (8 бит):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="spbMaxBlack">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Максимальный уровень яркости в исходном файле, который может быть принят за уровень &quot;чёрного&quot; (0) в процессе обнаружения уровней &quot;0&quot; и &quot;1&quot;</string>
+        </property>
+        <property name="whatsThis">
+         <string>Максимальный уровень яркости в исходном файле, который может быть принят за уровень &quot;чёрного&quot; (0) в процессе обнаружения уровней &quot;0&quot; и &quot;1&quot;</string>
+        </property>
+        <property name="minimum">
+         <number>5</number>
+        </property>
+        <property name="maximum">
+         <number>240</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="lblMinContrast">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Минимальная разница между обнаруженными уровнями &quot;белого&quot; (1) и &quot;чёрного&quot; (0) для признания найденных уровней яркости валидными</string>
+        </property>
+        <property name="statusTip">
+         <string/>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальная разница между обнаруженными уровнями &quot;белого&quot; (1) и &quot;чёрного&quot; (0) для признания найденных уровней яркости валидными</string>
+        </property>
+        <property name="text">
+         <string>Минимально допустимый контраст:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="lblMinRef">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Минимальный уровень яркости в исходном файле, который может быть принят за пороговый уровень (уровень разграничения &quot;0&quot; и &quot;1&quot;) в процессе подбора уровня бинаризации</string>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальный уровень яркости в исходном файле, который может быть принят за пороговый уровень (уровень разграничения &quot;0&quot; и &quot;1&quot;) в процессе подбора уровня бинаризации</string>
+        </property>
+        <property name="text">
+         <string>Минимально допустимый пороговый уровень (8 бит):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="lblMaxRef">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Максимальный уровень яркости в исходном файле, который может быть принят за пороговый уровень (уровень разграничения &quot;0&quot; и &quot;1&quot;) в процессе подбора уровня бинаризации</string>
+        </property>
+        <property name="whatsThis">
+         <string>Максимальный уровень яркости в исходном файле, который может быть принят за пороговый уровень (уровень разграничения &quot;0&quot; и &quot;1&quot;) в процессе подбора уровня бинаризации</string>
+        </property>
+        <property name="text">
+         <string>Максимально допустимый пороговый уровень (8 бит):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QSpinBox" name="spbMaxRef">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Максимальный уровень яркости в исходном файле, который может быть принят за пороговый уровень (уровень разграничения &quot;0&quot; и &quot;1&quot;) в процессе подбора уровня бинаризации</string>
+        </property>
+        <property name="whatsThis">
+         <string>Максимальный уровень яркости в исходном файле, который может быть принят за пороговый уровень (уровень разграничения &quot;0&quot; и &quot;1&quot;) в процессе подбора уровня бинаризации</string>
+        </property>
+        <property name="minimum">
+         <number>128</number>
+        </property>
+        <property name="maximum">
+         <number>250</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="gbxDataValidation">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Поиск и валидация данных</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <property name="horizontalSpacing">
+       <number>9</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>5</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblMinValidCRC">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
+        </property>
+        <property name="text">
+         <string>Минимальное число валидных CRC на строку:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="spbMinValidCRC">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
+        </property>
+        <property name="suffix">
+         <string> шт.</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>50</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="lblBitPicker">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Включить попытки подбора отрезанных слева или справа бит до схождения CRC</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Во время захвата видео края кадра (слева или справа) могут быть обрезаны. Данная настройка позволяет включить попытки подбора отрезанных бит до схождения CRC.&lt;/p&gt;&lt;p&gt;Позволяет компенсировать срезанные во время захвата видео края кадра, но может привести к ложно-позитивным CRC, &amp;quot;сломанным&amp;quot; блокам и щелчкам.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Подбор срезанных при захвате бит (PCM-1/PCM-16x0):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QCheckBox" name="cbxCoordSearch">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Включение автоматического определения начала и конца PCM данных, может привести к ошибкам и щелчкам из-за коллизий CRC</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В форматах PCM-1 и PCM-16x0 нет маркеров для обнаружения положения PCM данных по горизонтали кадра, поэтому поиск данных может быть осуществлён только перебором смещений от краёв кадра.&lt;/p&gt;&lt;p&gt;Включение этой настройки позволяет автоматически определить начало и конец PCM данных, но может привести к ошибкам и щелчкам из-за коллизий CRC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QCheckBox" name="cbxBitPicker">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Включить попытки подбора отрезанных слева или справа бит до схождения CRC</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Во время захвата видео края кадра (слева или справа) могут быть обрезаны. Данная настройка позволяет включить попытки подбора отрезанных бит до схождения CRC.&lt;/p&gt;&lt;p&gt;Позволяет компенсировать срезанные во время захвата видео края кадра, но может привести к ложно-позитивным CRC, &amp;quot;сломанным&amp;quot; блокам и щелчкам.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="lblCoordSearch">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Включение автоматического определения начала и конца PCM данных, может привести к ошибкам и щелчкам из-за коллизий CRC</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В форматах PCM-1 и PCM-16x0 нет маркеров для обнаружения положения PCM данных по горизонтали кадра, поэтому поиск данных может быть осуществлён только перебором смещений от краёв кадра.&lt;/p&gt;&lt;p&gt;Включение этой настройки позволяет автоматически определить начало и конец PCM данных, но может привести к ошибкам и щелчкам из-за коллизий CRC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Поиск PCM данных в строке (TBC для PCM-1/PCM-16x0):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QSpinBox" name="spbSearchWidth">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра.&lt;/p&gt;&lt;p&gt;Увеличение % позволяет автоматически обрезать более широкие поля кадра и компенсировать дрожание строки с большим размахом, но может привести к нахождению ложных координат с ложно-позитивной CRC и увеличить число &amp;quot;сломанных&amp;quot; блоков и щелчков.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="suffix">
+         <string> %</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>25</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="lblSearchWidth">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра.&lt;/p&gt;&lt;p&gt;Увеличение % позволяет автоматически обрезать более широкие поля кадра и компенсировать дрожание строки с большим размахом, но может привести к нахождению ложных координат с ложно-позитивной CRC и увеличить число &amp;quot;сломанных&amp;quot; блоков и щелчков.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Область поиска маркеров PCM от границ кадра (TBC для STC-007):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QCheckBox" name="cbxAllowNoMarker">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Разрешить бинаризацию по найденным ранееe удачным параметрам без проверки наличия старт- и стоп-маркеров в строке</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Разрешить бинаризацию по найденным ранее параметрам без проверки наличия старт- и стоп-маркеров в строке.&lt;/p&gt;&lt;p&gt;Позволяет лучше восстанавливать ВЧ и детали из видео с большим числом выпадений и ускоряет бинаризацию, но может привести к ложно-позитивным совпадениям CRC, &amp;quot;сломанным&amp;quot; блокам и щелчкам.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Разрешить бинаризацию по найденным ранееe удачным параметрам без проверки наличия старт- и стоп-маркеров в строке</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Разрешить бинаризацию по найденным ранее параметрам без проверки наличия старт- и стоп-маркеров в строке.&lt;/p&gt;&lt;p&gt;Позволяет лучше восстанавливать ВЧ и детали из видео с большим числом выпадений и ускоряет бинаризацию, но может привести к ложно-позитивным совпадениям CRC, &amp;quot;сломанным&amp;quot; блокам и щелчкам.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Бинаризация без проверки наличия маркеров (STC-007):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="hlButtons">
+     <property name="spacing">
+      <number>10</number>
+     </property>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Maximum</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnDefaults">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Сброс настроек к оптимальным (по умолчанию)</string>
+       </property>
+       <property name="whatsThis">
+        <string>Сброс настроек к оптимальным (по умолчанию)</string>
+       </property>
+       <property name="text">
+        <string>По умолчанию</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnRevert">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Вернуть настройки на момент открытия окна настроек</string>
+       </property>
+       <property name="whatsThis">
+        <string>Вернуть настройки на момент открытия окна настроек</string>
+       </property>
+       <property name="text">
+        <string>Отменить изменения</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnSave">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Применить все настройки из окна к бинаризатору</string>
+       </property>
+       <property name="whatsThis">
+        <string>Применить все настройки из окна к бинаризатору</string>
+       </property>
+       <property name="text">
+        <string>Сохранить</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnClose">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Закрыть окно настроек</string>
+       </property>
+       <property name="whatsThis">
+        <string>Закрыть окно настроек</string>
+       </property>
+       <property name="text">
+        <string>Закрыть</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>spbMaxBlack</tabstop>
+  <tabstop>spbMinWhite</tabstop>
+  <tabstop>spbMinContrast</tabstop>
+  <tabstop>spbMinRef</tabstop>
+  <tabstop>spbMaxRef</tabstop>
+  <tabstop>spbMinValidCRC</tabstop>
+  <tabstop>spbSearchWidth</tabstop>
+  <tabstop>cbxCoordSearch</tabstop>
+  <tabstop>cbxBitPicker</tabstop>
+  <tabstop>cbxAllowNoMarker</tabstop>
+  <tabstop>btnClose</tabstop>
+  <tabstop>btnSave</tabstop>
+  <tabstop>btnRevert</tabstop>
+  <tabstop>btnDefaults</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

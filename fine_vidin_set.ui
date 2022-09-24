@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>fine_vidin_set</class>
+ <widget class="QDialog" name="fine_vidin_set">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>645</width>
+    <height>476</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Тонкие настройки видео-декодера</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QGroupBox" name="gbxImageCrop">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Обрезка кадра</string>
+     </property>
+     <layout class="QGridLayout" name="_2">
+      <item row="0" column="1" alignment="Qt::AlignHCenter">
+       <widget class="QSpinBox" name="spbCropTop">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Число строк, которые будут пропущены сверху кадра</string>
+        </property>
+        <property name="statusTip">
+         <string>Число строк, которые будут пропущены сверху кадра</string>
+        </property>
+        <property name="suffix">
+         <string> строк</string>
+        </property>
+        <property name="prefix">
+         <string>Верх: </string>
+        </property>
+        <property name="maximum">
+         <number>250</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" alignment="Qt::AlignRight">
+       <widget class="QSpinBox" name="spbCropLeft">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>120</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Число пикселей, которые будут отрезаны слева кадра</string>
+        </property>
+        <property name="statusTip">
+         <string>Число пикселей, которые будут отрезаны слева кадра</string>
+        </property>
+        <property name="suffix">
+         <string> пикс.</string>
+        </property>
+        <property name="prefix">
+         <string>Слева: </string>
+        </property>
+        <property name="maximum">
+         <number>250</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2" alignment="Qt::AlignLeft">
+       <widget class="QSpinBox" name="spbCropRight">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>120</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Число пикселей, которые будут отрезаны справа кадра</string>
+        </property>
+        <property name="statusTip">
+         <string>Число пикселей, которые будут отрезаны справа кадра</string>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="suffix">
+         <string> пикс.</string>
+        </property>
+        <property name="prefix">
+         <string>Справа: </string>
+        </property>
+        <property name="maximum">
+         <number>250</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1" alignment="Qt::AlignHCenter">
+       <widget class="QSpinBox" name="spbCropBottom">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Число строк, которые будут пропущены снизу кадра</string>
+        </property>
+        <property name="statusTip">
+         <string>Число строк, которые будут пропущены снизу кадра</string>
+        </property>
+        <property name="suffix">
+         <string> строк</string>
+        </property>
+        <property name="prefix">
+         <string>Низ: </string>
+        </property>
+        <property name="maximum">
+         <number>250</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QFrame" name="frame">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>75</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>300</width>
+          <height>300</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Кадр с PCM</string>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::Box</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Plain</enum>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
+        <property name="midLineWidth">
+         <number>0</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="gbxFrameDecode">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Декодирование кадра</string>
+     </property>
+     <layout class="QGridLayout" name="L">
+      <property name="topMargin">
+       <number>3</number>
+      </property>
+      <property name="spacing">
+       <number>9</number>
+      </property>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="cbxSkipLines">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Позволить корректно считывать видео с деинтерлейсом удвоением строк с удвоенной частотой кадров</string>
+        </property>
+        <property name="whatsThis">
+         <string>Позволить корректно считывать видео с деинтерлейсом удвоением строк с удвоенной частотой кадров</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QCheckBox" name="cbxDrawDeint">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
+        </property>
+        <property name="whatsThis">
+         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="lblSkipLines">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Позволить корректно считывать видео с деинтерлейсом удвоением строк с удвоенной частотой кадров</string>
+        </property>
+        <property name="whatsThis">
+         <string>Позволить корректно считывать видео с деинтерлейсом удвоением строк с удвоенной частотой кадров</string>
+        </property>
+        <property name="text">
+         <string>Пропуск каждой 2-й строки в видео (для видео после деинтерлейса с удвоением строк):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="lblDrawDeint">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
+        </property>
+        <property name="whatsThis">
+         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
+        </property>
+        <property name="text">
+         <string>Устранение чересстрочности для визуализатора источника видео:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblColorUse">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Выбор цветовых каналов в исходном видео, из которых декодировать PCM-данные</string>
+        </property>
+        <property name="whatsThis">
+         <string>Выбор цветовых каналов в исходном видео, из которых декодировать PCM-данные</string>
+        </property>
+        <property name="text">
+         <string>Использовать цвета:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QComboBox" name="lbxColorUse">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>130</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Выбор цветовых каналов в исходном видео, из которых декодировать PCM-данные</string>
+        </property>
+        <property name="whatsThis">
+         <string>Выбор цветовых каналов в исходном видео, из которых декодировать PCM-данные</string>
+        </property>
+        <item>
+         <property name="text">
+          <string>Яркость (канал Y)</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Красный (канал R)</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Зелёный (канал G)</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Синий (канал B)</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="hlButtons">
+     <property name="spacing">
+      <number>10</number>
+     </property>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Maximum</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnDefaults">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Сброс настроек к оптимальным (по умолчанию)</string>
+       </property>
+       <property name="whatsThis">
+        <string>Сброс настроек к оптимальным (по умолчанию)</string>
+       </property>
+       <property name="text">
+        <string>По умолчанию</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnRevert">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Вернуть настройки на момент открытия окна настроек</string>
+       </property>
+       <property name="whatsThis">
+        <string>Вернуть настройки на момент открытия окна настроек</string>
+       </property>
+       <property name="text">
+        <string>Отменить изменения</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnSave">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Применить все настройки из окна к декодеру видео</string>
+       </property>
+       <property name="whatsThis">
+        <string>Применить все настройки из окна к декодеру видео</string>
+       </property>
+       <property name="text">
+        <string>Сохранить</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnClose">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Закрыть окно настроек</string>
+       </property>
+       <property name="whatsThis">
+        <string>Закрыть окно настроек</string>
+       </property>
+       <property name="text">
+        <string>Закрыть</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>spbCropTop</tabstop>
+  <tabstop>spbCropLeft</tabstop>
+  <tabstop>spbCropRight</tabstop>
+  <tabstop>spbCropBottom</tabstop>
+  <tabstop>lbxColorUse</tabstop>
+  <tabstop>cbxSkipLines</tabstop>
+  <tabstop>cbxDrawDeint</tabstop>
+  <tabstop>btnClose</tabstop>
+  <tabstop>btnSave</tabstop>
+  <tabstop>btnRevert</tabstop>
+  <tabstop>btnDefaults</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
