@@ -123,10 +123,6 @@
         <translation>625 (PAL, 2x294)</translation>
     </message>
     <message>
-        <source>без ограничения</source>
-        <translation type="vanished">bez limitu</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="468"/>
         <location filename="mainwindow.ui" line="471"/>
         <location filename="mainwindow.ui" line="496"/>
@@ -179,10 +175,6 @@
         <location filename="mainwindow.ui" line="884"/>
         <source>Коррекция ошибок:</source>
         <translation>Korekcja błędów:</translation>
-    </message>
-    <message>
-        <source>частичная (только P-код)</source>
-        <translation type="vanished">częściowa (tylko P-kod)</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="669"/>
@@ -256,10 +248,6 @@
         <translation>Ścieżka do źródłowego pliku wideo</translation>
     </message>
     <message>
-        <source>Параметры кадра</source>
-        <translation type="vanished">Parametry klatki</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="1486"/>
         <location filename="mainwindow.ui" line="1489"/>
         <location filename="mainwindow.ui" line="2127"/>
@@ -331,22 +319,6 @@
         <translation>Pierwsza linia z danymi PCM w górnym polu</translation>
     </message>
     <message>
-        <source>Номер строки, на которой заканчиваются PCM-данные</source>
-        <translation type="vanished">Ostatnia linia z danymi PCM</translation>
-    </message>
-    <message>
-        <source>Конечная строка:</source>
-        <translation type="vanished">Ostatnia linia:</translation>
-    </message>
-    <message>
-        <source>Конечная строка PCM-данных в нечётном поле</source>
-        <translation type="vanished">Ostatnia linia z danymi PCM w dolnym polu</translation>
-    </message>
-    <message>
-        <source>Автоматически определённое разрешение аудио</source>
-        <translation type="vanished">Wykryta rozdzielczość dźwięku</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="3082"/>
         <location filename="mainwindow.ui" line="3085"/>
         <source>Разрешение аудио в нечётном поле</source>
@@ -374,21 +346,9 @@
         <translation>Liczba pustych linii do wstawienia między pola</translation>
     </message>
     <message>
-        <source>Количество строк, которое необходимо вставить между полями для корректной стыковки полей</source>
-        <translation type="vanished">Liczba pustych linii do wstawienia między pola dla prawidłowego łączenia pól</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="3161"/>
         <source>Дополнение строк:</source>
         <translation>Puste linie:</translation>
-    </message>
-    <message>
-        <source>Вставка строк внутри полей одного кадра</source>
-        <translation type="vanished">Dodawanie linii między polami klatki</translation>
-    </message>
-    <message>
-        <source>Вставка строк между соседними кадрами</source>
-        <translation type="vanished">Dodawanie linii między następującymi klatkami</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="2957"/>
@@ -402,10 +362,6 @@
         <location filename="mainwindow.ui" line="2982"/>
         <source>Стандарт видео:</source>
         <translation>Standard wideo:</translation>
-    </message>
-    <message>
-        <source>Автоматически определённый порядок полей в кадре</source>
-        <translation type="vanished">Wykrywanie kolejnośći pól w klatkach</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="115"/>
@@ -815,6 +771,11 @@ bloku danych:</translation>
     <message>
         <location filename="mainwindow.ui" line="971"/>
         <source>CWD отключено</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1216"/>
+        <source>заглушать по отсчётам</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1550,10 +1511,6 @@ zakłócenia:</translation>
         <translation>PAL (625i), 294 linii PCM na pole</translation>
     </message>
     <message>
-        <source>не установлен, без ограничения</source>
-        <translation type="vanished">nie określono, bez limitu</translation>
-    </message>
-    <message>
         <location filename="mainwindow.h" line="58"/>
         <source>Формат SI</source>
         <translation type="unfinished"></translation>
@@ -1612,10 +1569,6 @@ zakłócenia:</translation>
         <location filename="mainwindow.h" line="82"/>
         <source>Для использования меню отладки запустите приложение из коммандной строки</source>
         <translation>Aby skorzystać z menu debugowania, uruchom aplikację za pomocą wiersza poleceń</translation>
-    </message>
-    <message>
-        <source>STC007 decoder</source>
-        <translation type="vanished">Dekoder STC-007</translation>
     </message>
     <message>
         <location filename="frame_vis.h" line="22"/>
@@ -1961,17 +1914,9 @@ zakłócenia:</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Сброс настроек к оптимальным (по умолчанию).</source>
-        <translation type="vanished">Resetowanie do optymalnych ustawień (domyślne).</translation>
-    </message>
-    <message>
         <location filename="fine_bin_set.ui" line="607"/>
         <source>По умолчанию</source>
         <translation>Domyślne</translation>
-    </message>
-    <message>
-        <source>Вернуть настройки на момент открытия окна настроек.</source>
-        <translation type="vanished">Porzuć zmiany ustawień w tym oknie.</translation>
     </message>
     <message>
         <location filename="fine_bin_set.ui" line="626"/>

@@ -6390,7 +6390,7 @@ void STC007DataStitcher::prescanFrame()
     suppress_log = ((log_level&LOG_FIELD_ASSEMBLY)==0);
 
     // Detect BROKEN data blocks and trace down false valid PCM lines.
-    patchBrokenLines(&conv_queue);
+    //patchBrokenLines(&conv_queue);
 
     if(enable_CWD!=false)
     {

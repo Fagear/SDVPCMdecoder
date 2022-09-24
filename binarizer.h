@@ -103,6 +103,7 @@ typedef struct
 
 // TODO: add preset data coordinates offset [-30...+30] [bin_preset_t] and fine settings in GUI
 // TODO: add counters for left/right bits instead of [en_bit_picker] in [bin_preset_t] and fine settings in GUI
+// TODO: add preset/override for data coordinates and reference level
 class Binarizer
 {
 public:

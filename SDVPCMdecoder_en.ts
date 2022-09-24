@@ -107,10 +107,6 @@
         <translation>625 (PAL, 2x294)</translation>
     </message>
     <message>
-        <source>без ограничения</source>
-        <translation type="vanished">no limits</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="468"/>
         <location filename="mainwindow.ui" line="471"/>
         <location filename="mainwindow.ui" line="496"/>
@@ -163,10 +159,6 @@
         <location filename="mainwindow.ui" line="884"/>
         <source>Коррекция ошибок:</source>
         <translation>Error correction:</translation>
-    </message>
-    <message>
-        <source>частичная (только P-код)</source>
-        <translation type="vanished">partial (only P-code)</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="669"/>
@@ -240,10 +232,6 @@
         <translation>Path to source video file</translation>
     </message>
     <message>
-        <source>Параметры кадра</source>
-        <translation type="vanished">Frame parameters</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="1486"/>
         <location filename="mainwindow.ui" line="1489"/>
         <location filename="mainwindow.ui" line="2127"/>
@@ -315,22 +303,6 @@
         <translation>First line with PCM data in even field</translation>
     </message>
     <message>
-        <source>Номер строки, на которой заканчиваются PCM-данные</source>
-        <translation type="vanished">Last line with PCM data</translation>
-    </message>
-    <message>
-        <source>Конечная строка:</source>
-        <translation type="vanished">Last line:</translation>
-    </message>
-    <message>
-        <source>Конечная строка PCM-данных в нечётном поле</source>
-        <translation type="vanished">Last line with PCM data in odd field</translation>
-    </message>
-    <message>
-        <source>Автоматически определённое разрешение аудио</source>
-        <translation type="vanished">Detected audio resolution</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="3082"/>
         <location filename="mainwindow.ui" line="3085"/>
         <source>Разрешение аудио в нечётном поле</source>
@@ -358,21 +330,9 @@
         <translation>Number of lines to be inserted between fields</translation>
     </message>
     <message>
-        <source>Количество строк, которое необходимо вставить между полями для корректной стыковки полей</source>
-        <translation type="vanished">Number of lines to be inserted between fields for valid field stitching</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="3161"/>
         <source>Дополнение строк:</source>
         <translation>Line padding:</translation>
-    </message>
-    <message>
-        <source>Вставка строк внутри полей одного кадра</source>
-        <translation type="vanished">Line padding between fields of a frame</translation>
-    </message>
-    <message>
-        <source>Вставка строк между соседними кадрами</source>
-        <translation type="vanished">Line padding between adjacent frames</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="2957"/>
@@ -386,10 +346,6 @@
         <location filename="mainwindow.ui" line="2982"/>
         <source>Стандарт видео:</source>
         <translation>Video standard:</translation>
-    </message>
-    <message>
-        <source>Автоматически определённый порядок полей в кадре</source>
-        <translation type="vanished">Detected field order in a frame</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="115"/>
@@ -699,14 +655,6 @@ data blocks:</translation>
         <translation>PCM format:</translation>
     </message>
     <message>
-        <source>PCM-1</source>
-        <translation type="vanished">PCM-1</translation>
-    </message>
-    <message>
-        <source>PCM-16x0</source>
-        <translation type="vanished">PCM-16x0</translation>
-    </message>
-    <message>
         <location filename="mainwindow.ui" line="1361"/>
         <source>STC-007/PCM-F1</source>
         <translation>STC-007/PCM-F1</translation>
@@ -716,10 +664,6 @@ data blocks:</translation>
         <location filename="mainwindow.ui" line="343"/>
         <source>Автоматическая пауза после каждого кадра видео</source>
         <translation>Automatic pause after every video frame</translation>
-    </message>
-    <message>
-        <source>полная (P и Q коды, для STC-007)</source>
-        <translation type="vanished">full (P and Q codes, for STC-007)</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="856"/>
@@ -830,6 +774,11 @@ data blocks:</translation>
         <location filename="mainwindow.ui" line="971"/>
         <source>CWD отключено</source>
         <translation>CWD disabled</translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1216"/>
+        <source>заглушать по отсчётам</source>
+        <translation>mute by samples</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1351"/>
@@ -1010,7 +959,7 @@ data blocks:</translation>
         <location filename="mainwindow.ui" line="2542"/>
         <location filename="mainwindow.ui" line="2885"/>
         <source>Координаты:</source>
-        <translation type="unfinished"></translation>
+        <translation>Coordinates:</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="2015"/>
@@ -1566,10 +1515,6 @@ audio samples:</translation>
         <translation>PAL (625i), 294 PCM lines per field</translation>
     </message>
     <message>
-        <source>не установлен, без ограничения</source>
-        <translation type="vanished">not defined, no limits</translation>
-    </message>
-    <message>
         <location filename="mainwindow.h" line="58"/>
         <source>Формат SI</source>
         <translation>SI format</translation>
@@ -1582,7 +1527,7 @@ audio samples:</translation>
     <message>
         <location filename="mainwindow.h" line="69"/>
         <source> (форсирован)</source>
-        <translation type="unfinished"></translation>
+        <translation> (forced)</translation>
     </message>
     <message>
         <location filename="mainwindow.h" line="71"/>
@@ -1628,10 +1573,6 @@ audio samples:</translation>
         <location filename="mainwindow.h" line="82"/>
         <source>Для использования меню отладки запустите приложение из коммандной строки</source>
         <translation>Launch application from a command line to get access to the debug menu</translation>
-    </message>
-    <message>
-        <source>STC007 decoder</source>
-        <translation type="vanished">STC007 decoder</translation>
     </message>
     <message>
         <location filename="frame_vis.h" line="22"/>
@@ -1771,14 +1712,6 @@ audio samples:</translation>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;mihail2501&lt;/span&gt; (interleave algorithms for PCM-1 and PCM-16x0, matrix operations for STC-007)&lt;br&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;userrft2&lt;/span&gt; (test recordings with deliberately corrupted video)&lt;br&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;VCD&lt;/span&gt; (video-PCM popularization, test recordings from hardware coders)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;walhi&lt;/span&gt; (bit center coordinate pixel-shifting idea)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, STANDARD B)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, STANDARD A)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056 Гц)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="vanished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 channels, 13 bits, 44056 Hz, STANDARD B)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 channels, 16 bits, 44056 Hz,  STANDARD A)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 channels, 16 bits, 44056/4410 Hz)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 channels, 16 bits, 44056/44100 Hz)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 channels, 14 bits, 44056 Hz, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 channels, 14 bits, 44100 Hz, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 channels, 16 bits, 44056 Hz)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-        <source>Автор: Максим Крюков (Fagear)</source>
-        <translation type="vanished">Author: Maksim Kryukov (Fagear)</translation>
-    </message>
-    <message>
         <location filename="about_wnd.ui" line="45"/>
         <source>Поддерживаемые форматы PCM:</source>
         <translation>Supported PCM formats:</translation>
@@ -1790,10 +1723,6 @@ audio samples:</translation>
         <location filename="fine_bin_set.ui" line="14"/>
         <source>Тонкие настройки бинаризатора</source>
         <translation>Fine binarizator settings</translation>
-    </message>
-    <message>
-        <source>Включение автоматического определения начала и конца PCM данных, может привести к ошибкам и щелчкам из-за коллизий CRC.</source>
-        <translation type="vanished">Enable automatic PCM data position search, can lead to errors and clicks due to CRC collisions.</translation>
     </message>
     <message>
         <location filename="fine_bin_set.ui" line="417"/>
@@ -1870,14 +1799,6 @@ audio samples:</translation>
         <location filename="fine_bin_set.ui" line="265"/>
         <source>Максимально допустимый пороговый уровень (8 бит):</source>
         <translation>Maximum binarization threshold level (8 bit):</translation>
-    </message>
-    <message>
-        <source>Включить попытки подбора отрезанных слева или справа бит до схождения CRC.</source>
-        <translation type="vanished">Enable Bit Picker to brute-force pick bits that were cut from the left or the right until CRC is valid.</translation>
-    </message>
-    <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Во время захвата видео края кадра (слева или справа) могут быть обрезаны.&lt;/p&gt;&lt;p&gt;Данная настройка позволяет включить попытки подбора отрезанных бит до схождения CRC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="vanished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;It is possible to lose some data from the sides of the frame (from the left or the right) during capture process.&lt;/p&gt;&lt;p&gt;Enabling this option can help recover lost bits by brute-force picking those until CRC is valid.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="fine_bin_set.ui" line="420"/>
@@ -1989,17 +1910,9 @@ audio samples:</translation>
         <translation>Data search and validation</translation>
     </message>
     <message>
-        <source>Сброс настроек к оптимальным (по умолчанию).</source>
-        <translation type="vanished">Reset fine settings to optimal (by default).</translation>
-    </message>
-    <message>
         <location filename="fine_bin_set.ui" line="607"/>
         <source>По умолчанию</source>
         <translation>By default</translation>
-    </message>
-    <message>
-        <source>Вернуть настройки на момент открытия окна настроек.</source>
-        <translation type="vanished">Revert fine settings changes in the dialog.</translation>
     </message>
     <message>
         <location filename="fine_bin_set.ui" line="626"/>
@@ -2370,8 +2283,7 @@ audio samples:</translation>
     <message>
         <location filename="fine_vidin_set.ui" line="373"/>
         <source>Яркость (канал Y)</source>
-        <oldsource>Все (яркость, канал Y)</oldsource>
-        <translation type="unfinished">All (brightness level, Y channel)</translation>
+        <translation>Brightness (Y channel)</translation>
     </message>
     <message>
         <location filename="fine_vidin_set.ui" line="378"/>

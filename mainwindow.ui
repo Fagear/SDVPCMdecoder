@@ -944,7 +944,7 @@
              <item row="2" column="2">
               <widget class="QComboBox" name="lbxSTC007CWD">
                <property name="enabled">
-                <bool>true</bool>
+                <bool>false</bool>
                </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">

@@ -30,6 +30,7 @@
 #endif
 
 // TODO: SI/EI auto-detection
+// TODO: fix erroneous SI format stitching (causing repetitive broken blocks)
 class PCM16X0DataStitcher : public QObject
 {
     Q_OBJECT
