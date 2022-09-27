@@ -7,8 +7,8 @@
 IDI_ICON1	ICON	DISCARDABLE	"D:/_stuff/_prj/Fagear/PCM/FrPCM/SDVPCMdecoder/pcm_ico.ico"
 
 VS_VERSION_INFO VERSIONINFO
-	FILEVERSION 0,95,0,0
-	PRODUCTVERSION 0,95,0,0
+	FILEVERSION 0,99,4,0
+	PRODUCTVERSION 0,99,4,0
 	FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
 	FILEFLAGS VS_FF_DEBUG
@@ -24,12 +24,12 @@ VS_VERSION_INFO VERSIONINFO
 			BLOCK "041904b0"
 			BEGIN
 				VALUE "CompanyName", "Fagear\0"
-				VALUE "FileDescription", "STC-007/STC-008/PCM-F1 video PCM decoder\0"
-				VALUE "FileVersion", "0.95.0.0\0"
+				VALUE "FileDescription", "SD video to digital audio PCM decoder\0"
+				VALUE "FileVersion", "0.99.4.0\0"
 				VALUE "LegalCopyright", "(c) Fagear\0"
 				VALUE "OriginalFilename", "SDVPCMdecoder.exe\0"
-				VALUE "ProductName", "STC-007/PCM-F1 decoder\0"
-				VALUE "ProductVersion", "0.95.0.0\0"
+				VALUE "ProductName", "SD video PCM decoder\0"
+				VALUE "ProductVersion", "0.99.4.0\0"
 			END
 		END
 		BLOCK "VarFileInfo"

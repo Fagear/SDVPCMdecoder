@@ -1,6 +1,6 @@
-﻿#include "stc007toaudio.h"
+﻿#include "samples2audio.h"
 
-STC007ToAudio::STC007ToAudio(QObject *parent) : QObject(parent)
+SamplesToAudio::SamplesToAudio(QObject *parent) : QObject(parent)
 {
     audio_dev = NULL;
     audio_info = QAudioDeviceInfo::defaultOutputDevice();
@@ -20,14 +20,14 @@ STC007ToAudio::STC007ToAudio(QObject *parent) : QObject(parent)
     audio_settings.setSampleRate(PCMSamplePair::SAMPLE_RATE_44100);
 }
 
-STC007ToAudio::~STC007ToAudio()
+SamplesToAudio::~SamplesToAudio()
 {
     deleteTimer();
     deleteAudioInterface();
 }
 
 //------------------------
-void STC007ToAudio::deleteTimer()
+void SamplesToAudio::deleteTimer()
 {
     if(timDumpAudio!=NULL)
     {
@@ -39,7 +39,7 @@ void STC007ToAudio::deleteTimer()
 }
 
 //------------------------
-void STC007ToAudio::deleteAudioInterface()
+void SamplesToAudio::deleteAudioInterface()
 {
     if(audio_if!=NULL)
     {
@@ -53,13 +53,13 @@ void STC007ToAudio::deleteAudioInterface()
 }
 
 //------------------------ Set debug logging level (LOG_PROCESS, etc...).
-void STC007ToAudio::setLogLevel(uint8_t in_level)
+void SamplesToAudio::setLogLevel(uint8_t in_level)
 {
     log_level = in_level;
 }
 
 //------------------------ Set samplerate of audio.
-void STC007ToAudio::setSampleRate(uint16_t in_rate)
+void SamplesToAudio::setSampleRate(uint16_t in_rate)
 {
     if(in_rate==PCMSamplePair::SAMPLE_RATE_44100)
     {
@@ -90,7 +90,7 @@ void STC007ToAudio::setSampleRate(uint16_t in_rate)
 }
 
 //------------------------ Setup for new stream.
-void STC007ToAudio::prepareNewFile()
+void SamplesToAudio::prepareNewFile()
 {
     // Close old output (if exists).
     deleteTimer();
@@ -177,7 +177,7 @@ void STC007ToAudio::prepareNewFile()
 }
 
 //------------------------ Save audio data from data block into buffer (blocking).
-void STC007ToAudio::saveAudio(int16_t in_left, int16_t in_right)
+void SamplesToAudio::saveAudio(int16_t in_left, int16_t in_right)
 {
     //qInfo()<<"[TA] Saving...";
 #ifdef TA_EN_DBG_OUT
@@ -201,7 +201,7 @@ void STC007ToAudio::saveAudio(int16_t in_left, int16_t in_right)
 }
 
 //------------------------ Output all data from the buffer into sound device.
-void STC007ToAudio::purgeBuffer()
+void SamplesToAudio::purgeBuffer()
 {
     // Check if there is anything to dump.
     if(audio.empty()==false)
@@ -263,7 +263,7 @@ void STC007ToAudio::purgeBuffer()
 }
 
 //------------------------ Stop playback and timers, flush all buffers.
-void STC007ToAudio::stopOutput()
+void SamplesToAudio::stopOutput()
 {
     deleteTimer();
     deleteAudioInterface();
@@ -276,7 +276,7 @@ void STC007ToAudio::stopOutput()
 }
 
 //------------------------ React on sound card state change.
-void STC007ToAudio::scStateChanged(QAudio::State new_state)
+void SamplesToAudio::scStateChanged(QAudio::State new_state)
 {
     if(new_state==QAudio::IdleState)
     {

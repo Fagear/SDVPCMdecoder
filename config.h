@@ -23,7 +23,7 @@ extern "C"
 #define APP_ORG_HTTP    QString("http://fagear.ru")
 #define APP_NAME        QString("Video PCM decoder")
 #define APP_EXEC        QString("SDVPCMdecoder")
-#define APP_VERSION     "0.99.3"
+#define APP_VERSION     "0.99.4"
 #define APP_INI_NAME    QString("pcmdecode")
 #define APP_LANG_PATH   (qApp->applicationDirPath())
 

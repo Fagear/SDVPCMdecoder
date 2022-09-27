@@ -173,9 +173,6 @@ uint8_t VideoInFFMPEG::decoderInit()
         return VIP_RET_NO_DEC_CTX;
     }
 
-    // Register all demuxers.
-    //avdevice_register_all();
-
     // Open a new source with FFMPEG.
     av_res = avformat_open_input(&format_ctx, src_path.toLocal8Bit().constData(), NULL, NULL);
     if(av_res<0)
@@ -225,6 +222,7 @@ uint8_t VideoInFFMPEG::decoderInit()
     }
 
     // Try to get hardware to decode it.
+    // TODO: maybe add hardware video decoding
     //findHWDecoder(v_decoder);
 
     // Allocate a codec context for the decoder.
@@ -1299,6 +1297,29 @@ void VideoInFFMPEG::runFrameDecode()
                "."+QString::number(AV_VERSION_MICRO(vers))+
                " ("+QString::number(vers)+")";
     qInfo()<<"[VIP] FFMPEG swscale run-time version:"<<log_line;
+
+    // Register all demuxers.
+    /*avdevice_register_all();
+
+    AVDictionary *inopt = NULL;
+    AVInputFormat *infmt = NULL;
+    AVDeviceInfoList *dev_list;
+    //infmt = av_find_input_format("gdigrab");
+    infmt = av_find_input_format("dshow");
+    av_res = avdevice_list_input_sources(infmt, NULL, inopt, &dev_list);
+    if(av_res<0)
+    {
+        qDebug()<<"[VIP] Unable to find capture devices";
+    }
+    else
+    {
+        qDebug()<<"[VIP] Found"<<av_res<<"capture devices";
+        if(av_res>0)
+        {
+            qInfo()<<dev_list->devices[0]->device_description<<dev_list->devices[0]->device_name;
+        }
+        avdevice_free_list_devices(dev_list);
+    }*/
 
     // Inf. loop in a thread.
     while(finish_work==false)

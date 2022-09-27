@@ -654,7 +654,8 @@ bloku danych:</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1361"/>
-        <source>STC-007/PCM-F1</source>
+        <source>STC-007/Sony PCM-F1</source>
+        <oldsource>STC-007/PCM-F1</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -780,12 +781,14 @@ bloku danych:</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1351"/>
-        <source>PCM-1 (Standard B)</source>
+        <source>PCM-1 (Sony Standard B)</source>
+        <oldsource>PCM-1 (Standard B)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="1356"/>
-        <source>PCM-16x0 (Standard A)</source>
+        <source>PCM-16x0 (Sony Standard A)</source>
+        <oldsource>PCM-16x0 (Standard A)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1480,93 +1483,93 @@ zakłócenia:</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="mainwindow.h" line="61"/>
-        <location filename="mainwindow.h" line="66"/>
+        <location filename="mainwindow.h" line="62"/>
+        <location filename="mainwindow.h" line="67"/>
         <source>не определён</source>
         <translation>nie określono</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="62"/>
+        <location filename="mainwindow.h" line="63"/>
         <source>TFF, нечётное поле первое</source>
         <translation>TFF, najpierw górne pole</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="63"/>
+        <location filename="mainwindow.h" line="64"/>
         <source>BFF, чётное поле первое</source>
         <translation>BFF, najpierw dolne pole</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="64"/>
+        <location filename="mainwindow.h" line="65"/>
         <source> (форсировано)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="67"/>
+        <location filename="mainwindow.h" line="68"/>
         <source>NTSC (525i), 245 строк с PCM в поле</source>
         <translation>NTSC (525i), 245 linii PCM na pole</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="68"/>
+        <location filename="mainwindow.h" line="69"/>
         <source>PAL (625i), 294 строк с PCM в поле</source>
         <translation>PAL (625i), 294 linii PCM na pole</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="58"/>
+        <location filename="mainwindow.h" line="59"/>
         <source>Формат SI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="59"/>
+        <location filename="mainwindow.h" line="60"/>
         <source>Формат EI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="69"/>
+        <location filename="mainwindow.h" line="70"/>
         <source> (форсирован)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="71"/>
+        <location filename="mainwindow.h" line="72"/>
         <source>14 бит (STC-007)</source>
         <translation>14 bit (STC-007)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="72"/>
+        <location filename="mainwindow.h" line="73"/>
         <source>14 бит (неточно)</source>
         <translation>14 bit (nie określono)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="73"/>
+        <location filename="mainwindow.h" line="74"/>
         <source>16 бит (неточно)</source>
         <translation>16 bit (nie określono)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="74"/>
+        <location filename="mainwindow.h" line="75"/>
         <source>16 бит (PCM-F1)</source>
         <translation>16 bit (PCM F-1)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="77"/>
+        <location filename="mainwindow.h" line="78"/>
         <source>Источник видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="78"/>
+        <location filename="mainwindow.h" line="79"/>
         <source>Бинаризированные кадры</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="79"/>
+        <location filename="mainwindow.h" line="80"/>
         <source>Пересобранные кадры</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="80"/>
+        <location filename="mainwindow.h" line="81"/>
         <source>Блоки данных</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="82"/>
+        <location filename="mainwindow.h" line="83"/>
         <source>Для использования меню отладки запустите приложение из коммандной строки</source>
         <translation>Aby skorzystać z menu debugowania, uruchom aplikację za pomocą wiersza poleceń</translation>
     </message>
@@ -1674,7 +1677,8 @@ zakłócenia:</translation>
     </message>
     <message>
         <location filename="about_wnd.ui" line="61"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, STANDARD B, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, STANDARD A, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC/PAL)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, Sony Standard B, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, Sony Standard A, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC/PAL)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <oldsource>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, STANDARD B, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, STANDARD A, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC/PAL)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>

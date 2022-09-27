@@ -1587,11 +1587,11 @@ void AudioProcessor::processAudio()
         ext_tw_log_lvl = ext_ta_log_lvl = 0;
         if((log_level&LOG_FILE_OP)!=0)
         {
-            ext_tw_log_lvl |= (STC007ToWAV::LOG_PROCESS|STC007ToWAV::LOG_WAVE_SAVE);
+            ext_tw_log_lvl |= (SamplesToWAV::LOG_PROCESS|SamplesToWAV::LOG_WAVE_SAVE);
         }
         if((log_level&LOG_LIVE_OP)!=0)
         {
-            ext_ta_log_lvl |= (STC007ToAudio::LOG_PROCESS|STC007ToAudio::LOG_WAVE_LIVE);
+            ext_ta_log_lvl |= (SamplesToAudio::LOG_PROCESS|SamplesToAudio::LOG_WAVE_LIVE);
         }
         wav_output.setLogLevel(ext_tw_log_lvl);
         sc_output.setLogLevel(ext_ta_log_lvl);

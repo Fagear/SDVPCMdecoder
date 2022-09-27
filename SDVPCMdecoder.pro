@@ -28,7 +28,7 @@ QMAKE_CFLAGS_RELEASE += -O3 -march=pentium3m
 
 QMAKE_CXXFLAGS+= -D__STDC_CONSTANT_MACROS -fpermissive
 
-VERSION = 0.99.3
+VERSION = 0.99.4
 win32: QMAKE_TARGET_COMPANY = Fagear
 win32: QMAKE_TARGET_PRODUCT = SD video PCM decoder
 win32: QMAKE_TARGET_DESCRIPTION = SD video to digital audio PCM decoder
@@ -42,11 +42,9 @@ SOURCES += main.cpp\
     stc007datablock.cpp \
     frametrimset.cpp \
     stc007deinterleaver.cpp \
-    stc007towav.cpp \
     audioprocessor.cpp \
     stc007datastitcher.cpp \
     vin_ffmpeg.cpp \
-    stc007toaudio.cpp \
     circbuffer.cpp \
     fine_bin_set.cpp \
     fine_deint_set.cpp \
@@ -69,7 +67,9 @@ SOURCES += main.cpp\
     about_wnd.cpp \
     vid_preset_t.cpp \
     pcmtester.cpp \
-    pcm16x0subline.cpp
+    pcm16x0subline.cpp \
+    samples2audio.cpp \
+    samples2wav.cpp
 
 HEADERS  += mainwindow.h \
     videoline.h \
@@ -78,13 +78,10 @@ HEADERS  += mainwindow.h \
     stc007datablock.h \
     frametrimset.h \
     stc007deinterleaver.h \
-    stc007towav.h \
     audioprocessor.h \
     stc007datastitcher.h \
     vin_ffmpeg.h \
-    stc007toaudio.h \
     circbuffer.h \
-    audio_sample.h \
     fine_bin_set.h \
     fine_deint_set.h \
     frame_vis.h \
@@ -106,7 +103,9 @@ HEADERS  += mainwindow.h \
     about_wnd.h \
     vid_preset_t.h \
     pcmtester.h \
-    pcm16x0subline.h
+    pcm16x0subline.h \
+    samples2audio.h \
+    samples2wav.h
 
 FORMS    += mainwindow.ui \
     fine_bin_set.ui \

@@ -1,5 +1,5 @@
-﻿#ifndef STC007TOAUDIO_H
-#define STC007TOAUDIO_H
+﻿#ifndef SAMPLES2AUDIO_H
+#define SAMPLES2AUDIO_H
 
 #include <QAudioOutput>
 #include <QDebug>
@@ -8,7 +8,6 @@
 #include <QTimer>
 #include <QThread>
 #include "config.h"
-#include "audio_sample.h"
 #include "circbuffer.h"
 #include "pcmsamplepair.h"
 
@@ -21,7 +20,17 @@
 //#define TA_AD_BUF_SIZE      (262144)
 #define TA_AD_BUF_SIZE      (8192)
 
-class STC007ToAudio : public QObject
+typedef union
+{
+    struct
+    {
+        int16_t word_left;
+        int16_t word_right;
+    };
+    uint8_t bytes[4];
+} sample_pair_t;
+
+class SamplesToAudio : public QObject
 {
     Q_OBJECT
 public:
@@ -46,8 +55,8 @@ private:
     bool output_en;
 
 public:
-    explicit STC007ToAudio(QObject *parent = 0);
-    ~STC007ToAudio();
+    explicit SamplesToAudio(QObject *parent = 0);
+    ~SamplesToAudio();
 
 private:
     void deleteTimer();
@@ -68,4 +77,4 @@ signals:
     void livePlayback(bool);
 };
 
-#endif // STC007TOAUDIO_H
+#endif // SAMPLES2AUDIO_H

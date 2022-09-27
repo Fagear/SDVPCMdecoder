@@ -101,9 +101,8 @@ typedef struct
     int16_t data_stop;      // Coordinate of data stop in the line for current CRC.
 } crc_handler_t;
 
-// TODO: add preset data coordinates offset [-30...+30] [bin_preset_t] and fine settings in GUI
 // TODO: add counters for left/right bits instead of [en_bit_picker] in [bin_preset_t] and fine settings in GUI
-// TODO: add preset/override for data coordinates and reference level
+// TODO: add preset/override for data coordinates and reference level in [bin_preset_t] and fine settings in GUI
 class Binarizer
 {
 public:

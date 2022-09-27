@@ -1037,7 +1037,7 @@ uint8_t PCM16X0DataStitcher::trySIPadding(std::deque<PCM16X0SubLine> *field_data
     uint8_t intl_blk_index;
     uint16_t line_index, start_subline;
     uint16_t valid_burst_count, silence_burst_count, uncheck_burst_count, brk_burst_count;
-    uint16_t valid_burst_max, silence_burst_max, uncheck_burst_max, brk_burst_max;
+    uint16_t top_broken, valid_burst_max, silence_burst_max, uncheck_burst_max, brk_burst_max;
     size_t buf_size;
     PCM16X0DataBlock service_bits;
 
@@ -1060,8 +1060,9 @@ uint8_t PCM16X0DataStitcher::trySIPadding(std::deque<PCM16X0SubLine> *field_data
 #endif
 
     // Per interleave block stats.
-    std::vector<FieldStitchStats> iblk_stats;
+    std::deque<FieldStitchStats> iblk_stats;
     iblk_stats.resize(PCM16X0DataBlock::INT_BLK_PER_FIELD);
+    top_broken = 0;
 
     // Run deinterleaving and error-detection on padded field.
     // Cycle through interleave blocks in the field.
@@ -1210,6 +1211,7 @@ uint8_t PCM16X0DataStitcher::trySIPadding(std::deque<PCM16X0SubLine> *field_data
             }
             buf_size++;
 
+            // TODO: check validity of the line before checking Control Bits.
             // Check if current sub-line contains useful service bits.
             if(line_index<BIT_MAX_OFS)
             {
@@ -1355,6 +1357,33 @@ uint8_t PCM16X0DataStitcher::trySIPadding(std::deque<PCM16X0SubLine> *field_data
         intl_blk_index++;
     }// [intl_blk_index] cycle
 
+    // Check if there are more than 2 interleave blocks.
+    if(iblk_stats.size()>2)
+    {
+        // First and last blocks may be unsafe to process,
+        // exclude those from stats if there are enough blocks in the list.
+        if(iblk_stats.front().index==0)
+        {
+            iblk_stats.pop_front();
+        }
+        if(iblk_stats.back().index==6)
+        {
+            iblk_stats.pop_back();
+        }
+    }
+    for(uint8_t index=0;index<iblk_stats.size();index++)
+    {
+        if(iblk_stats[index].broken>top_broken)
+        {
+            top_broken = iblk_stats[index].broken;
+        }
+    }
+    // Fill all broken fields with top value to prevent sort skewing.
+    for(uint8_t index=0;index<iblk_stats.size();index++)
+    {
+        iblk_stats[index].broken = top_broken;
+    }
+
     // Sort vector by valid block count, then by unchecked blocks count.
     std::sort(iblk_stats.begin(), iblk_stats.end());
 
@@ -1362,7 +1391,7 @@ uint8_t PCM16X0DataStitcher::trySIPadding(std::deque<PCM16X0SubLine> *field_data
     if(suppress_log==false)
     {
         QString index_line, valid_line, silence_line, unchecked_line, broken_line, tmp;
-        for(uint8_t index=0;index<PCM16X0DataBlock::INT_BLK_PER_FIELD;index++)
+        for(uint8_t index=0;index<iblk_stats.size();index++)
         {
             tmp.sprintf("%02u", iblk_stats[index].index);
             index_line += "|"+tmp;
@@ -2136,6 +2165,12 @@ void PCM16X0DataStitcher::findSIDataAlignment()
         qInfo()<<"[L2B-16x0] -------------------- Processing odd field...";
     }
 #endif
+
+    if(frasm_f1.frame_number==282)
+    {
+        // pcm_04_cut.avi
+        qInfo()<<"DBG";
+    }
 
     // Preset field order.
     if(preset_field_order==FrameAsmDescriptor::ORDER_BFF)

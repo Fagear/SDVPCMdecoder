@@ -3,7 +3,7 @@
 bin_preset_t::bin_preset_t()
 {
     max_black_lvl = 160;
-    min_white_lvl = 30;
+    min_white_lvl = 28;
     min_contrast = 10;
     min_ref_lvl = 7;
     max_ref_lvl = 240;

@@ -17,8 +17,8 @@
 #include "frametrimset.h"
 #include "pcmsamplepair.h"
 #include "stc007datablock.h"
-#include "stc007toaudio.h"
-#include "stc007towav.h"
+#include "samples2audio.h"
+#include "samples2wav.h"
 
 class AudioProcessor : public QObject
 {
@@ -73,8 +73,8 @@ public:
     };
 
 private:
-    STC007ToAudio sc_output;                    // Handler for soundcard operations.
-    STC007ToWAV wav_output;                     // Handler for WAV-file operations.
+    SamplesToAudio sc_output;                    // Handler for soundcard operations.
+    SamplesToWAV wav_output;                     // Handler for WAV-file operations.
     QString file_path;
     QString file_name;
     std::deque<PCMSamplePair> *in_samples;      // Input sample pair queue (shared).

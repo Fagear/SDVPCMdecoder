@@ -1,5 +1,5 @@
-﻿#ifndef STC007TOWAV_H
-#define STC007TOWAV_H
+﻿#ifndef SAMPLES2WAV_H
+#define SAMPLES2WAV_H
 
 #include <cstdio>
 #include <fstream>
@@ -18,7 +18,7 @@
 #define TW_AUD_BUF_SIZE     32768
 #define TW_FS_BUF_SIZE      2097152
 
-class STC007ToWAV
+class SamplesToWAV
 {
 public:
     // Console logging options (can be used simultaneously).
@@ -45,7 +45,7 @@ private:
     uint32_t written_data;
 
 public:
-    STC007ToWAV();
+    SamplesToWAV();
     void setLogLevel(uint8_t in_level);
     void setFolder(std::string path);
     void setName(std::string name);
@@ -60,4 +60,4 @@ private:
     void updateHeader();
 };
 
-#endif // STC007TOWAV_H
+#endif // SAMPLES2WAV_H

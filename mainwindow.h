@@ -41,13 +41,14 @@
 #include "stc007deinterleaver.h"
 #include "stc007line.h"
 #include "pcmtester.h"
-#include "stc007towav.h"
+#include "samples2wav.h"
 #include "videotodigital.h"
 #include "renderpcm.h"
 //#include "ui_about.h"
 #include "videoline.h"
 #include "vin_ffmpeg.h"
 
+// TODO: add support for capture devices through FFMPEG
 #define DBG_AVG_LEN         1
 #define TRACKING_BUF_LEN    30
 

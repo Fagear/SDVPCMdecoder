@@ -1889,7 +1889,6 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
         }
 #endif
 
-        // TODO: maybe compare result of some operation for unchecked blocks (division, substraction).
         last_pad_counter = stitch_data[0].broken;
         // Check for silence.
         if(stitch_data[0].silent<MAX_BURST_SILENCE)
@@ -2762,9 +2761,12 @@ void STC007DataStitcher::detectVideoStandard()
     // Try to assume video standard.
     if(preset_video_mode==FrameAsmDescriptor::VID_UNKNOWN)
     {
+        // Video standard is not preset externally.
         frasm_f1.vid_std_preset = false;
+        // Next check count of lines with some data in the fields.
+        // Note that count may increase above normal due to noise interpreted as PCM with bad CRC.
         // Check if at least one field contains more lines that PAL field could.
-        if((frasm_f1.odd_data_lines>LINES_PF_PAL)||(frasm_f1.even_data_lines>LINES_PF_PAL)||(frasm_f2.odd_data_lines>LINES_PF_PAL)||(frasm_f2.even_data_lines>LINES_PF_PAL))
+        if((frasm_f1.odd_data_lines>LINES_PF_MAX_PAL)||(frasm_f1.even_data_lines>LINES_PF_MAX_PAL)||(frasm_f2.odd_data_lines>LINES_PF_MAX_PAL)||(frasm_f2.even_data_lines>LINES_PF_MAX_PAL))
         {
             // Too many lines with PCM for PAL video.
             frasm_f1.video_standard = FrameAsmDescriptor::VID_UNKNOWN;
@@ -2776,7 +2778,7 @@ void STC007DataStitcher::detectVideoStandard()
 #endif
         }
         // Check if at least one field contains more lines that NTSC field could.
-        else if((frasm_f1.odd_data_lines>LINES_PF_NTSC)||(frasm_f1.even_data_lines>LINES_PF_NTSC)||(frasm_f2.odd_data_lines>LINES_PF_NTSC)||(frasm_f2.even_data_lines>LINES_PF_NTSC))
+        else if((frasm_f1.odd_data_lines>LINES_PF_MAX_NTSC)||(frasm_f1.even_data_lines>LINES_PF_MAX_NTSC)||(frasm_f2.odd_data_lines>LINES_PF_MAX_NTSC)||(frasm_f2.even_data_lines>LINES_PF_MAX_NTSC))
         {
             // Too many lines with PCM for NTSC video, but should fit PAL.
             frasm_f1.video_standard = FrameAsmDescriptor::VID_PAL;
@@ -2789,7 +2791,7 @@ void STC007DataStitcher::detectVideoStandard()
         }
         else
         {
-            // No luck with actual PCM line count, try determining by source line number.
+            // Can not determine between PAL and NTSC by actual PCM line count, try determining by source line number.
             if(f1_max_line<=((LINES_PF_PAL-STC007DataBlock::INTERLEAVE_OFS)*2))
             {
                 frasm_f1.video_standard = FrameAsmDescriptor::VID_NTSC;
@@ -2842,13 +2844,16 @@ void STC007DataStitcher::detectVideoStandard()
         // Try to assume by the previous frame.
         frasm_f1.video_standard = frasm_f0.video_standard;
     }
-    // Set number of lines by the video standard.
+
+    // Set number of target/standard lines by the video standard.
     if(frasm_f1.video_standard==FrameAsmDescriptor::VID_NTSC)
     {
+        // Both fields to NTSC line count.
         frasm_f1.odd_std_lines = frasm_f1.even_std_lines = LINES_PF_NTSC;
     }
     else if(frasm_f1.video_standard==FrameAsmDescriptor::VID_PAL)
     {
+        // Both fields to PAL line count.
         frasm_f1.odd_std_lines = frasm_f1.even_std_lines = LINES_PF_PAL;
     }
 

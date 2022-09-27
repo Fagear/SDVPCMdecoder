@@ -38,6 +38,7 @@
 // TODO: add time/cue parsing and storing
 // TODO: try to pick best padding for failed stitches by minimum BROKEN blocks
 // TODO: don't mask first 32 lines in the failed stitch
+// TODO: tune up limits for 16-bit stats stitching
 class STC007DataStitcher : public QObject
 {
     Q_OBJECT
@@ -65,6 +66,8 @@ public:
         LINES_PF_NTSC = (LINES_PER_NTSC_FIELD),     // PCM lines in one field of a frame for STC-007 NTSC video standard.
         LINES_PF_PAL = (LINES_PER_PAL_FIELD),       // PCM lines in one field of a frame for STC-008 PAL video standard.
         LINES_PF_DEFAULT = (LINES_PF_NTSC),         // Default video standard if not detected automatically.
+        LINES_PF_MAX_PAL = (LINES_PF_PAL+STC007DataBlock::INTERLEAVE_OFS),      // Maximum number of lines with data in the field until [VID_UNKNOWN] assumed above [VID_PAL].
+        LINES_PF_MAX_NTSC = (LINES_PF_PAL-2*STC007DataBlock::INTERLEAVE_OFS),   // Maximum number of lines with data in the field until [VID_PAL] assumed above [VID_NTSC].
         FLD_ORDER_DEFAULT = (FrameAsmDescriptor::ORDER_TFF)   // Default field order if not detected while padding.
     };
 

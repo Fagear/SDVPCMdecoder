@@ -1344,21 +1344,21 @@
             <string>Формат кодирования PCM в исходном видео-файле</string>
            </property>
            <property name="currentIndex">
-            <number>2</number>
+            <number>0</number>
            </property>
            <item>
             <property name="text">
-             <string>PCM-1 (Standard B)</string>
+             <string>PCM-1 (Sony Standard B)</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>PCM-16x0 (Standard A)</string>
+             <string>PCM-16x0 (Sony Standard A)</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>STC-007/PCM-F1</string>
+             <string>STC-007/Sony PCM-F1</string>
             </property>
            </item>
           </widget>

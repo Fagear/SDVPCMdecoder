@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>521</width>
-    <height>448</height>
+    <height>451</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -58,7 +58,7 @@
       <bool>true</bool>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, STANDARD B, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, STANDARD A, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC/PAL)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, Sony Standard B, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, Sony Standard A, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC/PAL)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>

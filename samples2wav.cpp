@@ -1,4 +1,4 @@
-﻿#include "stc007towav.h"
+﻿#include "samples2wav.h"
 
 // WAV file header.
 static const uint8_t header[TW_WAV_HEAD_SIZE] =
@@ -20,7 +20,7 @@ static const uint8_t header[TW_WAV_HEAD_SIZE] =
     0, 0, 0, 0                                  // Audio data size (in bytes)
 };
 
-STC007ToWAV::STC007ToWAV()
+SamplesToWAV::SamplesToWAV()
 {
     file_name = "output";
     for(uint16_t index=0;index<TW_AUD_BUF_SIZE;index++)
@@ -36,13 +36,13 @@ STC007ToWAV::STC007ToWAV()
 }
 
 //------------------------ Set debug logging level (LOG_PROCESS, etc...).
-void STC007ToWAV::setLogLevel(uint8_t in_level)
+void SamplesToWAV::setLogLevel(uint8_t in_level)
 {
     log_level = in_level;
 }
 
 //------------------------ Set folder to save wave data.
-void STC007ToWAV::setFolder(std::string path)
+void SamplesToWAV::setFolder(std::string path)
 {
     // Check if provided path is different from used.
     if(path_for_wav.compare(path)!=0)
@@ -61,7 +61,7 @@ void STC007ToWAV::setFolder(std::string path)
 }
 
 //------------------------ Set filename to write to.
-void STC007ToWAV::setName(std::string name)
+void SamplesToWAV::setName(std::string name)
 {
     // Check if provided filename is different from used.
     if(file_name.compare(name)!=0)
@@ -80,7 +80,7 @@ void STC007ToWAV::setName(std::string name)
 }
 
 //------------------------ Set samplerate of audio.
-void STC007ToWAV::setSampleRate(uint16_t in_rate)
+void SamplesToWAV::setSampleRate(uint16_t in_rate)
 {
     if(in_rate==PCMSamplePair::SAMPLE_RATE_44100)
     {
@@ -111,7 +111,7 @@ void STC007ToWAV::setSampleRate(uint16_t in_rate)
 }
 
 //------------------------ Setup for new output.
-void STC007ToWAV::prepareNewFile()
+void SamplesToWAV::prepareNewFile()
 {
     new_file = true;
     // Reset buffer position.
@@ -127,7 +127,7 @@ void STC007ToWAV::prepareNewFile()
 }
 
 //------------------------ Save audio data from data block into buffer.
-void STC007ToWAV::saveAudio(int16_t in_left, int16_t in_right)
+void SamplesToWAV::saveAudio(int16_t in_left, int16_t in_right)
 {
     // Check available space in buffer.
     if((TW_AUD_BUF_SIZE-cur_pos)<=1)
@@ -154,7 +154,7 @@ void STC007ToWAV::saveAudio(int16_t in_left, int16_t in_right)
 }
 
 //------------------------ Output all data from the buffer into file.
-void STC007ToWAV::purgeBuffer()
+void SamplesToWAV::purgeBuffer()
 {
     std::string audio_path;
     audio_path = path_for_wav+"/"+file_name+"_v"+APP_VERSION+".wav";
@@ -273,7 +273,7 @@ void STC007ToWAV::purgeBuffer()
 }
 
 //------------------------ Perform final header update and close file.
-void STC007ToWAV::releaseFile()
+void SamplesToWAV::releaseFile()
 {
     // Check if file is open.
     if(file_hdl.is_open()!=false)
@@ -294,7 +294,7 @@ void STC007ToWAV::releaseFile()
 }
 
 //------------------------ Write WAV-header into new opened file.
-void STC007ToWAV::addHeader()
+void SamplesToWAV::addHeader()
 {
     // Seek to the beginning of the file.
     file_hdl.seekp(0, std::ios::beg);
@@ -309,7 +309,7 @@ void STC007ToWAV::addHeader()
 }
 
 //------------------------ Update file size in WAV-header.
-void STC007ToWAV::updateHeader()
+void SamplesToWAV::updateHeader()
 {
     uint32_t wav_size, byte_rate;
     std::ifstream::streampos writing_pos;
