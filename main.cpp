@@ -4,6 +4,7 @@
 Q_DECLARE_METATYPE(uint8_t)
 Q_DECLARE_METATYPE(uint16_t)
 Q_DECLARE_METATYPE(uint32_t)
+Q_DECLARE_METATYPE(QVector<VCapDevice>)
 Q_DECLARE_METATYPE(VideoLine)
 Q_DECLARE_METATYPE(PCM1Line)
 Q_DECLARE_METATYPE(PCM1SubLine)
@@ -39,6 +40,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<uint32_t>("uint32_t");
+    qRegisterMetaType<QList<VCapDevice>>("QVector<VCapDevice>");
     qRegisterMetaType<vid_preset_t>("vid_preset_t");
     qRegisterMetaType<bin_preset_t>("bin_preset_t");
     qRegisterMetaType<VideoLine>("VideoLine");

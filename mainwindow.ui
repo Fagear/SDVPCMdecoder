@@ -258,6 +258,9 @@
          </item>
          <item>
           <widget class="QCheckBox" name="cbxFrameDropout">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
              <horstretch>0</horstretch>
@@ -417,7 +420,7 @@
             </sizepolicy>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>2</number>
            </property>
            <widget class="QWidget" name="pgPCM1Settings">
             <layout class="QGridLayout" name="gridLayout_3">
@@ -4712,7 +4715,7 @@ Q-коррекций:</string>
      <string>Файл</string>
     </property>
     <addaction name="actLoadPCM"/>
-    <addaction name="actLoadPicture"/>
+    <addaction name="actOpenCapture"/>
     <addaction name="separator"/>
     <addaction name="actExit"/>
    </widget>
@@ -5413,24 +5416,52 @@ Q-коррекций:</string>
     <string>Сбросить настройки декодера</string>
    </property>
   </action>
+  <action name="actCaptDisconnect">
+   <property name="text">
+    <string>Отключиться от захвата</string>
+   </property>
+  </action>
+  <action name="actOpenCapture">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/icons/filmreel.ico</normaloff>:/icons/filmreel.ico</iconset>
+   </property>
+   <property name="text">
+    <string>Захватить PCM с видео захвата...</string>
+   </property>
+   <property name="shortcut">
+    <string notr="true">Ctrl+I</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
   <tabstop>btnOpen</tabstop>
-  <tabstop>btnPlay</tabstop>
   <tabstop>cbxLivePB</tabstop>
   <tabstop>cbxWaveSave</tabstop>
   <tabstop>cbxFrameDropout</tabstop>
   <tabstop>cbxLineDuplicate</tabstop>
+  <tabstop>btnPlay</tabstop>
   <tabstop>cbxFrameStep</tabstop>
   <tabstop>btnPause</tabstop>
   <tabstop>btnStatReset</tabstop>
-  <tabstop>spbSTC007OuterPadding</tabstop>
-  <tabstop>edtSTC007EvenAudRes</tabstop>
-  <tabstop>edtSTC007OddAudRes</tabstop>
-  <tabstop>spbSTC007OddTopCut</tabstop>
-  <tabstop>spbSTC007EvenTopCut</tabstop>
-  <tabstop>spbSTC007InnerPadding</tabstop>
+  <tabstop>lbxBinQuality</tabstop>
+  <tabstop>lbxPCMType</tabstop>
+  <tabstop>lbxPCM1FieldOrder</tabstop>
+  <tabstop>spinBox</tabstop>
+  <tabstop>spinBox_2</tabstop>
+  <tabstop>lbxPCM16x0Format</tabstop>
+  <tabstop>lbxPCM16x0FieldOrder</tabstop>
+  <tabstop>lbxPCM16x0ECC</tabstop>
+  <tabstop>lbxPCM16x0SampleRate</tabstop>
+  <tabstop>lbxSTC007VidStandard</tabstop>
+  <tabstop>lbxSTC007FieldOrder</tabstop>
+  <tabstop>lbxSTC007ECC</tabstop>
+  <tabstop>lbxSTC007CWD</tabstop>
+  <tabstop>lbxSTC007Resolution</tabstop>
+  <tabstop>lbxSTC007SampleRate</tabstop>
+  <tabstop>lbxDeemphasis</tabstop>
+  <tabstop>lbxDropAction</tabstop>
  </tabstops>
  <resources>
   <include location="icons.qrc"/>

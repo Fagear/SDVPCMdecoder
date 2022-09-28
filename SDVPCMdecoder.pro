@@ -6,7 +6,7 @@
 
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia concurrent
 
 CONFIG += c++11
 
@@ -69,7 +69,8 @@ SOURCES += main.cpp\
     pcmtester.cpp \
     pcm16x0subline.cpp \
     samples2audio.cpp \
-    samples2wav.cpp
+    samples2wav.cpp \
+    capt_sel.cpp
 
 HEADERS  += mainwindow.h \
     videoline.h \
@@ -105,14 +106,16 @@ HEADERS  += mainwindow.h \
     pcmtester.h \
     pcm16x0subline.h \
     samples2audio.h \
-    samples2wav.h
+    samples2wav.h \
+    capt_sel.h
 
 FORMS    += mainwindow.ui \
     fine_bin_set.ui \
     fine_deint_set.ui \
     frame_vis.ui \
     fine_vidin_set.ui \
-    about_wnd.ui
+    about_wnd.ui \
+    capt_sel.ui
 
 RESOURCES += \
     icons.qrc \
@@ -124,4 +127,4 @@ TRANSLATIONS += SDVPCMdecoder_en.ts SDVPCMdecoder_pl.ts
 
 CODECFORSRC = UTF-8
 
-unix|win32: LIBS += -L$$PWD/lib/ -lavcodec -lavdevice -lavformat -lavutil -lswscale
+unix|win32: LIBS += -L$$PWD/lib/ -lavdevice -lavformat -lavcodec -lavutil -lswscale

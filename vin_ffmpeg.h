@@ -144,7 +144,7 @@ public slots:
     void setFineSettings(vid_preset_t in_set);  // Set fine video processing settings.
     void setDefaultFineSettings();          // Set fine video processor settings to defaults.
     void requestCurrentFineSettings();      // Get current fine video processor settings.
-    void runFrameDecode();
+    void runFrameDecode();                  // Main execution loop.
     void mediaPlay();
     void mediaPause();
     void mediaStop();

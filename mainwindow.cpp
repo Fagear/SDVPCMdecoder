@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     L2B_PCM16X0_worker = NULL;
     L2B_STC007_worker = NULL;
     AP_worker = NULL;
+    captureSelectDialog = NULL;
     vipFineSetDialog = NULL;
     binFineSetDialog = NULL;
     deintFineSetDialog = NULL;
@@ -199,6 +200,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actWinPosReset, SIGNAL(triggered(bool)), this, SLOT(resetVisPositions()));
     connect(ui->actFullReset, SIGNAL(triggered(bool)), this, SLOT(resetFull()));
     connect(ui->actAbout, SIGNAL(triggered(bool)), this, SLOT(showAbout()));
+    connect(ui->actOpenCapture, SIGNAL(triggered(bool)), this, SLOT(showCaptureSelector()));
     connect(ui->actVidInFineSettings, SIGNAL(triggered(bool)), this, SLOT(showVidInFineSettings()));
     connect(ui->actBinFineSettings, SIGNAL(triggered(bool)), this, SLOT(showBinFineSettings()));
     connect(ui->actDeintFineSettings, SIGNAL(triggered(bool)), this, SLOT(showDeintFineSettings()));
@@ -1750,10 +1752,19 @@ void MainWindow::showAbout()
     about_dlg.exec();
 }
 
+//------------------------ Display video capture selection dialog.
+void MainWindow::showCaptureSelector()
+{
+    captureSelectDialog = new capt_sel(this);
+
+    captureSelectDialog->exec();
+    captureSelectDialog->deleteLater();
+}
+
 //------------------------ Display video processor fine settings dialog.
 void MainWindow::showVidInFineSettings()
 {
-    vipFineSetDialog = new fine_vidin_set(this);
+    vipFineSetDialog = new (std::nothrow) fine_vidin_set(this);
     //connect(VIN_worker, SIGNAL(guiUpdFineLineSkip(bool)), vipFineSetDialog, SLOT(newSkipLines(bool)));
     connect(VIN_worker, SIGNAL(guiUpdFineSettings(vid_preset_t)), vipFineSetDialog, SLOT(newSettings(vid_preset_t)));
     connect(this, SIGNAL(guiUpdFineDrawDeint(bool)), vipFineSetDialog, SLOT(newDrawDeint(bool)));

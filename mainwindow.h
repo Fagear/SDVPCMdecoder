@@ -24,6 +24,7 @@
 #include "about_wnd.h"
 #include "audioprocessor.h"
 #include "binarizer.h"
+#include "capt_sel.h"
 #include "circbuffer.h"
 #include "config.h"
 #include "fine_bin_set.h"
@@ -230,6 +231,7 @@ private:
     PCM16X0DataStitcher *L2B_PCM16X0_worker;
     STC007DataStitcher *L2B_STC007_worker;
     AudioProcessor *AP_worker;
+    capt_sel *captureSelectDialog;
     fine_vidin_set *vipFineSetDialog;
     fine_bin_set *binFineSetDialog;
     fine_deint_set *deintFineSetDialog;
@@ -367,6 +369,7 @@ private slots:
     void resetFull();
 
     void showAbout();                       // Display "About" window.
+    void showCaptureSelector();             // Display video capture selection dialog.
     void showVidInFineSettings();           // Display video processor fine settings dialog.
     void showBinFineSettings();             // Display binarizator fine settings dialog.
     void showDeintFineSettings();           // Display deinterleaver fine settings dialog.

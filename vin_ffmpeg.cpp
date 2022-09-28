@@ -21,6 +21,7 @@ static enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelF
     return AV_PIX_FMT_NONE;
 }
 
+//------------------------
 VideoInFFMPEG::VideoInFFMPEG(QObject *parent) : QObject(parent)
 {
     log_level = 0;
@@ -152,7 +153,7 @@ uint8_t VideoInFFMPEG::decoderInit()
 {
     int av_res, refcount;
     AVStream *v_stream;
-    AVCodec *v_decoder = NULL;
+    const AVCodec *v_decoder = NULL;
     AVDictionary *opts = NULL;
 
     // Reset frame counter.
@@ -296,7 +297,7 @@ uint8_t VideoInFFMPEG::decoderInit()
     }
 
     // Init packet container.
-    av_init_packet(&dec_packet);
+    //av_init_packet(&dec_packet);
     dec_packet.data = NULL;
     dec_packet.size = 0;
 
@@ -1299,27 +1300,7 @@ void VideoInFFMPEG::runFrameDecode()
     qInfo()<<"[VIP] FFMPEG swscale run-time version:"<<log_line;
 
     // Register all demuxers.
-    /*avdevice_register_all();
-
-    AVDictionary *inopt = NULL;
-    AVInputFormat *infmt = NULL;
-    AVDeviceInfoList *dev_list;
-    //infmt = av_find_input_format("gdigrab");
-    infmt = av_find_input_format("dshow");
-    av_res = avdevice_list_input_sources(infmt, NULL, inopt, &dev_list);
-    if(av_res<0)
-    {
-        qDebug()<<"[VIP] Unable to find capture devices";
-    }
-    else
-    {
-        qDebug()<<"[VIP] Found"<<av_res<<"capture devices";
-        if(av_res>0)
-        {
-            qInfo()<<dev_list->devices[0]->device_description<<dev_list->devices[0]->device_name;
-        }
-        avdevice_free_list_devices(dev_list);
-    }*/
+    avdevice_register_all();
 
     // Inf. loop in a thread.
     while(finish_work==false)
@@ -1435,7 +1416,7 @@ void VideoInFFMPEG::runFrameDecode()
                         }
                         else
                         {
-                            qWarning()<<DBG_ANCHOR<<"[VIP] Error while reading a frame!"<<av_res;
+                            qWarning()<<DBG_ANCHOR<<"[VIP] Error while reading a frame! Code:"<<av_res;
                         }
                     }
                     break;
