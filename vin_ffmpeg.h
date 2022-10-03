@@ -59,14 +59,6 @@ public:
         MAX_DOUBLE_WIDTH = 959
     };
 
-    // Frame advancing modes for [frame_advancing].
-    enum
-    {
-        ADV_CONST,              // Always advance frame counter after a frame.
-        ADV_HOLD,               // Do not advance frame counter at current frame.
-        ADV_MOVE                // Advance frame counter at current frame.
-    };
-
     // Source processing mode for [proc_state].
     enum
     {
@@ -80,13 +72,13 @@ private:
     uint8_t log_level;          // Setting for debugging log level.
     uint8_t proc_state;         // State of processing.
     uint8_t new_state;          // Desired new state.
-    uint8_t frame_advancing;    // Frame counter advancing mode.
     AVPixelFormat target_pixfmt;    // Pixel format for target frame (set in [initFrameConverter()]).
     uint16_t last_real_width;   // Last frame width.
     uint16_t last_width;        // Last frame width.
     uint16_t last_height;       // Last frame height.
     uint8_t last_color_mode;    // Last color mode (see [vid_preset_t.h]).
-    uint16_t frame_counter;     // Frame counter from the start.
+    uint32_t frame_counter;     // Frame counter from the start.
+    uint32_t frames_total;      // Number of frames that is written into the current stream.
     int64_t last_dts;           // Last frame pts (for drop detection).
     vid_preset_t vip_set;       // "Video Input Processor" fine settings (see [vid_preset_t.h]).
     QString src_path;           // Location of the media source.
@@ -103,6 +95,7 @@ private:
     AVFrame *dec_frame;                 // Frame holder for FFMPEG decoded frame.
     AVPacket dec_packet;                // Packet container for FFMPEG decoder.
     SwsContext *conv_ctx;               // Context for FFMPEG frame converter.
+    bool img_buf_free;
     uint8_t *video_dst_data[4];         // Container for frame data from the decoder.
     int video_dst_linesize[4];          // Container for frame parameters from the decoder.
     int stream_index;           // Current open video stream index.
@@ -129,7 +122,7 @@ private:
     bool waitForOutQueue(uint16_t);
     void outNewLine(VideoLine *);
     void spliceFrame(AVFrame *);
-    void insertDummyFrame(int64_t frame_cnt, bool last_frame = false, bool report = true);
+    void insertDummyFrame(uint32_t frame_cnt, bool last_frame = false, bool report = true);
     void insertNewFileLine();
     void insertFileEndLine(uint16_t line_number = 0);
     void insertFieldEndLine(uint16_t line_number = 0);
@@ -151,7 +144,7 @@ public slots:
     void stop();
 
 signals:
-    void mediaPlaying();
+    void mediaPlaying(uint32_t);
     void mediaPaused();
     void mediaStopped();
     void mediaError(QString);
@@ -159,7 +152,7 @@ signals:
     void newFrame(uint16_t, uint16_t);      // New frame started processing.
     void newLine(VideoLine);                // New line is processed.
     void frameDropDetected();
-    void frameDecoded(uint16_t);
+    void frameDecoded(uint32_t);
     void finished();
 };
 

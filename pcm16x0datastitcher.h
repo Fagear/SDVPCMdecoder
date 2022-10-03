@@ -225,7 +225,7 @@ private:
     uint16_t getFirstFieldLineNum(uint8_t in_order);
     uint16_t getSecondFieldLineNum(uint8_t in_order);
     uint16_t addLinesFromField(std::vector<PCM16X0SubLine> *field_buf, uint16_t ind_start, uint16_t count, uint16_t *last_q_order, uint16_t *last_line_num = NULL);
-    uint16_t addFieldPadding(uint16_t in_frame, uint16_t line_cnt, uint16_t *last_q_order, uint16_t *last_line_num = NULL);
+    uint16_t addFieldPadding(uint32_t in_frame, uint16_t line_cnt, uint16_t *last_q_order, uint16_t *last_line_num = NULL);
     void fillFrameForOutput();
     bool collectCtrlBitStats(PCM16X0DataBlock *int_block_flags = NULL);
     void outputFileStart();

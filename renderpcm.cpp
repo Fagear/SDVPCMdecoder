@@ -163,7 +163,7 @@ void RenderPCM::startSTC007DBFrame()
 }
 
 //------------------------
-void RenderPCM::prepareNewFrame(uint16_t in_frame_no)
+void RenderPCM::prepareNewFrame(uint32_t in_frame_no)
 {
 #ifdef VIS_EN_DBG_OUT
     qInfo()<<"[REN] New frame #"<<in_frame_no<<"incoming";
@@ -174,7 +174,7 @@ void RenderPCM::prepareNewFrame(uint16_t in_frame_no)
 }
 
 //------------------------ Convert finished frame and send it.
-void RenderPCM::finishNewFrame(uint16_t in_frame_no)
+void RenderPCM::finishNewFrame(uint32_t in_frame_no)
 {
 #ifdef VIS_EN_DBG_OUT
     qInfo()<<"[REN] Frame"<<in_frame_no<<"is done";

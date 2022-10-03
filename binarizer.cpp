@@ -1710,7 +1710,6 @@ void Binarizer::findMostFrequentCRC(crc_handler_t *crc_array, uint8_t *valid_cnt
             {
                 // Check for encounter difference.
                 // Make sure that most frequent CRC is significatly more frequent than any other ones.
-                //if((((uint16_t)crc_array[i].result)+MIN_CRC_CNT_DELTA)>crc_array[0].result)
                 if(crc_array[0].result<=(2*crc_array[i].result))
                 {
                     // One of other CRCs is too close to most frequent.
@@ -2890,7 +2889,7 @@ bool Binarizer::findBlackWhite()
 #ifdef LB_EN_DBG_OUT
     if((log_level&LOG_BRIGHT)!=0)
     {
-        log_line.sprintf("[LB] Line [%03u-%03u] final brighness spread: ", out_pcm_line->frame_number, out_pcm_line->line_number);
+        log_line.sprintf("[LB] Line [%03u][%03u] final brighness spread: ", out_pcm_line->frame_number, out_pcm_line->line_number);
         for(uint16_t index=0;index<256;index++)
         {
             log_line += QString::number(brightness_spread[index]);
@@ -3844,7 +3843,6 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
     }
 }
 
-// TODO for PCM-1, PCM-16x0
 //------------------------ Calculate reference level by sweeping it from BLACK to WHITE
 //------------------------ gather stats and get the most usable result.
 void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
@@ -3864,35 +3862,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
 
     // Fast pre-calculate average reference level for fallback and logs.
     fast_ref = pickCenterRefLevel(pcm_line->black_level, pcm_line->white_level);
-    /*
-    // Calculate number of levels to check for each thread.
-    lvls_per_thread = br_white-br_black;
-    lvls_per_thread = lvls_per_thread/thread_cnt;
-    if(lvls_per_thread==0)
-    {
-        lvls_per_thread = 1;
-    }
-#ifdef LB_EN_DBG_OUT
-    if(((log_level&(LOG_PROCESS))!=0)&&((log_level&(LOG_SWEEP))!=0))
-    {
-        qInfo()<<"[LB] Levels per thread:"<<lvls_per_thread;
-        log_line = "[LB] Thread spans: ";
-        for(uint8_t thrd=0;thrd<thread_cnt;thrd++)
-        {
-            if((thrd==(thread_cnt-1))||((br_black+lvls_per_thread*(thrd+1))>=br_white))
-            {
-                log_line += " ("+QString::number(br_black+lvls_per_thread*thrd)+":"+QString::number(br_white)+"]";
-                break;
-            }
-            else
-            {
-                log_line += " ("+QString::number(br_black+lvls_per_thread*thrd)+":"+QString::number(br_black+lvls_per_thread*(thrd+1))+"]";
-            }
-        }
-        qInfo()<<log_line;
-    }
-#endif
-*/
+
     if(pcm_line->getPCMType()==PCMLine::TYPE_STC007)
     {
         // Set maximum shift-stages per preset mode.
@@ -3911,6 +3881,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
 #if defined(_OPENMP)
     #pragma omp parallel
 #endif
+    // TODO: perform multi-threaded sweep
     // Perform reference level sweep and gather statistics in [scan_sweep_crcs].
     sweepRefLevel(pcm_line, scan_sweep_crcs);
 
@@ -3972,7 +3943,6 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
             else
             {
                 // Find and pick reference level with smallest hyst/shift combo from "good CRC" region.
-                //span_res = pickLevelByCRCStatsOpt(scan_sweep_crcs, &(pcm_line->ref_level), (pcm_line->black_level+1), (pcm_line->white_level-1));
                 span_res = pickLevelByCRCStats(scan_sweep_crcs, &(pcm_line->ref_level), (pcm_line->black_level+1), (pcm_line->white_level-1),
                                                REF_CRC_OK, 0x0F);
             }
@@ -4065,9 +4035,6 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
         else
         {
 
-            /*span_res = pickLevelByCRCStatsOpt(scan_sweep_crcs, &(pcm_line->ref_level),
-                                        (pcm_line->black_level+1), (pcm_line->white_level-1),
-                                        (uint8_t)REF_BAD_CRC, 0xFF, 0xFF);*/
             // Make sure that binarization will give bad CRC.
             if(pcm_line->canUseMarkers()!=false)
             {
@@ -4645,7 +4612,7 @@ uint8_t Binarizer::searchPCM16X0Data(PCM16X0SubLine *pcm_line, CoordinatePair da
 #ifdef LB_EN_DBG_OUT
             if(suppress_log==false)
             {
-                log_line.sprintf("[LB] Line [%03u-%03u] starting coordinates [%03d...%03d|%04d...%04d] exclude default ones, reset to [%03d|%04d]",
+                log_line.sprintf("[LB] Line [%03u][%03u] starting coordinates [%03d...%03d|%04d...%04d] exclude default ones, reset to [%03d|%04d]",
                                  video_line->frame_number, video_line->line_number,
                                  left_coord.data_start, left_coord.data_stop, right_coord.data_start, right_coord.data_stop,
                                  scan_start, scan_end);
@@ -4668,7 +4635,7 @@ uint8_t Binarizer::searchPCM16X0Data(PCM16X0SubLine *pcm_line, CoordinatePair da
 #ifdef LB_EN_DBG_OUT
     if(suppress_log==false)
     {
-        log_line.sprintf("[LB] Line [%03u-%03u] left/right starting coordinates: [%03d/%04d], PPB: [%02u]",
+        log_line.sprintf("[LB] Line [%03u][%03u] left/right starting coordinates: [%03d/%04d], PPB: [%02u]",
                          video_line->frame_number, video_line->line_number,
                          data_loc.data_start, data_loc.data_stop, pcm_line->getPPB());
         qInfo()<<log_line;

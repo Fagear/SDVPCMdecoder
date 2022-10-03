@@ -24,7 +24,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     shutdown_started = false;
     inhibit_setting_save = false;
-    window_geom_saved = false;
     src_draw_deint = false;
 
     log_level = 0;
@@ -41,9 +40,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pgrDebug->setValue(0);
     ui->pgrDebug->setMaximum(1);
 
-    for(uint8_t i=0;i<TRACKING_BUF_LEN;i++)
+    while(stat_tracking_arr.empty()==false)
     {
-        stat_tracking_arr[i].clear();
+        stat_tracking_arr.pop();
     }
     stat_video_tracking.lines_odd = stat_video_tracking.lines_pcm_odd = stat_video_tracking.lines_bad_odd = 0;
     stat_vlines_time_per_frame = 0;
@@ -91,14 +90,18 @@ MainWindow::MainWindow(QWidget *parent) :
     }*/
 #endif
 
+    timResizeUpd.setSingleShot(true);
+    timResizeUpd.setInterval(500);
+    connect(&timResizeUpd, SIGNAL(timeout()), this, SLOT(updateWindowPosition()));
+
     // 20 ms (50 Hz) GUI update.
-    timUIUpdate.setInterval(20);
     timUIUpdate.setSingleShot(false);
+    timUIUpdate.setInterval(20);
     connect(&timUIUpdate, SIGNAL(timeout()), this, SLOT(updateGUIByTimer()));
 
     // 500 ms (2 Hz) thread check update.
-    timTRDUpdate.setInterval(500);
     timTRDUpdate.setSingleShot(false);
+    timTRDUpdate.setInterval(500);
     connect(&timTRDUpdate, SIGNAL(timeout()), this, SLOT(checkThreads()));
 
     qInfo()<<"[M] GUI thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId())<<", starting processing threads...";
@@ -106,8 +109,6 @@ MainWindow::MainWindow(QWidget *parent) :
     // Инициализация хранилища настроек.
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
     qInfo()<<"[M] Settings path:"<<settings_hdl.fileName();
-
-    connect(this, SIGNAL(newWindowPosition()), this, SLOT(updateWindowPosition()));
 
     // Create pallettes.
     QBrush brs_redlabel(QColor(255, 60, 45, 255));
@@ -155,12 +156,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(doPlayStart()), VIN_worker, SLOT(mediaPlay()));
     connect(this, SIGNAL(doPlayPause()), VIN_worker, SLOT(mediaPause()));
     connect(this, SIGNAL(doPlayStop()), VIN_worker, SLOT(mediaStop()));
-    connect(VIN_worker, SIGNAL(mediaPlaying()), this, SLOT(playerStarted()));
+    connect(VIN_worker, SIGNAL(mediaPlaying(uint32_t)), this, SLOT(playerStarted(uint32_t)));
     connect(VIN_worker, SIGNAL(mediaPaused()), this, SLOT(playerPaused()));
     connect(VIN_worker, SIGNAL(mediaStopped()), this, SLOT(playerStopped()));
     connect(VIN_worker, SIGNAL(mediaError(QString)), this, SLOT(playerError(QString)));
     connect(VIN_worker, SIGNAL(frameDropDetected()), this, SLOT(updateStatsDroppedFrame()));
-    connect(VIN_worker, SIGNAL(frameDecoded(uint16_t)), this, SLOT(updateStatsVIPFrame(uint16_t)));
+    connect(VIN_worker, SIGNAL(frameDecoded(uint32_t)), this, SLOT(updateStatsVIPFrame(uint32_t)));
     // Start new thread with video input processor.
     input_FPU->start(QThread::LowestPriority);
 
@@ -278,7 +279,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(V2D_worker, SIGNAL(guiUpdFrameBin(FrameBinDescriptor)), this, SLOT(updateStatsVideoTracking(FrameBinDescriptor)));
     //connect(V2D_worker, SIGNAL(loopTime(quint64)), this, SLOT(updateDebugBar(quint64)));
 
-    connect(this, SIGNAL(newFrameAssembled(uint16_t)), this, SLOT(updateStatsDIFrame(uint16_t)));
+    connect(this, SIGNAL(newFrameAssembled(uint32_t)), this, SLOT(updateStatsDIFrame(uint32_t)));
 
     // Create and link PCM-1 deinterleaver worker.
     conv_L2B_PCM1 = NULL;
@@ -414,16 +415,16 @@ MainWindow::~MainWindow()
 //------------------------ Main window was moved.
 void MainWindow::moveEvent(QMoveEvent *event)
 {
-    emit newWindowPosition();
-    //updateWindowPosition();
+    // (Re)start timer to update window position and size.
+    timResizeUpd.start();
     event->accept();
 }
 
 //------------------------ Main window was resized.
-void MainWindow::resizeEvent(QMoveEvent *event)
+void MainWindow::resizeEvent(QResizeEvent *event)
 {
-    emit newWindowPosition();
-    //updateWindowPosition();
+    // (Re)start timer to update window position and size.
+    timResizeUpd.start();
     event->accept();
 }
 
@@ -437,7 +438,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
         // Stop GUI update and thread check.
         timUIUpdate.stop();
         timTRDUpdate.stop();
-        //emit newWindowPosition();
 
         // Notify all threads about exiting.
         emit aboutToExit();
@@ -578,8 +578,7 @@ void MainWindow::buffer_tester()
 
 }
 
-
-//------------------------ Generate proper name for translation file.
+//------------------------ Generate proper full name for translation file.
 QString MainWindow::generateTranslationPath(QString in_locale)
 {
     QString lang_file;
@@ -1269,6 +1268,7 @@ void MainWindow::readGUISettings()
     settings_hdl.beginGroup("main_window");
     if(settings_hdl.contains("position")!=false)
     {
+        // Set window position.
         this->setGeometry(settings_hdl.value("size").toRect());
         this->move(settings_hdl.value("position").toPoint());
     }
@@ -1397,7 +1397,7 @@ void MainWindow::clearPCMQueue()
 }
 
 //------------------------ Find and return coordinates from video tracking history.
-CoordinatePair MainWindow::getCoordByFrameNo(uint16_t frame_num)
+CoordinatePair MainWindow::getCoordByFrameNo(uint32_t frame_num)
 {
     CoordinatePair coord_res;
     for(uint8_t idx=0;idx<TRACKING_BUF_LEN;idx++)
@@ -1414,6 +1414,7 @@ CoordinatePair MainWindow::getCoordByFrameNo(uint16_t frame_num)
 //------------------------ Save new window position and size in setting storage.
 void MainWindow::updateWindowPosition()
 {
+    qInfo()<<"[M] Position saved"<<this->geometry()<<this->pos();
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
     settings_hdl.beginGroup("main_window");
     settings_hdl.setValue("size", this->geometry());
@@ -1637,9 +1638,9 @@ void MainWindow::clearStat()
     ui->pgrDebug->setValue(0);
     ui->pgrDebug->setMaximum(1);
 
-    for(uint8_t i=0;i<TRACKING_BUF_LEN;i++)
+    while(stat_tracking_arr.empty()==false)
     {
-        stat_tracking_arr[i].clear();
+        stat_tracking_arr.pop();
     }
     stat_video_tracking.lines_odd = stat_video_tracking.lines_pcm_odd = stat_video_tracking.lines_bad_odd = 0;
     stat_read_frame_cnt = 0;
@@ -1656,6 +1657,7 @@ void MainWindow::clearStat()
     stat_mask_cnt = 0;
     stat_processed_frame_cnt = 0;
     stat_line_cnt = 0;
+    ui->lcdTotalNumber->display(0);
     ui->lcdReadFrames->display(0);
     ui->lcdRefLevel->display(0);
     ui->lcdNoPCM->display(0);
@@ -1900,8 +1902,8 @@ void MainWindow::showVisSource(bool is_checked)
         {
             connect(VIN_worker, SIGNAL(newLine(VideoLine)), renderSource, SLOT(renderNewLine(VideoLine)));
         }
-        connect(VIN_worker, SIGNAL(frameDecoded(uint16_t)), renderSource, SLOT(finishNewFrame(uint16_t)));
-        connect(renderSource, SIGNAL(newFrame(QPixmap,uint16_t)), visuSource, SLOT(drawFrame(QPixmap,uint16_t)));
+        connect(VIN_worker, SIGNAL(frameDecoded(uint32_t)), renderSource, SLOT(finishNewFrame(uint32_t)));
+        connect(renderSource, SIGNAL(newFrame(QPixmap,uint32_t)), visuSource, SLOT(drawFrame(QPixmap,uint32_t)));
 
         vis_thread->start();
     }
@@ -1944,7 +1946,7 @@ void MainWindow::showVisBin(bool is_checked)
         renderBin->setLivePlay(ui->cbxLivePB->isChecked());
         connect(ui->cbxLivePB, SIGNAL(clicked(bool)), renderBin, SLOT(setLivePlay(bool)));
         connect(this, SIGNAL(newVideoStandard(uint8_t)), renderBin, SLOT(setFrameTime(uint8_t)));
-        connect(this, SIGNAL(newFrameBinarized(uint16_t)), renderBin, SLOT(prepareNewFrame(uint16_t)));
+        connect(this, SIGNAL(newFrameBinarized(uint32_t)), renderBin, SLOT(prepareNewFrame(uint32_t)));
 
         if(ui->lbxPCMType->currentIndex()==LIST_TYPE_PCM1)
         {
@@ -1962,7 +1964,7 @@ void MainWindow::showVisBin(bool is_checked)
             renderBin->setLineCount(FrameAsmDescriptor::VID_UNKNOWN);
             connect(this, SIGNAL(retransmitBinLine(STC007Line)), renderBin, SLOT(renderNewLine(STC007Line)));
         }
-        connect(renderBin, SIGNAL(newFrame(QPixmap,uint16_t)), visuBin, SLOT(drawFrame(QPixmap,uint16_t)));
+        connect(renderBin, SIGNAL(newFrame(QPixmap,uint32_t)), visuBin, SLOT(drawFrame(QPixmap,uint32_t)));
 
         vis_thread->start();
     }
@@ -2005,7 +2007,7 @@ void MainWindow::showVisAssembled(bool is_checked)
         connect(ui->cbxLivePB, SIGNAL(clicked(bool)), renderAssembled, SLOT(setLivePlay(bool)));
         connect(this, SIGNAL(newVideoStandard(uint8_t)), renderAssembled, SLOT(setFrameTime(uint8_t)));
         connect(this, SIGNAL(newVideoStandard(uint8_t)), renderAssembled, SLOT(setLineCount(uint8_t)));
-        connect(this, SIGNAL(newFrameAssembled(uint16_t)), renderAssembled, SLOT(prepareNewFrame(uint16_t)));
+        connect(this, SIGNAL(newFrameAssembled(uint32_t)), renderAssembled, SLOT(prepareNewFrame(uint32_t)));
 
         if(ui->lbxPCMType->currentIndex()==LIST_TYPE_PCM1)
         {
@@ -2022,7 +2024,7 @@ void MainWindow::showVisAssembled(bool is_checked)
             renderAssembled->startSTC007NTSCFrame();
             connect(this, SIGNAL(retransmitAsmLine(STC007Line)), renderAssembled, SLOT(renderNewLine(STC007Line)));
         }
-        connect(renderAssembled, SIGNAL(newFrame(QPixmap,uint16_t)), visuAssembled, SLOT(drawFrame(QPixmap,uint16_t)));
+        connect(renderAssembled, SIGNAL(newFrame(QPixmap,uint32_t)), visuAssembled, SLOT(drawFrame(QPixmap,uint32_t)));
 
         vis_thread->start();
     }
@@ -2065,7 +2067,7 @@ void MainWindow::showVisBlocks(bool is_checked)
         connect(ui->cbxLivePB, SIGNAL(clicked(bool)), renderBlocks, SLOT(setLivePlay(bool)));
         connect(this, SIGNAL(newVideoStandard(uint8_t)), renderBlocks, SLOT(setFrameTime(uint8_t)));
         connect(this, SIGNAL(newVideoStandard(uint8_t)), renderBlocks, SLOT(setLineCount(uint8_t)));
-        connect(this, SIGNAL(newFrameAssembled(uint16_t)), renderBlocks, SLOT(prepareNewFrame(uint16_t)));
+        connect(this, SIGNAL(newFrameAssembled(uint32_t)), renderBlocks, SLOT(prepareNewFrame(uint32_t)));
 
         if(ui->lbxPCMType->currentIndex()==LIST_TYPE_PCM1)
         {
@@ -2082,7 +2084,7 @@ void MainWindow::showVisBlocks(bool is_checked)
             renderBlocks->startSTC007DBFrame();
             connect(this, SIGNAL(retransmitPCMDataBlock(STC007DataBlock)), renderBlocks, SLOT(renderNewBlock(STC007DataBlock)));
         }
-        connect(renderBlocks, SIGNAL(newFrame(QPixmap,uint16_t)), visuBlocks, SLOT(drawFrame(QPixmap,uint16_t)));
+        connect(renderBlocks, SIGNAL(newFrame(QPixmap,uint32_t)), visuBlocks, SLOT(drawFrame(QPixmap,uint32_t)));
 
         vis_thread->start();
     }
@@ -2311,8 +2313,9 @@ void MainWindow::clearAllLogging()
 }
 
 //------------------------
-void MainWindow::playerStarted()
+void MainWindow::playerStarted(uint32_t in_frames_total)
 {
+    ui->lcdTotalNumber->display((int)in_frames_total);
     ui->btnOpen->setEnabled(true);
     ui->btnPause->setEnabled(true);
     ui->btnPlay->setEnabled(true);
@@ -2386,13 +2389,6 @@ void MainWindow::checkThreads()
 //------------------------ Update GUI counters and bars with data.
 void MainWindow::updateGUIByTimer()
 {
-    if(window_geom_saved==false)
-    {
-        window_geom_saved = true;
-        // Save window size and position.
-        emit newWindowPosition();
-    }
-
     // Update GUI elements.
     // Update frame assembling indication.
     if(frame_asm_pcm1.drawn==false)
@@ -2409,6 +2405,10 @@ void MainWindow::updateGUIByTimer()
     }
 
     // Update decoder stats.
+    if(stat_read_frame_cnt>ui->lcdTotalNumber->value())
+    {
+        ui->lcdTotalNumber->display((int)stat_read_frame_cnt);
+    }
     ui->lcdReadFrames->display((int)stat_read_frame_cnt);
     ui->lcdFrameDrop->display((int)stat_drop_frame_cnt);
     if(set_pcm_type==LIST_TYPE_PCM1)
@@ -3003,7 +3003,7 @@ void MainWindow::updateStatsVideoLineTime(uint32_t line_time)
 }
 
 //------------------------ Update stats after VIP has read a frame.
-void MainWindow::updateStatsVIPFrame(uint16_t frame_no)
+void MainWindow::updateStatsVIPFrame(uint32_t frame_no)
 {
     stat_read_frame_cnt++;
 
@@ -3053,22 +3053,6 @@ void MainWindow::updateStatsVideoTracking(FrameBinDescriptor in_tracking)
 
     stat_no_pcm_cnt += (in_tracking.lines_odd-in_tracking.lines_pcm_odd);
     stat_crc_err_cnt += in_tracking.lines_bad_odd;
-    /*
-    uint32_t with_pcm, crc_errors;
-    with_pcm = crc_errors = 0;
-    for(uint8_t i=0;i<TRACKING_BUF_LEN;i++)
-    {
-        total += stat_tracking_arr[i].lines_odd;
-        with_pcm += stat_tracking_arr[i].lines_pcm_odd;
-        crc_errors += stat_tracking_arr[i].lines_bad_odd;
-    }
-    total = total/TRACKING_BUF_LEN;
-    with_pcm = with_pcm/TRACKING_BUF_LEN;
-    crc_errors = crc_errors/TRACKING_BUF_LEN;
-
-    stat_video_tracking.lines_odd = total;
-    stat_video_tracking.lines_pcm_odd = with_pcm;
-    stat_video_tracking.lines_bad_odd = crc_errors;*/
 
     // Report the number of the binarized frame.
     emit newFrameBinarized(in_tracking.frame_id);
@@ -3082,6 +3066,7 @@ void MainWindow::updateStatsDroppedFrame()
 }
 
 //------------------------ Update stats after LB has finished a line and provided spent time count.
+// TODO: maybe deprecate?
 void MainWindow::updateStatsLineTime(unsigned int line_time)
 {
     // Count time spent on a frame.
@@ -3095,33 +3080,6 @@ void MainWindow::updateStatsLineTime(unsigned int line_time)
     {
         stat_max_bin_time = line_time;
     }
-}
-
-//------------------------ Update stats after LB has finished a frame.
-void MainWindow::updateStatsLBFrame(unsigned int frame_no)
-{
-    if(stat_lines_per_frame==0) stat_lines_per_frame = 1;
-
-    // Output logs for spent time.
-    QString log_line;
-    log_line = "Binarized "+QString::number(stat_lines_per_frame)+" lines in frame "+QString::number(frame_no)+
-            " by "+QString::number(stat_lines_time_per_frame)+" us ("+QString::number(stat_lines_time_per_frame/stat_lines_per_frame)+" us per line)";
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        qInfo()<<"[M]"<<log_line;
-    }
-    log_line.clear();
-    log_line = "Binarization min/max per line: "+QString::number(stat_min_bin_time)+"/"+QString::number(stat_max_bin_time)+" us";
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        qInfo()<<"[M]"<<log_line;
-    }
-
-    // Reset stats.
-    stat_lines_time_per_frame = 0;
-    stat_lines_per_frame = 0;
-    stat_min_bin_time = 0xFFFFFFFF;
-    stat_max_bin_time = 0;
 }
 
 //------------------------ Update stats and video processor with new frame assembling settings.
@@ -3236,7 +3194,7 @@ void MainWindow::updateStatsBlockTime(STC007DataBlock in_block)
 }
 
 //------------------------ Update stats after DI has finished a frame.
-void MainWindow::updateStatsDIFrame(uint16_t frame_no)
+void MainWindow::updateStatsDIFrame(uint32_t frame_no)
 {
     // Update GUI.
     stat_processed_frame_cnt++;

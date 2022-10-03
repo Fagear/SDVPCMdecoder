@@ -97,8 +97,9 @@ void STC007Line::clear()
 //------------------------ Set service flag "PCM control block".
 void STC007Line::setServCtrlBlk()
 {
-    uint16_t frame, line;
     uint16_t id_word, address1_word, address2_word, ctrl_flags;
+    uint16_t line;
+    uint32_t frame;
     // Store Control Block data before clearing the line.
     id_word = words[WORD_CB_ID];
     address1_word = words[WORD_CB_ADDR1];

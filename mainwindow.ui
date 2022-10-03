@@ -7,8 +7,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1018</width>
-    <height>665</height>
+    <width>1108</width>
+    <height>680</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -420,7 +420,7 @@
             </sizepolicy>
            </property>
            <property name="currentIndex">
-            <number>2</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="pgPCM1Settings">
             <layout class="QGridLayout" name="gridLayout_3">
@@ -450,12 +450,21 @@
               </widget>
              </item>
              <item row="1" column="2">
-              <widget class="QSpinBox" name="spinBox">
+              <widget class="QSpinBox" name="spbPCM1BottomPad">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
                </property>
               </widget>
              </item>
@@ -492,7 +501,7 @@
                <property name="minimumSize">
                 <size>
                  <width>200</width>
-                 <height>0</height>
+                 <height>25</height>
                 </size>
                </property>
                <property name="toolTip">
@@ -530,12 +539,21 @@
               </widget>
              </item>
              <item row="2" column="2">
-              <widget class="QSpinBox" name="spinBox_2">
+              <widget class="QSpinBox" name="spbPCM1TopPad">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
                </property>
               </widget>
              </item>
@@ -585,7 +603,7 @@
                <property name="minimumSize">
                 <size>
                  <width>200</width>
-                 <height>0</height>
+                 <height>25</height>
                 </size>
                </property>
                <property name="toolTip">
@@ -650,7 +668,7 @@
                <property name="minimumSize">
                 <size>
                  <width>200</width>
-                 <height>0</height>
+                 <height>25</height>
                 </size>
                </property>
                <property name="toolTip">
@@ -707,7 +725,7 @@
                <property name="minimumSize">
                 <size>
                  <width>200</width>
-                 <height>0</height>
+                 <height>25</height>
                 </size>
                </property>
                <property name="toolTip">
@@ -764,7 +782,7 @@
                <property name="minimumSize">
                 <size>
                  <width>200</width>
-                 <height>0</height>
+                 <height>25</height>
                 </size>
                </property>
                <property name="toolTip">
@@ -918,6 +936,12 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
                <property name="toolTip">
                 <string>Разрешённые ступени исправления ошибок CRC (Q-код доступен только для 14 бит)</string>
                </property>
@@ -955,6 +979,12 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
                <property name="toolTip">
                 <string>Активация дополнительной коррекции Cross-Word Decoding</string>
                </property>
@@ -990,7 +1020,7 @@
                <property name="minimumSize">
                 <size>
                  <width>200</width>
-                 <height>0</height>
+                 <height>25</height>
                 </size>
                </property>
                <property name="toolTip">
@@ -1033,7 +1063,7 @@
                <property name="minimumSize">
                 <size>
                  <width>200</width>
-                 <height>0</height>
+                 <height>25</height>
                 </size>
                </property>
                <property name="toolTip">
@@ -1076,7 +1106,7 @@
                <property name="minimumSize">
                 <size>
                  <width>200</width>
-                 <height>0</height>
+                 <height>25</height>
                 </size>
                </property>
                <property name="toolTip">
@@ -1119,7 +1149,7 @@
                <property name="minimumSize">
                 <size>
                  <width>200</width>
-                 <height>0</height>
+                 <height>25</height>
                 </size>
                </property>
                <property name="toolTip">
@@ -3315,7 +3345,7 @@
      </layout>
     </item>
     <item>
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QGroupBox" name="gbxStats">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
         <horstretch>0</horstretch>
@@ -3345,8 +3375,8 @@
         <number>6</number>
        </property>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
+        <layout class="QGridLayout" name="gridLayout_7">
+         <item row="0" column="0" colspan="2">
           <widget class="QPushButton" name="btnStatReset">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -3365,128 +3395,120 @@
            </property>
           </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlReadFrames">
-           <item>
-            <widget class="QLabel" name="lblReadFrames">
-             <property name="toolTip">
-              <string>Число считанных кадров</string>
-             </property>
-             <property name="statusTip">
-              <string>Число считанных кадров</string>
-             </property>
-             <property name="text">
-              <string>Считано кадров:</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdReadFrames">
-             <property name="toolTip">
-              <string>Число считанных кадров</string>
-             </property>
-             <property name="statusTip">
-              <string>Число считанных кадров</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>7</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="3" column="1">
+          <widget class="QLCDNumber" name="lcdFrameDrop">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>120</red>
+                 <green>120</green>
+                 <blue>120</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число кадров, выпавших в исходном видео</string>
+           </property>
+           <property name="statusTip">
+            <string>Число кадров, выпавших в исходном видео</string>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>7</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlFrameDrop">
-           <item>
-            <widget class="QLabel" name="lblFrameDrop">
-             <property name="toolTip">
-              <string>Число кадров, выпавших в исходном видео</string>
-             </property>
-             <property name="statusTip">
-              <string>Число кадров, выпавших в исходном видео</string>
-             </property>
-             <property name="text">
-              <string>Выпавших кадров:</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdFrameDrop">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>120</red>
-                   <green>120</green>
-                   <blue>120</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число кадров, выпавших в исходном видео</string>
-             </property>
-             <property name="statusTip">
-              <string>Число кадров, выпавших в исходном видео</string>
-             </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>7</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblReadFrames">
+           <property name="toolTip">
+            <string>Число считанных кадров</string>
+           </property>
+           <property name="statusTip">
+            <string>Число считанных кадров</string>
+           </property>
+           <property name="text">
+            <string>Считано кадров:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
-         <item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblFrameDrop">
+           <property name="toolTip">
+            <string>Число кадров, выпавших в исходном видео</string>
+           </property>
+           <property name="statusTip">
+            <string>Число кадров, выпавших в исходном видео</string>
+           </property>
+           <property name="text">
+            <string>Выпавших кадров:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLCDNumber" name="lcdReadFrames">
+           <property name="toolTip">
+            <string>Число считанных кадров</string>
+           </property>
+           <property name="statusTip">
+            <string>Число считанных кадров</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>7</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0" colspan="2">
           <widget class="QProgressBar" name="pgrTracking">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -3517,7 +3539,61 @@
            </property>
           </widget>
          </item>
-         <item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="lblProcessedFrames">
+           <property name="toolTip">
+            <string>Число полностью обработанных кадров</string>
+           </property>
+           <property name="statusTip">
+            <string>Число полностью обработанных кадров</string>
+           </property>
+           <property name="text">
+            <string>Обработано кадров:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QLCDNumber" name="lcdProcessedFrames">
+           <property name="toolTip">
+            <string>Число полностью обработанных кадров</string>
+           </property>
+           <property name="statusTip">
+            <string>Число полностью обработанных кадров</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>7</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="0" colspan="2">
+          <widget class="QProgressBar" name="pgrVidTime">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="format">
+            <string notr="true">%p%</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="2">
           <widget class="QProgressBar" name="pgrDataQuality">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -3548,84 +3624,111 @@
            </property>
           </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlProcessedFrames">
-           <item>
-            <widget class="QLabel" name="lblProcessedFrames">
-             <property name="toolTip">
-              <string>Число полностью обработанных кадров</string>
-             </property>
-             <property name="statusTip">
-              <string>Число полностью обработанных кадров</string>
-             </property>
-             <property name="text">
-              <string>Обработано кадров:</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdProcessedFrames">
-             <property name="toolTip">
-              <string>Число полностью обработанных кадров</string>
-             </property>
-             <property name="statusTip">
-              <string>Число полностью обработанных кадров</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>7</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblTotalFrames">
+           <property name="toolTip">
+            <string>Общее число кадров в источнике</string>
+           </property>
+           <property name="statusTip">
+            <string>Общее число кадров в источнике</string>
+           </property>
+           <property name="text">
+            <string>Всего кадров:</string>
+           </property>
+          </widget>
          </item>
-         <item>
-          <widget class="QProgressBar" name="pgrVidTime">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+         <item row="1" column="1">
+          <widget class="QLCDNumber" name="lcdTotalNumber">
+           <property name="toolTip">
+            <string>Общее число кадров в источнике</string>
            </property>
-           <property name="value">
-            <number>0</number>
+           <property name="statusTip">
+            <string>Общее число кадров в источнике</string>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
            </property>
-           <property name="format">
-            <string notr="true">%p%</string>
+           <property name="digitCount">
+            <number>7</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
            </property>
           </widget>
          </item>
         </layout>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout">
+        <layout class="QGridLayout" name="gridLayout_8">
          <property name="sizeConstraint">
           <enum>QLayout::SetDefaultConstraint</enum>
          </property>
-         <item>
+         <item row="1" column="1">
+          <widget class="QLCDNumber" name="lcdNoPCM">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число видео-строк без PCM</string>
+           </property>
+           <property name="statusTip">
+            <string>Число видео-строк без PCM</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="2">
           <widget class="QProgressBar" name="pgrVideoBuf">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>15</height>
-            </size>
            </property>
            <property name="toolTip">
             <string>Заполненность буфера видео-строк</string>
@@ -3644,283 +3747,208 @@
            </property>
           </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlNoPCM">
-           <item>
-            <widget class="QLabel" name="lblNoPCM">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Число видео-строк без PCM</string>
-             </property>
-             <property name="statusTip">
-              <string>Число видео-строк без PCM</string>
-             </property>
-             <property name="text">
-              <string>Пустые строки
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblNoPCM">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="toolTip">
+            <string>Число видео-строк без PCM</string>
+           </property>
+           <property name="statusTip">
+            <string>Число видео-строк без PCM</string>
+           </property>
+           <property name="text">
+            <string>Пустые строки
 (без PCM):</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdNoPCM">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>210</red>
-                   <green>210</green>
-                   <blue>210</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число видео-строк без PCM</string>
-             </property>
-             <property name="statusTip">
-              <string>Число видео-строк без PCM</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+           </property>
+          </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlDupErr">
-           <item>
-            <widget class="QLabel" name="lblDupErr">
-             <property name="toolTip">
-              <string>Число видео-строк, одинаковых с предшествующими</string>
-             </property>
-             <property name="statusTip">
-              <string>Число видео-строк, одинаковых с предшествующими (возможные ошибки из-за компенсаторов выпадений)</string>
-             </property>
-             <property name="text">
-              <string>Дубликатов строк:</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdDupErr">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>210</red>
-                   <green>210</green>
-                   <blue>210</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число видео-строк, одинаковых с предшествующими</string>
-             </property>
-             <property name="statusTip">
-              <string>Число видео-строк, одинаковых с предшествующими (возможные ошибки из-за компенсаторов выпадений)</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="2" column="1">
+          <widget class="QLCDNumber" name="lcdDupErr">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число видео-строк, одинаковых с предшествующими</string>
+           </property>
+           <property name="statusTip">
+            <string>Число видео-строк, одинаковых с предшествующими (возможные ошибки из-за компенсаторов выпадений)</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlCrcErr">
-           <item>
-            <widget class="QLabel" name="lblCrcErr">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="toolTip">
-              <string>Число видео-строк с ошибками</string>
-             </property>
-             <property name="statusTip">
-              <string>Число видео-строк с ошибками</string>
-             </property>
-             <property name="text">
-              <string>Повреждённые
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblDupErr">
+           <property name="toolTip">
+            <string>Число видео-строк, одинаковых с предшествующими</string>
+           </property>
+           <property name="statusTip">
+            <string>Число видео-строк, одинаковых с предшествующими (возможные ошибки из-за компенсаторов выпадений)</string>
+           </property>
+           <property name="text">
+            <string>Дубликатов строк:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLCDNumber" name="lcdCrcErr">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число видео-строк с ошибками</string>
+           </property>
+           <property name="statusTip">
+            <string>Число видео-строк с ошибками</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblCrcErr">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="toolTip">
+            <string>Число видео-строк с ошибками</string>
+           </property>
+           <property name="statusTip">
+            <string>Число видео-строк с ошибками</string>
+           </property>
+           <property name="text">
+            <string>Повреждённые
 строки (CRC):</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdCrcErr">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>210</red>
-                   <green>210</green>
-                   <blue>210</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число видео-строк с ошибками</string>
-             </property>
-             <property name="statusTip">
-              <string>Число видео-строк с ошибками</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+           </property>
+          </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlRefLevel">
-           <item>
-            <widget class="QLabel" name="lblRefLevel">
-             <property name="toolTip">
-              <string>Текущий уровень порога бинаризатора</string>
-             </property>
-             <property name="statusTip">
-              <string>Текущий уровень порога бинаризатора (0...255)</string>
-             </property>
-             <property name="text">
-              <string>Пороговый
+         <item row="4" column="1">
+          <widget class="QLCDNumber" name="lcdRefLevel">
+           <property name="toolTip">
+            <string>Текущий уровень порога бинаризатора</string>
+           </property>
+           <property name="statusTip">
+            <string>Текущий уровень порога бинаризатора (0...255)</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>7</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="lblRefLevel">
+           <property name="toolTip">
+            <string>Текущий уровень порога бинаризатора</string>
+           </property>
+           <property name="statusTip">
+            <string>Текущий уровень порога бинаризатора (0...255)</string>
+           </property>
+           <property name="text">
+            <string>Пороговый
 уровень:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdRefLevel">
-             <property name="toolTip">
-              <string>Текущий уровень порога бинаризатора</string>
-             </property>
-             <property name="statusTip">
-              <string>Текущий уровень порога бинаризатора (0...255)</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>7</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+           </property>
+          </widget>
          </item>
-         <item>
+         <item row="5" column="0" colspan="2">
           <widget class="QProgressBar" name="pgrBinTime">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -3942,20 +3970,300 @@
         </layout>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_6">
-         <item>
+        <layout class="QGridLayout" name="gridLayout_9">
+         <item row="1" column="2">
+          <widget class="QLCDNumber" name="lcdBadStitch">
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>185</red>
+                 <green>185</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>120</red>
+                 <green>120</green>
+                 <blue>120</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
+           </property>
+           <property name="statusTip">
+            <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>7</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLCDNumber" name="lcdPCorr">
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>0</red>
+                 <green>170</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>0</red>
+                 <green>170</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="2">
+          <widget class="QLCDNumber" name="lcdQCorr">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>0</red>
+                 <green>170</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>0</red>
+                 <green>170</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="2">
+          <widget class="QLCDNumber" name="lcdBroken">
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>255</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>255</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLabel" name="lblBadStitch">
+           <property name="toolTip">
+            <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
+           </property>
+           <property name="statusTip">
+            <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
+           </property>
+           <property name="text">
+            <string>Непроверенных
+сшивок полей:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="lblPCorr">
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
+           </property>
+           <property name="text">
+            <string>Успешных
+P-коррекций:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLabel" name="lblQCorr">
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
+           </property>
+           <property name="text">
+            <string>Успешных
+Q-коррекций:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLabel" name="lblBroken">
+           <property name="toolTip">
+            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
+           </property>
+           <property name="text">
+            <string>&quot;Сломанных&quot;
+блоков данных:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1" colspan="2">
           <widget class="QProgressBar" name="pgrLineBuf">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>15</height>
-            </size>
            </property>
            <property name="toolTip">
             <string>Заполненность буфера бинаризированных PCM-строк</string>
@@ -3974,309 +4282,7 @@
            </property>
           </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlBadStitch">
-           <item>
-            <widget class="QLabel" name="lblBadStitch">
-             <property name="toolTip">
-              <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
-             </property>
-             <property name="statusTip">
-              <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
-             </property>
-             <property name="text">
-              <string>Непроверенных
-сшивок полей:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdBadStitch">
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>185</red>
-                   <green>185</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>120</red>
-                   <green>120</green>
-                   <blue>120</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
-             </property>
-             <property name="statusTip">
-              <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>7</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlPCorr">
-           <item>
-            <widget class="QLabel" name="lblPCorr">
-             <property name="toolTip">
-              <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
-             </property>
-             <property name="statusTip">
-              <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
-             </property>
-             <property name="text">
-              <string>Успешных
-P-коррекций:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdPCorr">
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>0</red>
-                   <green>170</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>0</red>
-                   <green>170</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>210</red>
-                   <green>210</green>
-                   <blue>210</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
-             </property>
-             <property name="statusTip">
-              <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlQCorr">
-           <item>
-            <widget class="QLabel" name="lblQCorr">
-             <property name="toolTip">
-              <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
-             </property>
-             <property name="statusTip">
-              <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
-             </property>
-             <property name="text">
-              <string>Успешных
-Q-коррекций:</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdQCorr">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>0</red>
-                   <green>170</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>0</red>
-                   <green>170</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>210</red>
-                   <green>210</green>
-                   <blue>210</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
-             </property>
-             <property name="statusTip">
-              <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlBroken">
-           <item>
-            <widget class="QLabel" name="lblBroken">
-             <property name="toolTip">
-              <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
-             </property>
-             <property name="statusTip">
-              <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
-             </property>
-             <property name="text">
-              <string>&quot;Сломанных&quot;
-блоков данных:</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdBroken">
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>255</red>
-                   <green>0</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>255</red>
-                   <green>0</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>210</red>
-                   <green>210</green>
-                   <blue>210</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
-             </property>
-             <property name="statusTip">
-              <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
+         <item row="6" column="1" colspan="2">
           <widget class="QProgressBar" name="pgrDeintTime">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -4298,20 +4304,70 @@ Q-коррекций:</string>
         </layout>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <item>
+        <layout class="QGridLayout" name="gridLayout_10">
+         <item row="1" column="1">
+          <widget class="QLCDNumber" name="lcdDropout">
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>255</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>255</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="2">
           <widget class="QProgressBar" name="pgrBlockBuf">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>16777215</width>
-             <height>15</height>
-            </size>
            </property>
            <property name="toolTip">
             <string>Заполненность буфера PCM блоков данных</string>
@@ -4330,316 +4386,244 @@ Q-коррекций:</string>
            </property>
           </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlDropout">
-           <item>
-            <widget class="QLabel" name="lblDropout">
-             <property name="toolTip">
-              <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-             </property>
-             <property name="statusTip">
-              <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-             </property>
-             <property name="text">
-              <string>Неисправленных
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblDropout">
+           <property name="toolTip">
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="text">
+            <string>Неисправленных
 блоков данных:</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdDropout">
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>255</red>
-                   <green>0</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>255</red>
-                   <green>0</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>210</red>
-                   <green>210</green>
-                   <blue>210</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-             </property>
-             <property name="statusTip">
-              <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlSampleDrops">
-           <item>
-            <widget class="QLabel" name="lblSampleDrops">
-             <property name="toolTip">
-              <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
-             </property>
-             <property name="statusTip">
-              <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
-             </property>
-             <property name="text">
-              <string>Неисправленных
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblSampleDrops">
+           <property name="toolTip">
+            <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="statusTip">
+            <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="text">
+            <string>Неисправленных
 аудио-отсчётов:</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdSampleDrops">
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>255</red>
-                   <green>0</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>255</red>
-                   <green>0</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>210</red>
-                   <green>210</green>
-                   <blue>210</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
-             </property>
-             <property name="statusTip">
-              <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlMask">
-           <item>
-            <widget class="QLabel" name="lblMask">
-             <property name="toolTip">
-              <string>Число аудио-отсчётов, в которых замаскировано выпадение</string>
-             </property>
-             <property name="statusTip">
-              <string>Число аудио-отсчётов, в которых замаскировано выпадение</string>
-             </property>
-             <property name="text">
-              <string>Маскировано
-аудио-отсчётов:</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdMask">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>190</red>
-                   <green>130</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>190</red>
-                   <green>130</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>190</red>
-                   <green>190</green>
-                   <blue>190</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число аудио-отсчётов, в которых замаскировано выпадение</string>
-             </property>
-             <property name="statusTip">
-              <string>Число аудио-отсчётов, в которых замаскировано выпадение</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+         <item row="2" column="1">
+          <widget class="QLCDNumber" name="lcdSampleDrops">
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>255</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>255</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="statusTip">
+            <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
          </item>
-         <item>
-          <layout class="QHBoxLayout" name="hlMute">
-           <item>
-            <widget class="QLabel" name="lblMute">
-             <property name="toolTip">
-              <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
-             </property>
-             <property name="statusTip">
-              <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
-             </property>
-             <property name="text">
-              <string>Заглушено
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblMask">
+           <property name="toolTip">
+            <string>Число аудио-отсчётов, в которых замаскировано выпадение</string>
+           </property>
+           <property name="statusTip">
+            <string>Число аудио-отсчётов, в которых замаскировано выпадение</string>
+           </property>
+           <property name="text">
+            <string>Маскировано
 аудио-отсчётов:</string>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLCDNumber" name="lcdMute">
-             <property name="palette">
-              <palette>
-               <active>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>190</red>
-                   <green>130</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </active>
-               <inactive>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>190</red>
-                   <green>130</green>
-                   <blue>0</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </inactive>
-               <disabled>
-                <colorrole role="WindowText">
-                 <brush brushstyle="SolidPattern">
-                  <color alpha="255">
-                   <red>210</red>
-                   <green>210</green>
-                   <blue>210</blue>
-                  </color>
-                 </brush>
-                </colorrole>
-               </disabled>
-              </palette>
-             </property>
-             <property name="toolTip">
-              <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
-             </property>
-             <property name="statusTip">
-              <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Sunken</enum>
-             </property>
-             <property name="digitCount">
-              <number>8</number>
-             </property>
-             <property name="segmentStyle">
-              <enum>QLCDNumber::Flat</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLCDNumber" name="lcdMask">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>190</red>
+                 <green>130</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>190</red>
+                 <green>130</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>190</red>
+                 <green>190</green>
+                 <blue>190</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число аудио-отсчётов, в которых замаскировано выпадение</string>
+           </property>
+           <property name="statusTip">
+            <string>Число аудио-отсчётов, в которых замаскировано выпадение</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="lblMute">
+           <property name="toolTip">
+            <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
+           </property>
+           <property name="statusTip">
+            <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
+           </property>
+           <property name="text">
+            <string>Заглушено
+аудио-отсчётов:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLCDNumber" name="lcdMute">
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>190</red>
+                 <green>130</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>190</red>
+                 <green>130</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
+           </property>
+           <property name="statusTip">
+            <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -4706,7 +4690,7 @@ Q-коррекций:</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1018</width>
+     <width>1108</width>
      <height>21</height>
     </rect>
    </property>
@@ -4882,9 +4866,7 @@ Q-коррекций:</string>
       <iconset resource="icons.qrc">
        <normaloff>:/icons/Language.ico</normaloff>:/icons/Language.ico</iconset>
      </property>
-     <addaction name="actLangEN"/>
      <addaction name="actLangRU"/>
-     <addaction name="actLangPL"/>
     </widget>
     <addaction name="mnLanguage"/>
     <addaction name="separator"/>
@@ -5448,8 +5430,8 @@ Q-коррекций:</string>
   <tabstop>lbxBinQuality</tabstop>
   <tabstop>lbxPCMType</tabstop>
   <tabstop>lbxPCM1FieldOrder</tabstop>
-  <tabstop>spinBox</tabstop>
-  <tabstop>spinBox_2</tabstop>
+  <tabstop>spbPCM1BottomPad</tabstop>
+  <tabstop>spbPCM1TopPad</tabstop>
   <tabstop>lbxPCM16x0Format</tabstop>
   <tabstop>lbxPCM16x0FieldOrder</tabstop>
   <tabstop>lbxPCM16x0ECC</tabstop>

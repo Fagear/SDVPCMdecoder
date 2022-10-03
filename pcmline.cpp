@@ -506,7 +506,8 @@ uint16_t PCMLine::getCalcCRC16(uint16_t CRC_data, uint16_t in_data, uint8_t bit_
 //------------------------ Convert PCM line into service tag.
 void PCMLine::setServiceLine()
 {
-    uint16_t frame, line;
+    uint16_t line;
+    uint32_t frame;
     // Temporary save frame and line number.
     frame = frame_number;
     line = line_number;

@@ -97,7 +97,7 @@ public:
     };
 
 public:
-    uint16_t frame_number;          // Number of source frame with first sample.
+    uint32_t frame_number;          // Number of source frame with first sample.
     uint16_t start_line;            // Number of line with first sample (top left).
     uint16_t stop_line;             // Number of line with last sample (bottom right).
     uint8_t start_part;             // Part of the source video line with first sample.

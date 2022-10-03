@@ -85,7 +85,7 @@ private:
     QElapsedTimer frame_time;
     bool live_pb;
     uint8_t frame_time_lim;
-    uint16_t frame_number;
+    uint32_t frame_number;
     uint16_t fill_line_num;
     uint16_t provided_width;
     uint16_t provided_heigth;
@@ -106,8 +106,8 @@ public slots:
     void startPCM1DBFrame();
     void startPCM1600DBFrame();
     void startSTC007DBFrame();
-    void prepareNewFrame(uint16_t);
-    void finishNewFrame(uint16_t);
+    void prepareNewFrame(uint32_t);
+    void finishNewFrame(uint32_t);
     void renderNewLine(VideoLine);
     void renderNewLineInOrder(VideoLine);
     void renderNewLine(PCM1Line);
@@ -119,7 +119,7 @@ public slots:
     void renderNewBlock(STC007DataBlock);
 
 signals:
-    void newFrame(QPixmap, uint16_t);
+    void newFrame(QPixmap, uint32_t);
 };
 
 #endif // RENDERPCM_H

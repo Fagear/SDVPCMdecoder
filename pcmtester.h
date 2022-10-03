@@ -19,14 +19,15 @@ class PCMTester : public QObject
 
     enum KillMode
     {
-        MODE_KILL_ANY,
-        MODE_KILL_1TO2,
-        MODE_KILL_2
+        MODE_KILL_ANY,      // Corrupt any count from 0 to data block word count.
+        MODE_KILL_1,        // Always corrupt 1 word
+        MODE_KILL_1TO2,     // Corrupt 1 or 2 words
+        MODE_KILL_2         // Always corrupt 2 words
     };
 
     enum
     {
-        RUN_COUNT = 4096
+        RUN_COUNT = 2048
     };
 
 public:
@@ -37,7 +38,7 @@ private:
     bool testPCM16x0CRCC();
     bool testSTC007CRCC();
     bool testPCM16x0ECC();
-    bool testSTC007ECC(enum KillMode test_mode = MODE_KILL_2);
+    bool testSTC007ECC(enum KillMode test_mode = MODE_KILL_1TO2);
 
 public slots:
     void testCRCC();

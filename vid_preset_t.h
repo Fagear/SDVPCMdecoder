@@ -16,7 +16,6 @@ public:
     };
 
 public:
-    bool skip_lines;            // Skip every other line in the frame.
     uint8_t colors;             // Color channels to use.
     uint16_t crop_left;         // Number of pixels to crop from the beginning of the video line.
     uint16_t crop_right;        // Number of pixels to crop from the ending of the video line.

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>645</width>
-    <height>476</height>
+    <width>602</width>
+    <height>464</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -178,7 +178,7 @@
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QFrame" name="frame">
+       <widget class="QFrame" name="frmPCMView">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
@@ -194,7 +194,7 @@
         <property name="maximumSize">
          <size>
           <width>300</width>
-          <height>300</height>
+          <height>245</height>
          </size>
         </property>
         <property name="toolTip">
@@ -212,6 +212,36 @@
         <property name="midLineWidth">
          <number>0</number>
         </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="lblPreview">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="images.qrc">:/images/STC-007 icon.png</pixmap>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
      </layout>
@@ -235,116 +265,6 @@
       <property name="spacing">
        <number>9</number>
       </property>
-      <item row="1" column="1">
-       <widget class="QCheckBox" name="cbxSkipLines">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Позволить корректно считывать видео с деинтерлейсом удвоением строк с удвоенной частотой кадров</string>
-        </property>
-        <property name="whatsThis">
-         <string>Позволить корректно считывать видео с деинтерлейсом удвоением строк с удвоенной частотой кадров</string>
-        </property>
-        <property name="text">
-         <string>включить</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QCheckBox" name="cbxDrawDeint">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
-        </property>
-        <property name="whatsThis">
-         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
-        </property>
-        <property name="text">
-         <string>включить</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="lblSkipLines">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Позволить корректно считывать видео с деинтерлейсом удвоением строк с удвоенной частотой кадров</string>
-        </property>
-        <property name="whatsThis">
-         <string>Позволить корректно считывать видео с деинтерлейсом удвоением строк с удвоенной частотой кадров</string>
-        </property>
-        <property name="text">
-         <string>Пропуск каждой 2-й строки в видео (для видео после деинтерлейса с удвоением строк):</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="lblDrawDeint">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
-        </property>
-        <property name="whatsThis">
-         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
-        </property>
-        <property name="text">
-         <string>Устранение чересстрочности для визуализатора источника видео:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="lblColorUse">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Выбор цветовых каналов в исходном видео, из которых декодировать PCM-данные</string>
-        </property>
-        <property name="whatsThis">
-         <string>Выбор цветовых каналов в исходном видео, из которых декодировать PCM-данные</string>
-        </property>
-        <property name="text">
-         <string>Использовать цвета:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="1">
        <widget class="QComboBox" name="lbxColorUse">
         <property name="enabled">
@@ -388,6 +308,72 @@
           <string>Синий (канал B)</string>
          </property>
         </item>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblColorUse">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Выбор цветовых каналов в исходном видео, из которых декодировать PCM-данные</string>
+        </property>
+        <property name="whatsThis">
+         <string>Выбор цветовых каналов в исходном видео, из которых декодировать PCM-данные</string>
+        </property>
+        <property name="text">
+         <string>Использовать цвета:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="cbxDrawDeint">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
+        </property>
+        <property name="whatsThis">
+         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="lblDrawDeint">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
+        </property>
+        <property name="whatsThis">
+         <string>Отрисовывать строки в визуализаторе после деинтерлейса, разбивая по полям</string>
+        </property>
+        <property name="text">
+         <string>Устранение чересстрочности для визуализатора источника видео:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
        </widget>
       </item>
      </layout>
@@ -503,13 +489,14 @@
   <tabstop>spbCropRight</tabstop>
   <tabstop>spbCropBottom</tabstop>
   <tabstop>lbxColorUse</tabstop>
-  <tabstop>cbxSkipLines</tabstop>
   <tabstop>cbxDrawDeint</tabstop>
   <tabstop>btnClose</tabstop>
   <tabstop>btnSave</tabstop>
   <tabstop>btnRevert</tabstop>
   <tabstop>btnDefaults</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="images.qrc"/>
+ </resources>
  <connections/>
 </ui>

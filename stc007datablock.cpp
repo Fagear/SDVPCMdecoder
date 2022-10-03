@@ -86,7 +86,7 @@ void STC007DataBlock::setWord(uint8_t index, uint16_t in_word, bool is_line_vali
 }
 
 //------------------------ Set source frame and line number for the word.
-void STC007DataBlock::setSource(uint8_t index, uint16_t frame, uint16_t line)
+void STC007DataBlock::setSource(uint8_t index, uint32_t frame, uint16_t line)
 {
     if(index<WORD_CNT)
     {
@@ -655,13 +655,13 @@ uint8_t STC007DataBlock::getErrorsTotalFixed()
 }
 
 //------------------------ Get number of source frame of the line with [WORD_L0] word.
-uint16_t STC007DataBlock::getStartFrame()
+uint32_t STC007DataBlock::getStartFrame()
 {
     return w_frame[WORD_L0];
 }
 
 //------------------------ Get number of source frame of the line with [WORD_Q0] word.
-uint16_t STC007DataBlock::getStopFrame()
+uint32_t STC007DataBlock::getStopFrame()
 {
     return w_frame[WORD_Q0];
 }

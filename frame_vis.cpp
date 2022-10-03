@@ -8,13 +8,16 @@ frame_vis::frame_vis(QWidget *parent) :
 
     scene = NULL;
     pixels = NULL;
-    img_data = NULL;
     win_title = VIS_FRAME_TXT+" ";
     set_label = "vis_window";
     settings_hdl = NULL;
     en_pos_save = false;
     prev_width = 640;
     prev_height = 480;
+
+    pos_timer.setSingleShot(true);
+    pos_timer.setInterval(500);
+    connect(&pos_timer, SIGNAL(timeout()), this, SLOT(updateWindowPosition()));
 
     scene = new QGraphicsScene(this);
 
@@ -26,13 +29,11 @@ frame_vis::frame_vis(QWidget *parent) :
     ui->viewport->setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
     ui->viewport->setMouseTracking(false);
 
-    //QImage pixels(640, 480, QImage::Format_Grayscale8);
-    img_data = new QImage(prev_width, prev_height, QImage::Format_RGB32);
-    //img_data->fill(Qt::black);
-
-    pix_data = QPixmap::fromImage(*img_data);
+    pix_data = QPixmap(prev_width, prev_height);
+    pix_data.fill(Qt::black);
     pixels = new QGraphicsPixmapItem(pix_data);
     pixels->setShapeMode(QGraphicsPixmapItem::BoundingRectShape);
+    scene->addItem(pixels);
 
     settings_hdl = new QSettings(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
     if(settings_hdl!=NULL)
@@ -41,18 +42,11 @@ frame_vis::frame_vis(QWidget *parent) :
         settings_hdl->sync();
     }
 
-    scene->addItem(pixels);
-
     qInfo()<<"[VIS] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
 }
 
 frame_vis::~frame_vis()
 {
-    if(img_data!=NULL)
-    {
-        delete img_data;
-    }
-
     if(settings_hdl!=NULL)
     {
         settings_hdl->sync();
@@ -63,23 +57,29 @@ frame_vis::~frame_vis()
     delete ui;
 }
 
+//------------------------ Set speciefic visualizator label to load proper settings.
 void frame_vis::setSettingsLabel(QString in_label)
 {
     set_label = in_label;
 }
 
+//------------------------ Visualizator window was moved.
 void frame_vis::moveEvent(QMoveEvent *event)
 {
-    updateWindowPosition();
+    // (Re)start timer to update window position and size.
+    pos_timer.start();
     event->accept();
 }
 
-void frame_vis::resizeEvent(QMoveEvent *event)
+//------------------------ Visualizator window was resized.
+void frame_vis::resizeEvent(QResizeEvent *event)
 {
-    updateWindowPosition();
+    // (Re)start timer to update window position and size.
+    pos_timer.start();
     event->accept();
 }
 
+//------------------------ Visualizator window is about to be shown.
 void frame_vis::showEvent(QShowEvent *event)
 {
     if(settings_hdl!=NULL)
@@ -97,21 +97,7 @@ void frame_vis::showEvent(QShowEvent *event)
     event->accept();
 }
 
-void frame_vis::updateWindowPosition()
-{
-    if(en_pos_save!=false)
-    {
-        if(settings_hdl!=NULL)
-        {
-            //qInfo()<<"[VIS] Updating window position"<<set_label;
-            settings_hdl->beginGroup(set_label);
-            settings_hdl->setValue("size", this->geometry());
-            settings_hdl->setValue("position", this->pos());
-            settings_hdl->endGroup();
-        }
-    }
-}
-
+//------------------------ Set speciefic visualizator window title.
 void frame_vis::setTitle(QString in_str)
 {
     if(in_str.isEmpty()==false)
@@ -125,7 +111,8 @@ void frame_vis::setTitle(QString in_str)
     this->setWindowTitle(win_title+QString::number(0));
 }
 
-void frame_vis::drawFrame(QPixmap in_pixmap, uint16_t in_frame_no)
+//------------------------ Get new frame from renderer and display it.
+void frame_vis::drawFrame(QPixmap in_pixmap, uint32_t in_frame_no)
 {
     if((prev_width!=in_pixmap.width())||(prev_height!=in_pixmap.height()))
     {
@@ -137,11 +124,32 @@ void frame_vis::drawFrame(QPixmap in_pixmap, uint16_t in_frame_no)
         scene->setSceneRect(0,0,prev_width,prev_height);
         ui->viewport->setSceneRect(scene->sceneRect());
         ui->viewport->adjustSize();
+        ui->viewport->viewport()->update();
         this->setMinimumSize(ui->viewport->size());
         this->setMaximumSize(ui->viewport->size());
         this->resize(ui->viewport->size());
         this->adjustSize();
     }
-    pixels->setPixmap(in_pixmap);
+    else
+    {
+        pixels->setPixmap(in_pixmap);
+        ui->viewport->viewport()->update();
+    }
     this->setWindowTitle(win_title+QString::number(in_frame_no));
+}
+
+//------------------------ Update window position and size in settings.
+void frame_vis::updateWindowPosition()
+{
+    if(en_pos_save!=false)
+    {
+        if(settings_hdl!=NULL)
+        {
+            qInfo()<<"[VIS] Updating window position"<<set_label;
+            settings_hdl->beginGroup(set_label);
+            settings_hdl->setValue("size", this->geometry());
+            settings_hdl->setValue("position", this->pos());
+            settings_hdl->endGroup();
+        }
+    }
 }

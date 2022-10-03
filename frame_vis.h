@@ -10,9 +10,11 @@
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include <QImage>
+#include <QPixmap>
 #include <QRectF>
 #include <QSettings>
 #include <QString>
+#include <QTimer>
 #include <QThread>
 #include <QtDebug>
 #include <QtWidgets>
@@ -36,16 +38,15 @@ public:
 
 private:
     void moveEvent(QMoveEvent *event);
-    void resizeEvent(QMoveEvent *event);
+    void resizeEvent(QResizeEvent *event);
     void showEvent(QShowEvent *event);
-    void updateWindowPosition();
 
 private:
     Ui::frame_vis *ui;
+    QTimer pos_timer;
     QGraphicsScene *scene;
     QGraphicsPixmapItem *pixels;
     QPixmap pix_data;
-    QImage *img_data;
     QString win_title;
     QString set_label;
     QSettings *settings_hdl;
@@ -55,7 +56,10 @@ private:
 
 public slots:
     void setTitle(QString);
-    void drawFrame(QPixmap, uint16_t);
+    void drawFrame(QPixmap, uint32_t);
+
+private slots:
+    void updateWindowPosition();
 };
 
 #endif // VISUALIZER_H

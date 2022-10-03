@@ -50,7 +50,8 @@ PCM1DataBlock& PCM1DataBlock::operator= (const PCM1DataBlock &in_object)
 //------------------------ Reset object.
 void PCM1DataBlock::clear()
 {
-    frame_number = start_line = stop_line = 0;
+    frame_number = 0;
+    start_line = stop_line = 0;
     interleave_num = 0;
     sample_rate = PCMSamplePair::SAMPLE_RATE_44056;
     short_blk = emphasis = false;

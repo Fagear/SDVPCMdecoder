@@ -12,7 +12,6 @@ fine_vidin_set::fine_vidin_set(QWidget *parent) :
     connect(ui->spbCropTop, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
     connect(ui->spbCropBottom, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
     connect(ui->lbxColorUse, SIGNAL(currentIndexChanged(int)), this, SLOT(setChange()));
-    connect(ui->cbxSkipLines, SIGNAL(toggled(bool)), this, SLOT(setChange()));
     connect(ui->cbxDrawDeint, SIGNAL(toggled(bool)), this, SLOT(setChange()));
 
     connect(ui->btnClose, SIGNAL(clicked(bool)), this, SLOT(usrClose()));
@@ -80,7 +79,6 @@ void fine_vidin_set::blockInputs()
     ui->spbCropBottom->setEnabled(false);
 
     ui->lbxColorUse->setEnabled(false);
-    ui->cbxSkipLines->setEnabled(false);
     ui->cbxDrawDeint->setEnabled(false);
 }
 
@@ -103,7 +101,6 @@ void fine_vidin_set::enableInputs()
     ui->spbCropBottom->setEnabled(true);
 
     ui->lbxColorUse->setEnabled(true);
-    //ui->cbxSkipLines->setEnabled(true); TODO
     ui->cbxDrawDeint->setEnabled(true);
 }
 
@@ -181,7 +178,6 @@ void fine_vidin_set::usrSave()
     {
         new_set.colors = vid_preset_t::COLOR_BW;
     }
-    new_set.skip_lines = (bool)ui->cbxSkipLines->isChecked();
 
     // Block all inputs.
     blockInputs();
@@ -222,7 +218,6 @@ void fine_vidin_set::newSettings(vid_preset_t in_set)
     {
         ui->lbxColorUse->setCurrentIndex(LIST_COLORS_ALL);
     }
-    ui->cbxSkipLines->setChecked(new_set.skip_lines);
 
     // Enable inputs.
     ui->spbCropLeft->setEnabled(true);
@@ -230,7 +225,6 @@ void fine_vidin_set::newSettings(vid_preset_t in_set)
     ui->spbCropTop->setEnabled(true);
     ui->spbCropBottom->setEnabled(true);
     ui->lbxColorUse->setEnabled(true);
-    //ui->cbxSkipLines->setEnabled(true); TODO
 
     // Enable buttons.
     blockSave();

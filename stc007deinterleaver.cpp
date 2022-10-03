@@ -413,6 +413,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                 }
             }
 #endif
+            out_data_block->clear();
             // Fill data block with words from interleaved PCM-lines.
             if(use_vector==false)
             {
@@ -1396,7 +1397,6 @@ uint8_t STC007Deinterleaver::fixByP(STC007DataBlock *data_block, uint8_t first_b
         if(first_bad!=NO_ERR_INDEX)
         {
             // Set sample as "ok" if it was marked with CRC.
-            //data_block->setFixed(first_bad);
             data_block->setValid(first_bad);
 #ifdef DI_EN_DBG_OUT
             if(suppress_log==false)
@@ -1546,8 +1546,6 @@ uint8_t STC007Deinterleaver::fixByQ(STC007DataBlock *data_block, uint8_t first_b
         if((synd_p==0)&&(synd_q==0))
         {
             // Audio data is ok.
-            //data_block->setFixed(first_bad);
-            //data_block->setFixed(second_bad);
             data_block->setValid(first_bad);
             data_block->setValid(second_bad);
 #ifdef DI_EN_DBG_OUT

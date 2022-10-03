@@ -39,6 +39,7 @@
 // TODO: try to pick best padding for failed stitches by minimum BROKEN blocks
 // TODO: don't mask first 32 lines in the failed stitch
 // TODO: tune up limits for 16-bit stats stitching
+// TODO: fix CWD
 class STC007DataStitcher : public QObject
 {
     Q_OBJECT
@@ -217,7 +218,7 @@ private:
     uint16_t getFirstFieldLineNum(uint8_t in_order);
     uint16_t getSecondFieldLineNum(uint8_t in_order);
     uint16_t addLinesFromField(std::vector<STC007Line> *field_buf, uint16_t ind_start, uint16_t count, uint16_t *last_line_num = NULL);
-    uint16_t addFieldPadding(uint16_t in_frame, uint16_t line_cnt, uint16_t *last_line_num = NULL);
+    uint16_t addFieldPadding(uint32_t in_frame, uint16_t line_cnt, uint16_t *last_line_num = NULL);
     bool isBlockNoReport(STC007DataBlock *in_block);
     void fillFrameForOutput();
     bool fillNextFieldForCWD();

@@ -22,7 +22,7 @@ static const int8_t PIX_SH_ED_TBL[PCM_LINE_MAX_PS_STAGES] =
 class PCMLine
 {
 public:
-    // Derived classes itentification.
+    // Derived classes identification.
     enum
     {
         TYPE_PCM1,              // Class [PCM1Line] for PCM-1 standard.
@@ -77,7 +77,7 @@ public:
     };
 
 public:
-    uint16_t frame_number;      // Number of source frame for this line.
+    uint32_t frame_number;      // Number of source frame for this line.
     uint16_t line_number;       // Number of the line in the frame (#1=topmost).
     uint8_t black_level;        // Detected brightness level of "BLACK" (bit 0).
     uint8_t white_level;        // Detected brightness level of "WHITE" (bit 1).

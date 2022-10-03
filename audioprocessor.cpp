@@ -1425,7 +1425,8 @@ void AudioProcessor::setFolder(QString in_path)
         }
 #endif
         //dumpBuffer();
-        std::string file_path(in_path.toLocal8Bit().constData());
+        std::string file_path;
+        file_path = in_path.toStdString();
         wav_output.purgeBuffer();
         wav_output.setFolder(file_path);
         wav_output.prepareNewFile();
@@ -1446,7 +1447,8 @@ void AudioProcessor::setFileName(QString in_name)
         }
 #endif
         //dumpBuffer();
-        std::string file_name(in_name.toLocal8Bit().constData());
+        std::string file_name;
+        file_name = in_name.toStdString();
         wav_output.purgeBuffer();
         wav_output.setName(file_name);
         wav_output.prepareNewFile();

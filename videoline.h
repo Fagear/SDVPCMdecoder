@@ -21,13 +21,13 @@ public:
     };
 
 public:
-    uint16_t frame_number;              // Number of source frame for this line.
+    uint32_t frame_number;              // Number of source frame for this line.
     uint16_t line_number;               // Number of line in the frame (#1=topmost).
-    uint8_t colors;                     // Source color channel (see [vid_preset_t.h]).
+    uint8_t colors;                     // Source color channel (see [vid_preset_t.h]), used for visualization.
     std::vector<uint8_t> pixel_data;    // Array of grayscale 8-bit pixels.
     std::string file_path;              // Path of decoded file (set with [serv_new_file]).
     uint32_t process_time;              // Amount of time spent processing the line [us].
-    bool scan_done;                     // Scan for coordinates is done by binarizer;
+    bool scan_done;                     // This line was scanned for data coordinates by binarizer;
 
 private:
     bool empty;                         // Is line marked as "empty" (no items in [pixel_data]) for fast skipping?

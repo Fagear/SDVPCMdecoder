@@ -914,7 +914,7 @@ uint16_t PCM1DataStitcher::addLinesFromField(std::vector<PCM1SubLine> *field_buf
 }
 
 //------------------------ Fill output line buffer with empty lines.
-uint16_t PCM1DataStitcher::addFieldPadding(uint16_t in_frame, uint16_t line_cnt, uint16_t *last_line_num)
+uint16_t PCM1DataStitcher::addFieldPadding(uint32_t in_frame, uint16_t line_cnt, uint16_t *last_line_num)
 {
     uint16_t lines_cnt;
     lines_cnt = 0;

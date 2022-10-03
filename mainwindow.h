@@ -239,6 +239,7 @@ private:
     frame_vis *visuBin;
     frame_vis *visuAssembled;
     frame_vis *visuBlocks;
+    QTimer timResizeUpd;                    // Timer for waiting for user-input while resizing/moving window.
     QTimer timUIUpdate;                     // Timer for GUI updating.
     QTimer timTRDUpdate;                    // Timer for thread checking.
     QThread *input_FPU;                     // Frame processing unit thread.
@@ -264,7 +265,6 @@ private:
 
     bool shutdown_started;                  // Application exit procedure started.
     bool inhibit_setting_save;              // Disable updating settings.
-    bool window_geom_saved;
     bool src_draw_deint;                    // Draw source video deinterlaced or not.
     uint8_t log_level;                      // Setting for debugging log level.
     uint8_t v_decoder_state;                // State of video decoder.
@@ -316,7 +316,7 @@ public:
 
 private:
     void moveEvent(QMoveEvent *event);
-    void resizeEvent(QMoveEvent *event);
+    void resizeEvent(QResizeEvent *event);
     void closeEvent(QCloseEvent *event);
 
     void buffer_tester();
@@ -343,7 +343,7 @@ private:
     void readGUISettings();                 // Read settings into GUI.
     void clearPCMQueue();
 
-    CoordinatePair getCoordByFrameNo(uint16_t);
+    CoordinatePair getCoordByFrameNo(uint32_t);
 
 private slots:
     //void dbgSlot(int);
@@ -402,7 +402,7 @@ private slots:
     void clearAllLogging();                 // Turn off all debug logging.
 
     // Player state reactions.
-    void playerStarted();                   // React on video decoder starting playback.
+    void playerStarted(uint32_t);           // React on video decoder starting playback.
     void playerStopped();                   // React on video decoder stopping playback.
     void playerPaused();                    // React on video decoder pausing playback.
     void playerError(QString);              // React on video decoder error.
@@ -430,18 +430,17 @@ private slots:
     // Stats gathering reactions.
     void updateDebugBar(quint64);
     void updateStatsVideoLineTime(uint32_t);// Update stats after VIP has finished a line and provided spent time count.
-    void updateStatsVIPFrame(uint16_t);     // Update stats after VIP has read a frame.
+    void updateStatsVIPFrame(uint32_t);     // Update stats after VIP has read a frame.
     void updateStatsVideoTracking(FrameBinDescriptor);  // Update stats after VIP has spliced a frame.
     void updateStatsDroppedFrame();         // Update stats with new value for dropped frames.
     void updateStatsLineTime(unsigned int); // Update stats after LB has finished a line and provided spent time count.
-    void updateStatsLBFrame(unsigned int);  // Update stats after LB has finished a frame.
     void updateStatsFrameAsm(FrameAsmPCM1);     // Update stats and video processor with new trim settings.
     void updateStatsFrameAsm(FrameAsmPCM16x0);  // Update stats and video processor with new trim settings.
     void updateStatsFrameAsm(FrameAsmSTC007);   // Update stats and video processor with new trim settings.
     void updateStatsMutes(uint16_t);        // Update stats with new value for muted samples.
     void updateStatsMaskes(uint16_t);       // Update stats with new value for masked samples.
     void updateStatsBlockTime(STC007DataBlock); // Update stats after DI has finished a data block and provided spent time count.
-    void updateStatsDIFrame(uint16_t);      // Update stats after DI has finished a frame.
+    void updateStatsDIFrame(uint32_t);      // Update stats after DI has finished a frame.
 
     // Self-test start and result reactions.
     void testStartCRCC();                   // Perform internal test of CRCC within PCM line.
@@ -455,7 +454,6 @@ private slots:
 
 signals:
     // GUI stuff.
-    void newWindowPosition();               // React to new size/location of the main window.
     void aboutToExit();                     // Application is about to close.
     void newTargetPath(QString);            // Full path for new source.
     // Signals for video input processor.
@@ -489,8 +487,8 @@ signals:
     void newEnableLivePB(bool);             // Send new "live playback" setting for AP thread.
     void newEnableWaveSave(bool);           // Send new "save to file" setting for AP thread.
     // Signals for visualizers and fine settings dialogs.
-    void newFrameBinarized(uint16_t);       // Binarized a whole new frame (frame number for visualization).
-    void newFrameAssembled(uint16_t);       // Assembled a whole new frame (frame number for visualization).
+    void newFrameBinarized(uint32_t);       // Binarized a whole new frame (frame number for visualization).
+    void newFrameAssembled(uint32_t);       // Assembled a whole new frame (frame number for visualization).
     void newVideoStandard(uint8_t);         // Video standard of the last assembled frame.
     void retransmitBinLine(PCM1Line);
     void retransmitBinLine(PCM16X0SubLine);

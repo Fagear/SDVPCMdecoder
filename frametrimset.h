@@ -43,7 +43,7 @@ public:
 class FrameBinDescriptor
 {
 public:
-    uint16_t frame_id;          // Frame number.
+    uint32_t frame_id;          // Frame number.
     uint16_t lines_odd;         // Number of lines in the odd field with video data.
     uint16_t lines_even;        // Number of lines in the even field with video data.
     uint16_t lines_pcm_odd;     // Number of lines in the odd field, containing PCM data (has valid CRC or has markers).
@@ -91,7 +91,7 @@ public:
     };
 
 public:
-    uint16_t frame_number;          // Frame number.
+    uint32_t frame_number;          // Frame number.
     uint16_t odd_std_lines;         // Number of lines by the standard in the odd field.
     uint16_t even_std_lines;        // Number of lines by the standard in the even field.
     uint16_t odd_data_lines;        // Number of lines with some PCM data in the odd field.
@@ -189,8 +189,8 @@ class FrameAsmSTC007 : public FrameAsmDescriptor
 {
 public:
     uint8_t video_standard;         // Video standard for this frame (tells how many lines should be in a field).
-    uint8_t tff_cnt;               // Probability of this frame to have TFF field order (# of successfull padding runs in TFF).
-    uint8_t bff_cnt;               // Probability of this frame to have BFF field order (# of successfull padding runs in BFF).
+    uint8_t tff_cnt;                // Probability of this frame to have TFF field order (# of successfull padding runs in TFF).
+    uint8_t bff_cnt;                // Probability of this frame to have BFF field order (# of successfull padding runs in BFF).
     uint8_t odd_resolution;         // Audio resolution in odd field;
     uint8_t even_resolution;        // Audio resolution in even field;
     uint16_t inner_padding;         // Number of lines to put between fields of this frame to correctly assemble data blocks.

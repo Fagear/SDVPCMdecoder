@@ -199,7 +199,13 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
         {
             bad_indexes[cor] = 0xFF;
         }
-        if(test_mode==MODE_KILL_2)
+        to_corrupt = 0;
+        if(test_mode==MODE_KILL_1)
+        {
+            // Force testing P-code correction.
+            to_corrupt = 1;
+        }
+        else if(test_mode==MODE_KILL_2)
         {
             // Force testing Q-code correction.
             to_corrupt = 2;
@@ -209,7 +215,7 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
             // Select how many words to corrupt.
             to_corrupt = rand()%2+1;
         }
-        else
+        else if(test_mode==MODE_KILL_ANY)
         {
             // Select how many words to corrupt.
             to_corrupt = rand()%STC007Line::WORD_CNT;
@@ -244,7 +250,7 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
             test_buffer[corr_index*16].setSourceCRC(~test_buffer[corr_index*16].getSourceCRC());
         }
         QString log_line;
-        log_line = "[TST] STC-007 test run #"+QString::number(test_n)+", corrupting "+QString::number(to_corrupt)+" words";
+        log_line = "[TST] STC-007 test run #"+QString::number(test_n+1)+", corrupting "+QString::number(to_corrupt)+" words";
         for(uint8_t i=0;i<to_corrupt;i++)
         {
             log_line += ", #"+QString::number(bad_indexes[i]);
@@ -260,13 +266,13 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
             if((test_block.isBlockValid()!=false)&&(test_block.isDataFixed()==false)&&(test_block.isDataBroken()==false))
             {
                 QString log_line;
-                log_line = "[TST] STC-007 test run #"+QString::number(test_n)+" passed.";
+                log_line = "[TST] STC-007 test run #"+QString::number(test_n+1)+" passed.";
                 qInfo()<<log_line;
             }
             else
             {
                 QString log_line;
-                log_line = "[TST] STC-007 test run #"+QString::number(test_n)+" FAILED! Data is fixed or broken while it is original.";
+                log_line = "[TST] STC-007 test run #"+QString::number(test_n+1)+" FAILED! Data is fixed or broken while it is original.";
                 qInfo()<<log_line;
                 return false;
             }
@@ -276,13 +282,13 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
             if(test_block.isBlockValid()==false)
             {
                 QString log_line;
-                log_line = "[TST] STC-007 test run #"+QString::number(test_n)+" passed.";
+                log_line = "[TST] STC-007 test run #"+QString::number(test_n+1)+" passed.";
                 qInfo()<<log_line;
             }
             else
             {
                 QString log_line;
-                log_line = "[TST] STC-007 test run #"+QString::number(test_n)+" FAILED! Valid audio, while it's corrupted and impossible.";
+                log_line = "[TST] STC-007 test run #"+QString::number(test_n+1)+" FAILED! Valid audio, while it's corrupted and impossible.";
                 qInfo()<<log_line;
                 return false;
             }
@@ -295,7 +301,7 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
                 (test_block.getWord(bad_indexes[0])==valid_line.getWord(bad_indexes[0])))
             {
                 QString log_line;
-                log_line = "[TST] STC-007 test run #"+QString::number(test_n)+" passed";
+                log_line = "[TST] STC-007 test run #"+QString::number(test_n+1)+" passed";
                 if(test_block.isDataFixed()==false)
                 {
                     log_line += ", audio was not damaged.";
@@ -316,26 +322,13 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
             else
             {
                 QString log_line;
-                log_line = "[TST] STC-007 test run #"+QString::number(test_n)+" FAILED! Data was not fixed while it should've been.";
+                log_line = "[TST] STC-007 test run #"+QString::number(test_n+1)+" FAILED! Data was not fixed while it should've been.";
                 qInfo()<<log_line;
                 return false;
             }
         }
         else if(to_corrupt==2)
         {
-            if((bad_indexes[0]>STC007Line::WORD_R_SH238)&&(bad_indexes[1]>STC007Line::WORD_R_SH238))
-            {
-                // Workaround to prevent checking P, Q and CRC which are not fixed or present.
-                if(bad_indexes[0]>STC007Line::WORD_R_SH238)
-                {
-                    bad_indexes[0] = STC007Line::WORD_L_SH0;
-                }
-                // Patch to prevent checking absent CRC word.
-                if(bad_indexes[1]>STC007Line::WORD_R_SH238)
-                {
-                    bad_indexes[1] = STC007Line::WORD_R_SH48;
-                }
-            }
             //qInfo()<<QString::number(test_block.getWord(bad_indexes[0]))<<"|"<<QString::number(valid_line.words[bad_indexes[0]]);
             //qInfo()<<QString::number(test_block.getWord(bad_indexes[1]))<<"|"<<QString::number(valid_line.words[bad_indexes[1]]);
             // Compare corrupted (and fixed) words to ones from the valid line.
@@ -344,7 +337,7 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
                 (test_block.getWord(bad_indexes[1])==valid_line.getWord(bad_indexes[1])))
             {
                 QString log_line;
-                log_line = "[TST] STC-007 test run #"+QString::number(test_n)+" passed";
+                log_line = "[TST] STC-007 test run #"+QString::number(test_n+1)+" passed";
                 if(test_block.isDataFixed()==false)
                 {
                     log_line += ", audio was not damaged.";
@@ -365,7 +358,7 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
             else
             {
                 QString log_line;
-                log_line = "[TST] STC-007 test run #"+QString::number(test_n)+" FAILED! Data was not fixed while it should've been.";
+                log_line = "[TST] STC-007 test run #"+QString::number(test_n+1)+" FAILED! Data was not fixed while it should've been.";
                 qInfo()<<log_line;
                 return false;
             }
@@ -382,8 +375,11 @@ void PCMTester::testCRCC()
 
     crc_works = true;
 
+    // Test 13-bit word CRC calculation.
     crc_works = crc_works&&testPCM1CRCC();
+    // Test 14-bit word CRC calculation.
     crc_works = crc_works&&testSTC007CRCC();
+    // Test 16-bit word CRC calculation.
     crc_works = crc_works&&testPCM16x0CRCC();
 
     if(crc_works==false)
@@ -406,7 +402,12 @@ void PCMTester::testDataBlock()
     ecc_works = true;
 
     ecc_works = ecc_works&&testPCM16x0ECC();
-    ecc_works = ecc_works&&testSTC007ECC(MODE_KILL_1TO2);
+    qInfo()<<"[TST] Testing STC-007 ECC with 1 error per block";
+    ecc_works = ecc_works&&testSTC007ECC(MODE_KILL_1);
+    qInfo()<<"[TST] Testing STC-007 ECC with 2 errors per block";
+    ecc_works = ecc_works&&testSTC007ECC(MODE_KILL_2);
+    qInfo()<<"[TST] Testing STC-007 ECC with any number of errors per block";
+    ecc_works = ecc_works&&testSTC007ECC(MODE_KILL_ANY);
 
     if(ecc_works==false)
     {

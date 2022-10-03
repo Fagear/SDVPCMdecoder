@@ -1439,9 +1439,10 @@ uint8_t STC007DataStitcher::tryPadding(std::vector<STC007Line> *field1, uint16_t
 {
     bool suppress_log, run_lock;
     uint8_t ext_di_log_lvl;
-    uint16_t line_count, line_num, frame_num;
+    uint16_t line_count, line_num;
     uint16_t valid_burst_count, silence_burst_count, uncheck_burst_count, broken_count;
     uint16_t valid_burst_max, silence_burst_max, uncheck_burst_max, brk_burst_max;
+    uint32_t frame_num;
     size_t buf_size;
     // Empty line container.
     STC007Line empty_line;
@@ -4286,7 +4287,7 @@ uint16_t STC007DataStitcher::addLinesFromField(std::vector<STC007Line> *field_bu
 }
 
 //------------------------ Fill output line buffer with empty lines.
-uint16_t STC007DataStitcher::addFieldPadding(uint16_t in_frame, uint16_t line_cnt, uint16_t *last_line_num)
+uint16_t STC007DataStitcher::addFieldPadding(uint32_t in_frame, uint16_t line_cnt, uint16_t *last_line_num)
 {
     bool suppress_log;
     uint16_t lines_cnt;

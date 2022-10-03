@@ -27,7 +27,6 @@ VideoInFFMPEG::VideoInFFMPEG(QObject *parent) : QObject(parent)
     log_level = 0;
     proc_state = STG_IDLE;
     new_state = STG_IDLE;
-    frame_advancing = ADV_CONST;
     target_pixfmt = VIP_BUF_FMT_BW;
     last_real_width = 0;
     last_width = 0;
@@ -45,7 +44,8 @@ VideoInFFMPEG::VideoInFFMPEG(QObject *parent) : QObject(parent)
     hw_fmt = AV_PIX_FMT_NONE;
     dec_frame = NULL;
     conv_ctx = NULL;
-    video_dst_data[0] = NULL;
+    img_buf_free = true;
+    //video_dst_data[0] = NULL;
     stream_index = 0;
     setDefaultFineSettings();
     step_play = false;
@@ -149,15 +149,17 @@ void VideoInFFMPEG::findHWDecoder(AVCodec *in_codec)
 }
 
 //------------------------ Do everything to prepare FFMPEG decoder.
+// TODO: remove [failToPlay()] from here and parse return code on upper level.
+// TODO: make a wrapper for FFMPEG init and data read.
 uint8_t VideoInFFMPEG::decoderInit()
 {
     int av_res, refcount;
     AVStream *v_stream;
     const AVCodec *v_decoder = NULL;
     AVDictionary *opts = NULL;
+    std::string source_path;
 
     // Reset frame counter.
-    frame_advancing = ADV_CONST;
     frame_counter = 1;
 
     // Reset DTS drop detection.
@@ -166,16 +168,14 @@ uint8_t VideoInFFMPEG::decoderInit()
 
     refcount = 1;
 
-    // Prepare FFMPEG library.
-    format_ctx = avformat_alloc_context();
-    if(!format_ctx)
-    {
-        new_state = failToPlay(tr("Не удалось выделить память для контекста FFMPEG"));
-        return VIP_RET_NO_DEC_CTX;
-    }
+    source_path = src_path.toStdString();
 
+    // Prepare FFMPEG library.
+    avdevice_register_all();
     // Open a new source with FFMPEG.
-    av_res = avformat_open_input(&format_ctx, src_path.toLocal8Bit().constData(), NULL, NULL);
+    av_dict_set(&opts, "rtbufsize", "100M", 0);
+    //av_res = avformat_open_input(&format_ctx, src_path.toLocal8Bit().constData(), NULL, NULL);    // FFMPEG v5.x crashes on some files
+    av_res = avformat_open_input(&format_ctx, source_path.c_str(), NULL, &opts);
     if(av_res<0)
     {
         new_state = failToPlay(tr("Не удалось открыть источник"));
@@ -184,9 +184,6 @@ uint8_t VideoInFFMPEG::decoderInit()
     // Preset muxer settings.
     format_ctx->flags &= ~(AVFMT_FLAG_SHORTEST|AVFMT_FLAG_FAST_SEEK);   // Clear unwanted flags.
     format_ctx->flags |= (AVFMT_FLAG_AUTO_BSF|AVFMT_FLAG_GENPTS);       // Set required flags.
-
-    //qInfo()<<"[VIP] Error flags:"<<format_ctx->error_recognition;
-    //av_dump_format(format_ctx, 0, src_path.toLocal8Bit().constData(), 0);
 
     // Get stream info.
     av_res = avformat_find_stream_info(format_ctx, NULL);
@@ -221,6 +218,10 @@ uint8_t VideoInFFMPEG::decoderInit()
         new_state = failToPlay(tr("Не удалось найти декодер для видео-потока"));
         return VIP_RET_NO_DECODER;
     }
+    // Select detected stream.
+    v_stream = format_ctx->streams[stream_index];
+    // Save number of frames.
+    frames_total = (uint32_t)v_stream->nb_frames;
 
     // Try to get hardware to decode it.
     // TODO: maybe add hardware video decoding
@@ -233,8 +234,6 @@ uint8_t VideoInFFMPEG::decoderInit()
         new_state = failToPlay(tr("Не удалось выделить память для контекста декодера"));
         return VIP_RET_NO_DEC_CTX;
     }
-    // Select detected stream.
-    v_stream = format_ctx->streams[stream_index];
 
     // Copy codec parameters from input stream to decoder context.
     av_res = avcodec_parameters_to_context(video_dec_ctx, v_stream->codecpar);
@@ -244,10 +243,10 @@ uint8_t VideoInFFMPEG::decoderInit()
         return VIP_RET_ERR_DEC_PARAM;
     }
 
-    if(hw_fmt!=AV_PIX_FMT_NONE)
+    /*if(hw_fmt!=AV_PIX_FMT_NONE)
     {
         initHWDecoder(video_dec_ctx);
-    }
+    }*/
 
     video_dec_ctx->flags |= AV_CODEC_FLAG_OUTPUT_CORRUPT;
     //video_dec_ctx->flags |= AV_CODEC_FLAG_GRAY;
@@ -280,6 +279,7 @@ uint8_t VideoInFFMPEG::decoderInit()
 #endif
 
     // Init the decoders, with or without reference counting.
+    av_dict_free(&opts);
     av_dict_set(&opts, "refcounted_frames", refcount ? "1" : "0", 0);
     av_res = avcodec_open2(video_dec_ctx, v_decoder, &opts);
     if(av_res<0)
@@ -442,6 +442,8 @@ bool VideoInFFMPEG::initFrameConverter(AVFrame *new_frame, uint16_t new_width, u
         qWarning()<<DBG_ANCHOR<<"[VIP] Failed to allocate destination buffer in [VideoInFFMPEG::initFrameConverter()]!";
         return false;
     }
+    // Image buffer was allocated.
+    img_buf_free = false;
 
     // Setup frame conversion context.
     conv_ctx = sws_getContext(new_frame->width, new_frame->height, (AVPixelFormat)new_frame->format,
@@ -468,7 +470,11 @@ void VideoInFFMPEG::freeFrameConverter()
 {
     // Free up memory from libsws contexts.
     sws_freeContext(conv_ctx);
-    av_freep(video_dst_data);
+    if(img_buf_free==false)
+    {
+        av_freep(video_dst_data);
+        img_buf_free = true;
+    }
 }
 
 //------------------------ Check new frame dimensions and update internal structures to stay in check.
@@ -515,7 +521,7 @@ bool VideoInFFMPEG::keepFrameInCheck(AVFrame *new_frame, uint16_t new_width, uin
 bool VideoInFFMPEG::waitForOutQueue(uint16_t line_count)
 {
     size_t queue_size;
-    uint16_t front_frame;
+    uint32_t front_frame;
     if(line_count>=MAX_VLINE_QUEUE_SIZE)
     {
         return false;
@@ -541,8 +547,8 @@ bool VideoInFFMPEG::waitForOutQueue(uint16_t line_count)
         {
             // There is enough space in output queue.
             //qInfo()<<front_frame<<frame_counter;
-            // Allow only up to 2 frames read-ahead.
-            if((front_frame==0)||(frame_counter<(front_frame+2)))
+            // Allow only up to [FRAMES_READ_AHEAD_MAX] frames read-ahead.
+            if((front_frame==0)||(frame_counter<(front_frame+FRAMES_READ_AHEAD_MAX)))
             {
                 break;
             }
@@ -579,7 +585,7 @@ void VideoInFFMPEG::outNewLine(VideoLine *in_line)
 void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
 {
     uint8_t line_jump, step_cycle;
-    uint16_t safety_cnt, frame_width, lines_count, real_line_count, line_offset, line_len, line_num;
+    uint16_t safety_cnt, frame_width, line_count, line_offset, line_len, line_num;
     uint32_t arr_coord;
     int av_res;
     QElapsedTimer frame_timer, line_timer;
@@ -592,66 +598,16 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
 #endif
 
     // Get frame parameters.
-    lines_count = getFinalHeight(in_frame->height);
+    line_count = getFinalHeight(in_frame->height);
     frame_width = getFinalWidth(in_frame->width);
     last_real_width = in_frame->width;
-    safety_cnt = (lines_count+1);
-
-    // Set number of passes to two for full frame deinterlacing (one field, than another field).
-    real_line_count = lines_count;
-    if(vip_set.skip_lines!=false)
-    {
-        // Limit number of passes to one (only first field).
-        real_line_count = lines_count/2;
-    }
+    safety_cnt = (line_count+1);
 
     // Enable deinterlacing.
     line_jump = 2;
-    // Check conditions for enabling frame counter hold.
-    /*if(real_line_count<(DS_STC007_PAL_LINES_PER_FIELD*4/3))
-    {
-        // Too little lines for one full frame, only one field would fit.
-        if(vip_set.skip_lines==false)
-        {
-            line_jump = 1;
-        }
-        // Check frame number counter advancing mode.
-        if(frame_advancing==ADV_CONST)
-        {
-            // Need to switch to half-frame counter and skip advancing on current frame.
-            frame_advancing = ADV_HOLD;
-#ifdef VIP_EN_DBG_OUT
-            if((log_level&LOG_PROCESS)!=0)
-            {
-                qInfo()<<"[VIP] Switched to half-frame counter advancing";
-            }
-#endif
-        }
-        else if(frame_advancing==ADV_MOVE)
-        {
-            // In half-frame counter mode last frame has advanced the counter, switch to hold for current one.
-            frame_advancing = ADV_HOLD;
-        }
-        else
-        {
-            // In half-frame counter mode last frame was not advancing the counter, switch to advancing at current frame.
-            frame_advancing = ADV_MOVE;
-        }
-    }
-    else if(frame_advancing!=ADV_CONST)
-    {
-        // Set normal once-per-frame counter advancing.
-        frame_advancing = ADV_CONST;
-#ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_PROCESS)!=0)
-        {
-            qInfo()<<"[VIP] Switched to every-frame counter advancing";
-        }
-#endif
-    }*/
 
     // Re-initialize frame converter if frame parameters change.
-    if(false==keepFrameInCheck(in_frame, frame_width, lines_count, vip_set.colors))
+    if(false==keepFrameInCheck(in_frame, frame_width, line_count, vip_set.colors))
     {
         new_state = failToPlay(tr("Не удалось инициализировать конвертер кадра"));
         return;
@@ -661,11 +617,11 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
     line_len = video_dst_linesize[0];
 
     // Wait for enough space in output queue.
-    if(waitForOutQueue(real_line_count)==false)
+    if(waitForOutQueue(line_count)==false)
     {
         if(finish_work==false)
         {
-            qWarning()<<DBG_ANCHOR<<"[VIP] Unsupported height of the frame in [VideoInFFMPEG::spliceFrame()]! ("<<real_line_count<<")";
+            qWarning()<<DBG_ANCHOR<<"[VIP] Unsupported height of the frame in [VideoInFFMPEG::spliceFrame()]! ("<<line_count<<")";
         }
         return;
     }
@@ -674,7 +630,7 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
     frame_timer.start();
 
     // Convert frame to grayscale.
-    av_res = sws_scale(conv_ctx, (const uint8_t * const *)in_frame->data, in_frame->linesize, 0, lines_count, video_dst_data, video_dst_linesize);
+    av_res = sws_scale(conv_ctx, (const uint8_t * const *)in_frame->data, in_frame->linesize, 0, line_count, video_dst_data, video_dst_linesize);
     //av_image_copy(video_dst_data, video_dst_linesize, (const uint8_t **)(in_frame->data), in_frame->linesize, in_frame->format, in_frame->width, in_frame->height);
 
     if(av_res<0)
@@ -695,31 +651,16 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
     // Report about new frame.
     if(hasWidthDoubling(in_frame->width)==false)
     {
-        if(frame_advancing==ADV_CONST)
-        {
-            emit newFrame(line_len, real_line_count);
-        }
-        else if(frame_advancing==ADV_HOLD)
-        {
-            emit newFrame(line_len, real_line_count*2);
-        }
+        emit newFrame(line_len, line_count);
     }
     else
     {
-        if(frame_advancing==ADV_CONST)
-        {
-            emit newFrame(line_len/2, real_line_count);
-        }
-        else if(frame_advancing==ADV_HOLD)
-        {
-            emit newFrame(line_len/2, real_line_count*2);
-        }
+        emit newFrame(line_len/2, line_count);
     }
-
 #ifdef VIP_EN_DBG_OUT
     if((log_level&LOG_PROCESS)!=0)
     {
-        qInfo()<<"[VIP] Processing with advancing:"<<frame_advancing<<", line jump:"<<line_jump<<", using"<<real_line_count<<"lines";
+        qInfo()<<"[VIP] Processing with line jump:"<<line_jump<<", using"<<line_count<<"lines";
     }
 #endif
 
@@ -734,26 +675,11 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
         line_offset = 0;
         if(step_cycle==1)
         {
-            if(frame_advancing==ADV_CONST)
-            {
-                // Not in half-frame mode, allow processing of second field.
-                // Switch lines down by one for second field.
-                line_offset++;
-            }
-            else
-            {
-                break;
-            }
+            // Switch lines down by one for second field.
+            line_offset++;
         }
         // Calculate starting line coordinate.
-        if(frame_advancing==ADV_MOVE)
-        {
-            line_num = line_offset+2;
-        }
-        else
-        {
-            line_num = line_offset+1;
-        }
+        line_num = line_offset+1;
 
         // Cycle through lines (backwards through frame).
         do
@@ -818,7 +744,7 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
             }
 #endif
             // Check for limits of the line count in the frame.
-            if(line_offset<(lines_count-line_jump))
+            if(line_offset<(line_count-line_jump))
             {
                 // Go to the next line in the field.
                 line_offset = line_offset+line_jump;
@@ -844,32 +770,20 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
     // Unlock shared access.
     mtx_lines->unlock();
 
-    if(frame_advancing!=ADV_HOLD)
-    {
-        // Notify about new lines from frame.
-        emit frameDecoded(frame_counter);
-        // Count frames.
-        frame_counter++;
+    // Notify about new lines from frame.
+    emit frameDecoded(frame_counter);
+    // Count frames.
+    frame_counter++;
 #ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_FRAME)!=0)
-        {
-            qInfo()<<"[VIP] Frame"<<(frame_counter-1)<<"sliced by"<<frame_timer.nsecsElapsed()/1000<<"us";
-        }
-#endif
-    }
-    else
+    if((log_level&LOG_FRAME)!=0)
     {
-#ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_FRAME)!=0)
-        {
-            qInfo()<<"[VIP] Half of the frame"<<(frame_counter-1)<<"sliced by"<<frame_timer.nsecsElapsed()/1000<<"us";
-        }
-#endif
+        qInfo()<<"[VIP] Frame"<<(frame_counter-1)<<"sliced by"<<frame_timer.nsecsElapsed()/1000<<"us";
     }
+#endif
 }
 
 //------------------------ Insert dummy frame to keep sync on dropped frames.
-void VideoInFFMPEG::insertDummyFrame(int64_t frame_cnt, bool last_frame, bool report)
+void VideoInFFMPEG::insertDummyFrame(uint32_t frame_cnt, bool last_frame, bool report)
 {
     uint8_t line_jump, step_cycle;
     uint16_t safety_cnt, line_len, lines_count, line_offset, line_num;
@@ -891,12 +805,6 @@ void VideoInFFMPEG::insertDummyFrame(int64_t frame_cnt, bool last_frame, bool re
         // Resize line to fit all pixels.
         dummy_line.setLength(line_len);
         dummy_line.setDoubleWidth(hasWidthDoubling(last_real_width));
-        // Cycle through all pixels in line.
-        /*for(uint16_t pixel=0; pixel<line_len; pixel++)
-        {
-            // Generate empty dummy lines.
-            dummy_line.pixel_data[pixel] = 0;
-        }*/
 
         // Wait for enough space in output queue.
         if(waitForOutQueue(lines_count)==false)
@@ -1275,32 +1183,42 @@ void VideoInFFMPEG::runFrameDecode()
     qInfo()<<"[VIP] FFMPEG avcodec compile-time version:"<<log_line;
     log_line = QString::fromLocal8Bit(AV_STRINGIFY(LIBAVCODEC_VERSION));
     qInfo()<<"[VIP] FFMPEG avdevice compile-time version:"<<log_line;
+    log_line = QString::fromLocal8Bit(AV_STRINGIFY(LIBAVUTIL_VERSION));
+    qInfo()<<"[VIP] FFMPEG avutil compile-time version:"<<log_line;
     log_line = QString::fromLocal8Bit(AV_STRINGIFY(LIBSWSCALE_VERSION));
     qInfo()<<"[VIP] FFMPEG swscale compile-time version:"<<log_line;
 
+    // Register all demuxers.
+    //avdevice_register_all();
+    // Register all codecs.
+    //avcodec_register_all();
+
     unsigned vers;
     // Dump run-time FFmpeg versions.
-    vers = avcodec_version();
-    log_line = QString::number(AV_VERSION_MAJOR(vers))+
-               "."+QString::number(AV_VERSION_MINOR(vers))+
-               "."+QString::number(AV_VERSION_MICRO(vers))+
-               " ("+QString::number(vers)+")";
-    qInfo()<<"[VIP] FFMPEG avcodec run-time version:"<<log_line;
     vers = avdevice_version();
     log_line = QString::number(AV_VERSION_MAJOR(vers))+
                "."+QString::number(AV_VERSION_MINOR(vers))+
                "."+QString::number(AV_VERSION_MICRO(vers))+
                " ("+QString::number(vers)+")";
     qInfo()<<"[VIP] FFMPEG avdevice run-time version:"<<log_line;
+    vers = avcodec_version();
+    log_line = QString::number(AV_VERSION_MAJOR(vers))+
+               "."+QString::number(AV_VERSION_MINOR(vers))+
+               "."+QString::number(AV_VERSION_MICRO(vers))+
+               " ("+QString::number(vers)+")";
+    qInfo()<<"[VIP] FFMPEG avcodec run-time version:"<<log_line;
+    vers = avutil_version();
+    log_line = QString::number(AV_VERSION_MAJOR(vers))+
+               "."+QString::number(AV_VERSION_MINOR(vers))+
+               "."+QString::number(AV_VERSION_MICRO(vers))+
+               " ("+QString::number(vers)+")";
+    qInfo()<<"[VIP] FFMPEG avutil run-time version:"<<log_line;
     vers = swscale_version();
     log_line = QString::number(AV_VERSION_MAJOR(vers))+
                "."+QString::number(AV_VERSION_MINOR(vers))+
                "."+QString::number(AV_VERSION_MICRO(vers))+
                " ("+QString::number(vers)+")";
     qInfo()<<"[VIP] FFMPEG swscale run-time version:"<<log_line;
-
-    // Register all demuxers.
-    avdevice_register_all();
 
     // Inf. loop in a thread.
     while(finish_work==false)
@@ -1322,7 +1240,7 @@ void VideoInFFMPEG::runFrameDecode()
                 if(proc_state==STG_PAUSE)
                 {
                     // Playback was paused before - just resume.
-                    emit mediaPlaying();
+                    emit mediaPlaying(frames_total);
                 }
                 else
                 {
@@ -1330,7 +1248,7 @@ void VideoInFFMPEG::runFrameDecode()
                     if(decoderInit()==VIP_RET_OK)
                     {
                         // Decoder init ok, playback ready to be started.
-                        emit mediaPlaying();
+                        emit mediaPlaying(frames_total);
                         new_file = true;
 #ifdef VIP_EN_DBG_OUT
                         if((log_level&LOG_PROCESS)!=0)
@@ -1574,7 +1492,7 @@ void VideoInFFMPEG::runFrameDecode()
                                 // Save new "last DTS".
                                 last_dts = dec_frame->pkt_dts;
                                 // Check if current DTS is one step after previous.
-                                if(dts_diff>0)
+                                if((dts_diff>0)&&(dec_frame->pkt_duration>0))
                                 {
 #ifdef VIP_EN_DBG_OUT
                                     if((log_level&LOG_PROCESS)!=0)
@@ -1583,7 +1501,7 @@ void VideoInFFMPEG::runFrameDecode()
                                     }
 #endif
                                     // Insert dummy frames in place of droped frames.
-                                    insertDummyFrame(dts_diff/dec_frame->pkt_duration, false, true);
+                                    insertDummyFrame((uint32_t)dts_diff/dec_frame->pkt_duration, false, true);
                                     // Finally put good frame into queue.
                                     // Cut frame into video lines and put those into output queue.
                                     spliceFrame(dec_frame);

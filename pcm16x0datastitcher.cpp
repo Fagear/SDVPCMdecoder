@@ -2166,11 +2166,13 @@ void PCM16X0DataStitcher::findSIDataAlignment()
     }
 #endif
 
+    // DEBUG hook
+    /*
     if(frasm_f1.frame_number==282)
     {
         // pcm_04_cut.avi
         qInfo()<<"DBG";
-    }
+    }*/
 
     // Preset field order.
     if(preset_field_order==FrameAsmDescriptor::ORDER_BFF)
@@ -4423,7 +4425,7 @@ uint16_t PCM16X0DataStitcher::addLinesFromField(std::vector<PCM16X0SubLine> *fie
 }
 
 //------------------------ Fill output line buffer with empty lines.
-uint16_t PCM16X0DataStitcher::addFieldPadding(uint16_t in_frame, uint16_t line_cnt,
+uint16_t PCM16X0DataStitcher::addFieldPadding(uint32_t in_frame, uint16_t line_cnt,
                                               uint16_t *last_q_order, uint16_t *last_line_num)
 {
     uint16_t lines_cnt;

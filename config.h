@@ -44,12 +44,16 @@ extern "C"
     #define TST_EN_DBG_OUT      1       // Enable debug console output in [pcmtester] module.
 #endif
 
+#define FRAMES_READ_AHEAD_MAX       3       // Maximum number of frames read ahead.
+#define FRAMES_ASM_BUF_MAX          4       // Maximum number of frames in the buffer after binarization.
+
+#define LINES_PER_FRAME_MAX         600     // Total number of lines in the frame maximum for the source.
 #define LINES_PER_NTSC_FIELD        245     // PCM lines in one field of a NTSC frame.
 #define LINES_PER_PAL_FIELD         294     // PCM lines in one field of a PAL frame.
 
-#define MAX_VLINE_QUEUE_SIZE        2800    // Maximum queue size (in lines) for video lines.
-#define MAX_PCMLINE_QUEUE_SIZE      5400    // Maximum queue size (in lines) for PCM lines.
-#define MAX_SAMPLEPAIR_QUEUE_SIZE   20480   // Maximum queue size (in sample pairs) for audio data.
+#define MAX_VLINE_QUEUE_SIZE        (FRAMES_READ_AHEAD_MAX*LINES_PER_FRAME_MAX)     // Maximum queue size (in lines) for video lines.
+#define MAX_PCMLINE_QUEUE_SIZE      (FRAMES_ASM_BUF_MAX*LINES_PER_FRAME_MAX)        // Maximum queue size (in lines) for PCM lines.
+#define MAX_SAMPLEPAIR_QUEUE_SIZE   22050   // Maximum queue size (in sample pairs) for audio data.
 
 //#define LB_EN_PIXEL_DBG     1     // Enable boundaries check for pixel coordinate in [stc007binarizer] module.
 //#define LB_ROUNDED_DIVS     1     // Enable rounded integer divisions in [findVideoPixel()] in [stc007binarizer] module.

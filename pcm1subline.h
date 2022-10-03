@@ -45,7 +45,7 @@ public:
     };
 
 public:
-    uint16_t frame_number;      // Number of source frame for this line.
+    uint32_t frame_number;      // Number of source frame for this line.
     uint16_t line_number;       // Number of line in the frame (#1=topmost).
     uint8_t picked_bits_left;   // Number of left bits of [WORD_L] that were picked after bad CRC.
     uint8_t picked_bits_right;  // Number of right bits of source line CRC that were picked after bad CRC.

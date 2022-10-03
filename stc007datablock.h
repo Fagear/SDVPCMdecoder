@@ -105,7 +105,7 @@ public:
     };
 
 public:
-    uint16_t w_frame[WORD_CNT];     // Number of source frames for words.
+    uint32_t w_frame[WORD_CNT];     // Number of source frames for words.
     uint16_t w_line[WORD_CNT];      // Number of source lines for words.
     uint16_t sample_rate;           // Sample rate of samples in the data block [Hz].
     bool emphasis;                  // Do samples need de-emphasis for playback?
@@ -127,7 +127,7 @@ public:
     void clear();
     void setResolution(uint8_t in_res);
     void setWord(uint8_t index, uint16_t in_word, bool is_line_valid, bool is_cwd_fixed);
-    void setSource(uint8_t index, uint16_t frame, uint16_t line);
+    void setSource(uint8_t index, uint32_t frame, uint16_t line);
     void setFixed(uint8_t index);
     void setValid(uint8_t index);
     void setAudioState(uint8_t in_state);
@@ -165,8 +165,8 @@ public:
     uint8_t getErrorsAudioFixed();
     uint8_t getErrorsTotalSource();
     uint8_t getErrorsTotalFixed();
-    uint16_t getStartFrame();
-    uint16_t getStopFrame();
+    uint32_t getStartFrame();
+    uint32_t getStopFrame();
     uint16_t getStartLine();
     uint16_t getStopLine();
     std::string dumpWordsString14bit();
