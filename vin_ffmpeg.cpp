@@ -1,360 +1,46 @@
 ﻿#include "vin_ffmpeg.h"
 
-static enum AVPixelFormat hw_fmt;                   // Frame format for HW decoder.
-
-//------------------------
-static enum AVPixelFormat get_hw_format(AVCodecContext *ctx, const enum AVPixelFormat *in_fmts)
-{
-    Q_UNUSED(ctx);
-
-    const enum AVPixelFormat *found_fmt;
-
-    for(found_fmt=in_fmts;*found_fmt!=-1;found_fmt++)
-    {
-        if(*found_fmt==hw_fmt)
-        {
-            return *found_fmt;
-        }
-    }
-
-    qWarning()<<DBG_ANCHOR<<"Failed to get HW surface format in [get_hw_format()]";
-    return AV_PIX_FMT_NONE;
-}
-
 //------------------------
 VideoInFFMPEG::VideoInFFMPEG(QObject *parent) : QObject(parent)
 {
     log_level = 0;
     proc_state = STG_IDLE;
     new_state = STG_IDLE;
-    target_pixfmt = VIP_BUF_FMT_BW;
+    event_usr = EVT_USR_NO;
+    event_cap = EVT_CAP_NO;
+    evt_frame_cnt = 0;
+    evt_errcode = FFMPEGWrapper::FFMERR_OK;
     last_real_width = 0;
-    last_width = 0;
     last_height = 0;
-    last_color_mode = vid_preset_t::COLOR_BW;
     frame_counter = 1;
-    last_dts = 0;
+    frames_total = 0;
     src_path.clear();
     out_lines = NULL;
     mtx_lines = NULL;
-    format_ctx = NULL;
-    video_dec_ctx = NULL;
-    hw_dev_ctx = NULL;
-    hw_type = AV_HWDEVICE_TYPE_NONE;
-    hw_fmt = AV_PIX_FMT_NONE;
-    dec_frame = NULL;
-    conv_ctx = NULL;
-    img_buf_free = true;
-    //video_dst_data[0] = NULL;
-    stream_index = 0;
+    ffmpeg_src = NULL;
+
+    ffmpeg_thread = NULL;
+    ffmpeg_thread = new QThread;
+    ffmpeg_src = new FFMPEGWrapper();
+    ffmpeg_src->moveToThread(ffmpeg_thread);
+    connect(ffmpeg_thread, SIGNAL(started()), ffmpeg_src, SLOT(slotLogStart()));
+    connect(ffmpeg_thread, SIGNAL(finished()), ffmpeg_thread, SLOT(deleteLater()));
+    connect(this, SIGNAL(finished()), ffmpeg_thread, SLOT(quit()));
+    connect(this, SIGNAL(requestDropDet(bool)), ffmpeg_src, SLOT(slotSetDropDetector(bool)));
+    connect(this, SIGNAL(requestColor(vid_preset_t)), ffmpeg_src, SLOT(slotSetCropColor(vid_preset_t)));
+    connect(this, SIGNAL(openDevice(QString,QString)), ffmpeg_src, SLOT(slotOpenInput(QString,QString)));
+    connect(this, SIGNAL(closeDevice()), ffmpeg_src, SLOT(slotCloseInput()));
+    connect(this, SIGNAL(requestFrame()), ffmpeg_src, SLOT(slotGetNextFrame()));
+    connect(ffmpeg_src, SIGNAL(sigInputReady(int, int, uint32_t, float)), this, SLOT(captureReady(int, int, uint32_t, float)));
+    connect(ffmpeg_src, SIGNAL(sigInputClosed()), this, SLOT(captureClosed()));
+    connect(ffmpeg_src, SIGNAL(sigVideoError(uint32_t)), this, SLOT(captureError(uint32_t)));
+    connect(ffmpeg_src, SIGNAL(newImage(QImage,bool)), this, SLOT(receiveFrame(QImage,bool)));
+
     setDefaultFineSettings();
+    new_file = false;
     step_play = false;
     detect_frame_drop = false;
-    dts_detect = false;
     finish_work = false;
-}
-
-//------------------------ Throw an error if playback is not possible for some reason.
-uint8_t VideoInFFMPEG::failToPlay(QString in_err)
-{
-#ifdef VIP_EN_DBG_OUT
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        if(in_err.isEmpty()==false)
-        {
-            qWarning()<<DBG_ANCHOR<<"[VIP]"<<in_err;
-        }
-        else
-        {
-            qWarning()<<DBG_ANCHOR<<"[VIP] Some unknown error occured!";
-        }
-    }
-#endif
-    if(in_err.isEmpty()!=false)
-    {
-        in_err = tr("Неизвестная ошибка");
-    }
-    // Store error description.
-    last_error_txt = in_err;
-    return STG_IDLE;
-}
-
-//------------------------
-void VideoInFFMPEG::initHWDecoder(AVCodecContext *in_dec_ctx)
-{
-    qInfo()<<"[VIP] Compatible HW decoder:"<<av_hwdevice_get_type_name(hw_type)<<hw_type;
-    int ret = av_hwdevice_ctx_create(&hw_dev_ctx, hw_type, NULL, NULL, 0);
-    if(ret>=0)
-    {
-        qInfo()<<"[VIP] HW device init ok";
-        in_dec_ctx->get_format = get_hw_format;
-        in_dec_ctx->hw_device_ctx = av_buffer_ref(hw_dev_ctx);
-    }
-    else
-    {
-        qInfo()<<"[VIP] HW failed"<<ret;
-    }
-}
-
-//------------------------ Try to get hardware decoder for the input.
-void VideoInFFMPEG::findHWDecoder(AVCodec *in_codec)
-{
-#ifdef VIP_EN_DBG_OUT
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        AVHWDeviceType hwtype = AV_HWDEVICE_TYPE_NONE;
-        do
-        {
-            hwtype = av_hwdevice_iterate_types(hwtype);
-            if(hwtype!=AV_HWDEVICE_TYPE_NONE)
-            {
-                qInfo()<<"[VIP] Supported HW decoder:"<<av_hwdevice_get_type_name(hwtype);
-            }
-        }
-        while(hwtype!=AV_HWDEVICE_TYPE_NONE);
-    }
-#endif
-
-    int i;
-    i = 0;
-    // Reset HW data (preset "no HW decoding").
-    hw_dev_ctx = NULL;
-    hw_type = AV_HWDEVICE_TYPE_NONE;
-    hw_fmt = AV_PIX_FMT_NONE;
-    while(1)
-    {
-        const AVCodecHWConfig *hw_config;
-        hw_config = avcodec_get_hw_config(in_codec, i);
-        i++;
-        if(hw_config!=NULL)
-        {
-            if(hw_config->methods&AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
-            {
-                // Save HW pixel format.
-                hw_fmt = hw_config->pix_fmt;
-                hw_type = hw_config->device_type;
-                qInfo()<<"[VIP] HW decoder found";
-                break;
-            }
-            else
-            {
-                qInfo()<<"[VIP]"<<in_codec->name<<"does not support"<<av_hwdevice_get_type_name(hw_config->device_type);
-            }
-        }
-        else
-        {
-            break;
-        }
-    }
-}
-
-//------------------------ Do everything to prepare FFMPEG decoder.
-// TODO: remove [failToPlay()] from here and parse return code on upper level.
-// TODO: make a wrapper for FFMPEG init and data read.
-uint8_t VideoInFFMPEG::decoderInit()
-{
-    int av_res, refcount;
-    AVStream *v_stream;
-    const AVCodec *v_decoder = NULL;
-    AVDictionary *opts = NULL;
-    std::string source_path;
-
-    // Reset frame counter.
-    frame_counter = 1;
-
-    // Reset DTS drop detection.
-    last_dts = 0;
-    dts_detect = false;
-
-    refcount = 1;
-
-    source_path = src_path.toStdString();
-
-    // Prepare FFMPEG library.
-    avdevice_register_all();
-    // Open a new source with FFMPEG.
-    av_dict_set(&opts, "rtbufsize", "100M", 0);
-    //av_res = avformat_open_input(&format_ctx, src_path.toLocal8Bit().constData(), NULL, NULL);    // FFMPEG v5.x crashes on some files
-    av_res = avformat_open_input(&format_ctx, source_path.c_str(), NULL, &opts);
-    if(av_res<0)
-    {
-        new_state = failToPlay(tr("Не удалось открыть источник"));
-        return VIP_RET_NO_SRC;
-    }
-    // Preset muxer settings.
-    format_ctx->flags &= ~(AVFMT_FLAG_SHORTEST|AVFMT_FLAG_FAST_SEEK);   // Clear unwanted flags.
-    format_ctx->flags |= (AVFMT_FLAG_AUTO_BSF|AVFMT_FLAG_GENPTS);       // Set required flags.
-
-    // Get stream info.
-    av_res = avformat_find_stream_info(format_ctx, NULL);
-    if(av_res<0)
-    {
-        new_state = failToPlay(tr("Не удалось определить информацию о потоках источника"));
-        return VIP_RET_NO_STREAM;
-    }
-
-    // Find best video stream.
-    stream_index = av_find_best_stream(format_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &v_decoder, 0);
-    if(stream_index<0)
-    {
-        if(stream_index==AVERROR_STREAM_NOT_FOUND)
-        {
-            new_state = failToPlay(tr("Не удалось найти видео-поток в источнике"));
-            return VIP_RET_NO_STREAM;
-        }
-        else if(stream_index==AVERROR_DECODER_NOT_FOUND)
-        {
-            new_state = failToPlay(tr("Не удалось найти декодер для видео-потока"));
-            return VIP_RET_NO_DECODER;
-        }
-        else
-        {
-            new_state = failToPlay(tr("Неизвестная ошибка при поиске видео-потока в источнике, код: ")+QString::number(av_res));
-            return VIP_RET_UNK_STREAM;
-        }
-    }
-    if(v_decoder==NULL)
-    {
-        new_state = failToPlay(tr("Не удалось найти декодер для видео-потока"));
-        return VIP_RET_NO_DECODER;
-    }
-    // Select detected stream.
-    v_stream = format_ctx->streams[stream_index];
-    // Save number of frames.
-    frames_total = (uint32_t)v_stream->nb_frames;
-
-    // Try to get hardware to decode it.
-    // TODO: maybe add hardware video decoding
-    //findHWDecoder(v_decoder);
-
-    // Allocate a codec context for the decoder.
-    video_dec_ctx = avcodec_alloc_context3(v_decoder);
-    if(video_dec_ctx==NULL)
-    {
-        new_state = failToPlay(tr("Не удалось выделить память для контекста декодера"));
-        return VIP_RET_NO_DEC_CTX;
-    }
-
-    // Copy codec parameters from input stream to decoder context.
-    av_res = avcodec_parameters_to_context(video_dec_ctx, v_stream->codecpar);
-    if(av_res<0)
-    {
-        new_state = failToPlay(tr("Не удалось применить параметры декодера"));
-        return VIP_RET_ERR_DEC_PARAM;
-    }
-
-    /*if(hw_fmt!=AV_PIX_FMT_NONE)
-    {
-        initHWDecoder(video_dec_ctx);
-    }*/
-
-    video_dec_ctx->flags |= AV_CODEC_FLAG_OUTPUT_CORRUPT;
-    //video_dec_ctx->flags |= AV_CODEC_FLAG_GRAY;
-    //video_dec_ctx->flags2 |= AV_CODEC_FLAG2_FAST;
-    video_dec_ctx->flags2 |= AV_CODEC_FLAG2_CHUNKS;
-    // Try to enable multithreaded single-frame decoding.
-    if(QThread::idealThreadCount()>4)
-    {
-        // Limit decoding thread count to 4 if more than 4 thread CPU is available.
-        video_dec_ctx->thread_count = 4;
-    }
-    else if(QThread::idealThreadCount()>1)
-    {
-        video_dec_ctx->thread_count = (QThread::idealThreadCount()-1);
-    }
-    else
-    {
-        video_dec_ctx->thread_count = 1;
-    }
-    //video_dec_ctx->thread_type = FF_THREAD_SLICE;
-    video_dec_ctx->thread_type = FF_THREAD_FRAME;       // causes frame decoding out of order
-#ifdef VIP_EN_DBG_OUT
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        QString log_line;
-        log_line = "[VIP] Threads available: "+QString::number(QThread::idealThreadCount())
-                   +", using "+QString::number(video_dec_ctx->thread_count)+" threads to decode video";
-        qInfo()<<log_line;
-    }
-#endif
-
-    // Init the decoders, with or without reference counting.
-    av_dict_free(&opts);
-    av_dict_set(&opts, "refcounted_frames", refcount ? "1" : "0", 0);
-    av_res = avcodec_open2(video_dec_ctx, v_decoder, &opts);
-    if(av_res<0)
-    {
-        new_state = failToPlay(tr("Не удалось запустить декодер видео"));
-        return VIP_RET_ERR_DEC_START;
-    }
-
-    // Allocate frame container.
-    dec_frame = av_frame_alloc();
-    if(dec_frame==NULL)
-    {
-        new_state = failToPlay(tr("Не удалось выделить память для буфера кадра"));
-        return VIP_RET_NO_FRM_BUF;
-    }
-
-    // Init packet container.
-    //av_init_packet(&dec_packet);
-    dec_packet.data = NULL;
-    dec_packet.size = 0;
-
-#ifdef VIP_EN_DBG_OUT
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        QString log_line("[VIP] Found video");
-        log_line += ", pixel format ID: " + QString::number(v_stream->codecpar->format);
-        if(v_stream->codecpar->field_order==AV_FIELD_PROGRESSIVE)
-        {
-            log_line += ", progressive.";
-        }
-        else if(v_stream->codecpar->field_order==AV_FIELD_TT)
-        {
-            log_line += ", TFF (decode: TFF)";
-        }
-        else if(v_stream->codecpar->field_order==AV_FIELD_BB)
-        {
-            log_line += ", BFF (decode: BFF)";
-        }
-        else if(v_stream->codecpar->field_order==AV_FIELD_TB)
-        {
-            log_line += ", TFF (decode: BFF)";
-        }
-        else if(v_stream->codecpar->field_order==AV_FIELD_BT)
-        {
-            log_line += ", BFF (decode: TFF)";
-        }
-        qInfo()<<log_line;
-        if(hw_fmt==AV_PIX_FMT_NONE)
-        {
-            qInfo()<<"[VIP] Using codec:"<<v_decoder->name<<"(SW)";
-        }
-        else
-        {
-            qInfo()<<"[VIP] Using codec:"<<v_decoder->name<<"(HW)";
-        }
-        // v_stream->codecpar->field_order
-        // v_stream->codecpar->request_sample_fmt
-
-        qInfo()<<"[VIP] New source:"<<video_dec_ctx->width<<"x"<<video_dec_ctx->height;
-    }
-#endif
-    return VIP_RET_OK;
-}
-
-//------------------------ Free decoder resources.
-void VideoInFFMPEG::decoderStop()
-{
-    // Free up resources.
-    av_frame_free(&dec_frame);
-    avcodec_free_context(&video_dec_ctx);
-    avformat_close_input(&format_ctx);
-    if(hw_fmt==AV_PIX_FMT_NONE)
-    {
-        av_buffer_unref(&hw_dev_ctx);
-    }
 }
 
 //------------------------ Clip bottom of the frame if does not fit into the buffer.
@@ -387,6 +73,20 @@ uint16_t VideoInFFMPEG::getFinalWidth(uint16_t in_width)
     return new_width;
 }
 
+//------------------------ Reset all counters and stats per source.
+void VideoInFFMPEG::resetCounters()
+{
+    new_file = true;
+    src_path.clear();
+    last_real_width = last_height = 0;
+    frame_counter = 1;
+    frames_total = 0;
+    gray_line.clear();
+    dummy_line.clear();
+    evt_frames.clear();
+    evt_double.clear();
+}
+
 //------------------------ Check if provided width should be doubled.
 bool VideoInFFMPEG::hasWidthDoubling(uint16_t in_width)
 {
@@ -407,114 +107,14 @@ bool VideoInFFMPEG::hasWidthDoubling(uint16_t in_width)
     }
 }
 
-//------------------------ Init libsws.
-bool VideoInFFMPEG::initFrameConverter(AVFrame *new_frame, uint16_t new_width, uint16_t new_height, uint8_t new_colors)
+//------------------------ Request next frame from FFMPEG.
+void VideoInFFMPEG::askNextFrame()
 {
-    int av_res;
-
-#ifdef VIP_EN_DBG_OUT
-    if((log_level&LOG_FRAME)!=0)
-    {
-        qInfo()<<"[VIP] New AVPixelFormat:"<<new_frame->format;
-    }
-#endif
-    // Setup destination frame buffer.
-    if(new_colors==vid_preset_t::COLOR_BW)
-    {
-        // Setup target buffer for Y plane data pickup.
-        target_pixfmt = VIP_BUF_FMT_BW;
-        av_res = av_image_alloc(video_dst_data, video_dst_linesize, new_width, new_height, target_pixfmt, 4);
-    }
-    else
-    {
-        // Setup target buffer for R/G/B planes data pickup.
-        target_pixfmt = VIP_BUF_FMT_COLOR;
-        av_res = av_image_alloc(video_dst_data, video_dst_linesize, new_width, new_height, target_pixfmt, 4);
-        if(av_res<0)
-        {
-            qWarning()<<DBG_ANCHOR<<"[VIP] Failed to allocate RGB destination buffer in [VideoInFFMPEG::initFrameConverter()], falling back to YUV buffer!";
-            target_pixfmt = VIP_BUF_FMT_BW;
-            av_res = av_image_alloc(video_dst_data, video_dst_linesize, new_width, new_height, target_pixfmt, 4);
-        }
-    }
-    if(av_res<0)
-    {
-        qWarning()<<DBG_ANCHOR<<"[VIP] Failed to allocate destination buffer in [VideoInFFMPEG::initFrameConverter()]!";
-        return false;
-    }
-    // Image buffer was allocated.
-    img_buf_free = false;
-
-    // Setup frame conversion context.
-    conv_ctx = sws_getContext(new_frame->width, new_frame->height, (AVPixelFormat)new_frame->format,
-                              new_width, new_height, target_pixfmt,
-                              SWS_GAUSS, NULL,
-                              NULL, NULL);
-
-    if(conv_ctx==NULL)
-    {
-        qWarning()<<DBG_ANCHOR<<"[VIP] Failed to init resize context in [VideoInFFMPEG::initFrameConverter()]!";
-        return false;
-    }
-#ifdef VIP_EN_DBG_OUT
-    if((log_level&LOG_FRAME)!=0)
-    {
-        qInfo()<<"[VIP] Destination buffer"<<video_dst_linesize[0]<<"x"<<new_height<<"is ready.";
-    }
-#endif
-    return true;
-}
-
-//------------------------ End work with libsws.
-void VideoInFFMPEG::freeFrameConverter()
-{
-    // Free up memory from libsws contexts.
-    sws_freeContext(conv_ctx);
-    if(img_buf_free==false)
-    {
-        av_freep(video_dst_data);
-        img_buf_free = true;
-    }
-}
-
-//------------------------ Check new frame dimensions and update internal structures to stay in check.
-bool VideoInFFMPEG::keepFrameInCheck(AVFrame *new_frame, uint16_t new_width, uint16_t new_height, uint8_t new_colors)
-{
-    bool result;
-    result = false;
-    if(new_frame!=NULL)
-    {
-        // Check if frame resolution or format is changed.
-        if((new_width!=last_width)||(new_height!=last_height)||(new_colors!=last_color_mode)||(new_frame->format!=last_frame_fmt))
-        {
-            // Save new values for later.
-            last_width = new_width;
-            last_height = new_height;
-            last_color_mode = new_colors;
-            last_frame_fmt = (AVPixelFormat)new_frame->format;
-#ifdef VIP_EN_DBG_OUT
-            if((log_level&LOG_FRAME)!=0)
-            {
-                qInfo()<<"[VIP] Re-init of frame converter:"<<last_width<<","<<last_height;
-            }
-#endif
-            // Free up frame converter context.
-            freeFrameConverter();
-            // Initialize frame converter.
-            result = initFrameConverter(new_frame, last_width, last_height, last_color_mode);
-            video_dst_linesize[0] = last_width;
-            if(result!=false)
-            {
-                // Resize gray line to fit all pixels.
-                gray_line.setLength(video_dst_linesize[0]);
-            }
-        }
-        else
-        {
-            result = true;
-        }
-    }
-    return result;
+    // Set settings.
+    emit requestDropDet(detect_frame_drop);
+    emit requestColor(vip_set);
+    // Request new frame from the source.
+    emit requestFrame();
 }
 
 //------------------------ Wait for free space in output queue (blocking).
@@ -526,6 +126,12 @@ bool VideoInFFMPEG::waitForOutQueue(uint16_t line_count)
     {
         return false;
     }
+#ifdef VIP_EN_DBG_OUT
+    bool wait_lock;
+    QElapsedTimer wait_cnt;
+    wait_lock = false;
+    wait_cnt.start();
+#endif
     while(1)
     {
         front_frame = 0;
@@ -546,7 +152,6 @@ bool VideoInFFMPEG::waitForOutQueue(uint16_t line_count)
         if(queue_size<(size_t)(MAX_VLINE_QUEUE_SIZE-line_count))
         {
             // There is enough space in output queue.
-            //qInfo()<<front_frame<<frame_counter;
             // Allow only up to [FRAMES_READ_AHEAD_MAX] frames read-ahead.
             if((front_frame==0)||(frame_counter<(front_frame+FRAMES_READ_AHEAD_MAX)))
             {
@@ -557,8 +162,15 @@ bool VideoInFFMPEG::waitForOutQueue(uint16_t line_count)
         QApplication::processEvents();
         if(finish_work==false)
         {
-            // Wait for queue to empty.
-            QThread::msleep(20);
+#ifdef VIP_EN_DBG_OUT
+            if((wait_lock==false)&&((log_level&LOG_PROCESS)!=0))
+            {
+                wait_lock = true;
+                qInfo()<<"[VIP] Waiting for free space in output queue...";
+            }
+#endif
+            // Wait for queue to empty and not waste CPU cycles.
+            QThread::msleep(5);
         }
         else
         {
@@ -567,6 +179,12 @@ bool VideoInFFMPEG::waitForOutQueue(uint16_t line_count)
             return false;
         }
     }
+#ifdef VIP_EN_DBG_OUT
+    if((wait_lock!=false)&&((log_level&LOG_PROCESS)!=0))
+    {
+        qInfo()<<"[VIP] Waiting took"<<wait_cnt.elapsed()<<"ms";
+    }
+#endif
     return true;
 }
 
@@ -581,99 +199,121 @@ void VideoInFFMPEG::outNewLine(VideoLine *in_line)
     }
 }
 
-//------------------------ Splice frame into individual video lines.
-void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
+//------------------------ Insert service line to signal that previous lines were last from the file.
+void VideoInFFMPEG::insertFileEndLine(uint16_t line_number)
 {
-    uint8_t line_jump, step_cycle;
-    uint16_t safety_cnt, frame_width, line_count, line_offset, line_len, line_num;
-    uint32_t arr_coord;
-    int av_res;
+    VideoLine service_line;
+    service_line.setServEndFile();
+    service_line.frame_number = frame_counter;
+    service_line.line_number = line_number;
+    // Put service line into output queue.
+    outNewLine(&service_line);
+#ifdef VIP_EN_DBG_OUT
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[VIP] File ended";
+    }
+#endif
+}
+
+//------------------------ Insert service line to signal that field of the frame has ended.
+void VideoInFFMPEG::insertFieldEndLine(uint16_t line_number)
+{
+    VideoLine service_line;
+    service_line.setServEndField();
+    service_line.frame_number = frame_counter;
+    service_line.line_number = line_number;
+    // Put service line into output queue.
+    outNewLine(&service_line);
+}
+
+//------------------------ Insert service line to signal that frame has ended.
+void VideoInFFMPEG::insertFrameEndLine(uint16_t line_number)
+{
+    VideoLine service_line;
+    service_line.setServEndFrame();
+    service_line.frame_number = frame_counter;
+    service_line.line_number = line_number;
+    // Put service line into output queue.
+    outNewLine(&service_line);
+}
+
+//------------------------ Splice frame into individual video lines.
+void VideoInFFMPEG::spliceFrame(QImage *in_frame, bool in_double)
+{
+    uint8_t line_jump, field_idx;
+    uint16_t safety_cnt, line_offset, line_len, line_num;
     QElapsedTimer frame_timer, line_timer;
 
 #ifdef VIP_EN_DBG_OUT
-    if((log_level&LOG_FRAME)!=0)
+    if((log_level&LOG_PROCESS)!=0)
     {
-        qInfo()<<"[VIP] New frame #"<<frame_counter;
+        if(new_file==false)
+        {
+            qInfo()<<"[VIP] Slicing frame #"<<frame_counter;
+        }
+        else
+        {
+            qInfo()<<"[VIP] Slicing frame #"<<frame_counter<<"(first in a source)";
+        }
     }
 #endif
 
     // Get frame parameters.
-    line_count = getFinalHeight(in_frame->height);
-    frame_width = getFinalWidth(in_frame->width);
-    last_real_width = in_frame->width;
-    safety_cnt = (line_count+1);
+    last_height = in_frame->height();
+    line_len = last_real_width = in_frame->width();
+    if(in_double!=false)
+    {
+        last_real_width = last_real_width/2;
+    }
+    safety_cnt = (last_height+1);
 
-    // Enable deinterlacing.
+    // Enable deinterlacing (skip over each other line).
     line_jump = 2;
 
-    // Re-initialize frame converter if frame parameters change.
-    if(false==keepFrameInCheck(in_frame, frame_width, line_count, vip_set.colors))
-    {
-        new_state = failToPlay(tr("Не удалось инициализировать конвертер кадра"));
-        return;
-    }
-
-    // Get "true" aligned line width.
-    line_len = video_dst_linesize[0];
-
     // Wait for enough space in output queue.
-    if(waitForOutQueue(line_count)==false)
+    if(waitForOutQueue(last_height)==false)
     {
         if(finish_work==false)
         {
-            qWarning()<<DBG_ANCHOR<<"[VIP] Unsupported height of the frame in [VideoInFFMPEG::spliceFrame()]! ("<<line_count<<")";
+            qWarning()<<DBG_ANCHOR<<"[VIP] Unsupported height of the frame! ("<<last_height<<")";
         }
         return;
     }
+
+    // Report about new frame.
+    emit newFrame(last_real_width, last_height);
 
     // Start frame processing timer.
     frame_timer.start();
 
-    // Convert frame to grayscale.
-    av_res = sws_scale(conv_ctx, (const uint8_t * const *)in_frame->data, in_frame->linesize, 0, line_count, video_dst_data, video_dst_linesize);
-    //av_image_copy(video_dst_data, video_dst_linesize, (const uint8_t **)(in_frame->data), in_frame->linesize, in_frame->format, in_frame->width, in_frame->height);
-
-    if(av_res<0)
-    {
-        new_state = failToPlay(tr("Не удалось преобразовать кадр (не поддерживается)"));
-        return;
-    }
-    else
-    {
-#ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_FRAME)!=0)
-        {
-            qInfo()<<"[VIP] Frame resize time:"<<frame_timer.nsecsElapsed()/1000<<"us";
-        }
-#endif
-    }
-
-    // Report about new frame.
-    if(hasWidthDoubling(in_frame->width)==false)
-    {
-        emit newFrame(line_len, line_count);
-    }
-    else
-    {
-        emit newFrame(line_len/2, line_count);
-    }
 #ifdef VIP_EN_DBG_OUT
     if((log_level&LOG_PROCESS)!=0)
     {
-        qInfo()<<"[VIP] Processing with line jump:"<<line_jump<<", using"<<line_count<<"lines";
+        qInfo()<<"[VIP] Processing with line jump:"<<line_jump<<", using"<<last_height<<"lines";
     }
 #endif
 
-    step_cycle = 0;
+    // Process first field.
+    field_idx = 0;
+    // Set length of the output line.
+    gray_line.setLength(line_len);
     // Lock shared access.
     mtx_lines->lock();
+    // Check if this is the first frame of a new source.
+    if(new_file!=false)
+    {
+        new_file = false;
+        // Put service line "new file" into queue.
+        insertNewFileLine();
+    }
     // Cycle through line-step-cycle iterations (two passes for deinterlacing).
-    while(step_cycle<line_jump)
+    while(field_idx<line_jump)
     {
         // Preset starting line offset for the frame/field.
         // (frame buffer contains data from top to bottom)
         line_offset = 0;
-        if(step_cycle==1)
+        if(field_idx==1)
         {
             // Switch lines down by one for second field.
             line_offset++;
@@ -681,7 +321,7 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
         // Calculate starting line coordinate.
         line_num = line_offset+1;
 
-        // Cycle through lines (backwards through frame).
+        // Cycle through lines.
         do
         {
             // Start line processing timer.
@@ -692,41 +332,12 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
             // Set frame/line counters.
             gray_line.line_number = line_num;
             gray_line.frame_number = frame_counter;
-            gray_line.setDoubleWidth(hasWidthDoubling(in_frame->width));
+            gray_line.setDoubleWidth(in_double);
             // Set source color channel.
-            gray_line.colors = last_color_mode;
-            // Calculate offset in frame data.
-            arr_coord = line_offset*line_len;
-#ifdef VIP_EN_DBG_OUT
-            if(((log_level&LOG_LINES)!=0)||((log_level&LOG_PIXELS)!=0))
-            {
-                qInfo()<<"[VIP] Current line in frame:"<<line_num<<", offset:"<<arr_coord<<", size:"<<line_len;
-            }
-#endif
-            if(target_pixfmt==VIP_BUF_FMT_BW)
-            {
-                // Copy data from frame line (Y plane, brightness only) to video line object.
-                std::copy(&video_dst_data[0][arr_coord], &video_dst_data[0][arr_coord+line_len], gray_line.pixel_data.begin());
-            }
-            else
-            {
-                // Single color channel decoding enabled.
-                if(vip_set.colors==vid_preset_t::COLOR_R)
-                {
-                    // Copy data from frame line (RED plane) to video line object.
-                    std::copy(&video_dst_data[2][arr_coord], &video_dst_data[2][arr_coord+line_len], gray_line.pixel_data.begin());
-                }
-                else if(vip_set.colors==vid_preset_t::COLOR_B)
-                {
-                    // Copy data from frame line (BLUE plane) to video line object.
-                    std::copy(&video_dst_data[1][arr_coord], &video_dst_data[1][arr_coord+line_len], gray_line.pixel_data.begin());
-                }
-                else
-                {
-                    // Copy data from frame line (GREEN plane) to video line object.
-                    std::copy(&video_dst_data[0][arr_coord], &video_dst_data[0][arr_coord+line_len], gray_line.pixel_data.begin());
-                }
-            }
+            gray_line.colors = vip_set.colors;
+
+            // Copy data from frame line into the video line object.
+            std::copy(in_frame->scanLine(line_offset), in_frame->scanLine(line_offset)+in_frame->bytesPerLine(), gray_line.pixel_data.begin());
 
             // Store amount of spent time.
             gray_line.process_time = line_timer.nsecsElapsed()/1000;
@@ -744,7 +355,7 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
             }
 #endif
             // Check for limits of the line count in the frame.
-            if(line_offset<(line_count-line_jump))
+            if(line_offset<(last_height-line_jump))
             {
                 // Go to the next line in the field.
                 line_offset = line_offset+line_jump;
@@ -757,12 +368,11 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
                 break;
             }
             // Advance final line counter.
-            //line_num += 2;
             line_num += line_jump;
         }
         while(safety_cnt>0);
         // Go to the next field.
-        step_cycle++;
+        field_idx++;
     }
     // Frame is done.
     line_num += line_jump;
@@ -772,187 +382,181 @@ void VideoInFFMPEG::spliceFrame(AVFrame *in_frame)
 
     // Notify about new lines from frame.
     emit frameDecoded(frame_counter);
-    // Count frames.
-    frame_counter++;
 #ifdef VIP_EN_DBG_OUT
     if((log_level&LOG_FRAME)!=0)
     {
-        qInfo()<<"[VIP] Frame"<<(frame_counter-1)<<"sliced by"<<frame_timer.nsecsElapsed()/1000<<"us";
+        qInfo()<<"[VIP] Frame"<<frame_counter<<"sliced by"<<frame_timer.nsecsElapsed()/1000<<"us";
     }
 #endif
+    // Count frames.
+    frame_counter++;
 }
 
 //------------------------ Insert dummy frame to keep sync on dropped frames.
-void VideoInFFMPEG::insertDummyFrame(uint32_t frame_cnt, bool last_frame, bool report)
+void VideoInFFMPEG::insertDummyFrame(bool last_frame, bool report)
 {
     uint8_t line_jump, step_cycle;
     uint16_t safety_cnt, line_len, lines_count, line_offset, line_num;
     QElapsedTimer frame_timer, line_timer;
 
-    // Cycle through empty frames.
-    while(frame_cnt>0)
+    // Set line step through frame.
+    line_jump = 2;
+    // Get frame parameters.
+    lines_count = last_height;
+    line_len = last_real_width;
+    safety_cnt = (lines_count+1);
+
+    dummy_line.setServNo();
+    // Resize line to fit all pixels.
+    dummy_line.setLength(line_len);
+    dummy_line.setDoubleWidth(hasWidthDoubling(last_real_width));
+
+    // Wait for enough space in output queue.
+    if(waitForOutQueue(lines_count)==false)
     {
-        frame_cnt--;
+        return;
+    }
 
-        // Set line step through frame.
-        line_jump = 2;
-        // Get frame parameters.
-        lines_count = last_height;
-        line_len = last_real_width;
-        safety_cnt = (lines_count+1);
-
-        dummy_line.setServNo();
-        // Resize line to fit all pixels.
-        dummy_line.setLength(line_len);
-        dummy_line.setDoubleWidth(hasWidthDoubling(last_real_width));
-
-        // Wait for enough space in output queue.
-        if(waitForOutQueue(lines_count)==false)
-        {
-            return;
-        }
-
-        emit newFrame(line_len, lines_count);
+    emit newFrame(line_len, last_height);
 
 #ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_FRAME)!=0)
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        frame_timer.start();
+        if(report==false)
         {
-            frame_timer.start();
+            qInfo()<<"[VIP] Dummy frame"<<frame_counter<<"(filler)";
+        }
+        else
+        {
+            qInfo()<<"[VIP] Dummy frame"<<frame_counter<<"(empty)";
+        }
+    }
+#endif
+
+    step_cycle = 0;
+    // Lock shared access.
+    mtx_lines->lock();
+    // Check if this is the first frame of a new source.
+    if(new_file!=false)
+    {
+        new_file = false;
+        // Put service line "new file" into queue.
+        insertNewFileLine();
+    }
+    // Cycle through line-step-cycle iterations (for deinterlacing).
+    while(step_cycle<line_jump)
+    {
+        // Set starting line offset for the frame/field.
+        // (frame buffer contains data from top to bottom)
+        line_offset = 0;
+        if(step_cycle==1)
+        {
+            // Shift to next field.
+            line_offset++;
+        }
+
+        // Cycle through lines (backwards through frame).
+        do
+        {
+            line_timer.start();
+
+            safety_cnt--;
+
+            // Calculate line coordinate.
+            line_num = line_offset+1;
+
+            // Set frame/line counters.
+            dummy_line.line_number = line_num;
+            dummy_line.frame_number = frame_counter;
             if(report==false)
             {
-                qInfo()<<"[VIP] New frame"<<frame_counter<<"(filler)";
+                dummy_line.setServFiller();
             }
             else
             {
-                qInfo()<<"[VIP] New frame"<<frame_counter<<"(empty dummy)";
+                dummy_line.setEmpty(true);
             }
-        }
-#endif
+            // Store amount of time spent on line.
+            dummy_line.process_time = line_timer.nsecsElapsed()/1000;
 
-        step_cycle = 0;
-        // Lock shared access.
-        mtx_lines->lock();
-        // Cycle through line-step-cycle iterations (for deinterlacing).
-        while(step_cycle<line_jump)
-        {
-            // Set starting line offset for the frame/field.
-            // (frame buffer contains data from top to bottom)
-            line_offset = 0;
-            if(step_cycle==1)
+            // Add resulting line into output queue.
+            outNewLine(&dummy_line);
+
+#ifdef VIP_EN_DBG_OUT
+            if((log_level&LOG_LINES)!=0)
             {
-                // Shift to next field.
-                line_offset++;
-            }
-
-            // Cycle through lines (backwards through frame).
-            do
-            {
-                line_timer.start();
-
-                safety_cnt--;
-
-                // Calculate line coordinate.
-                line_num = line_offset+1;
-
-                // Set frame/line counters.
-                dummy_line.line_number = line_num;
-                dummy_line.frame_number = frame_counter;
                 if(report==false)
                 {
-                    dummy_line.setServFiller();
+                    qInfo()<<"[VIP] Filler line"<<line_num<<"generated";
                 }
                 else
                 {
-                    dummy_line.setEmpty(true);
+                    qInfo()<<"[VIP] Empty line"<<line_num<<"generated";
                 }
-                // Store amount of time spent on line.
-                dummy_line.process_time = line_timer.nsecsElapsed()/1000;
-
-                // Add resulting line into output queue.
-                outNewLine(&dummy_line);
-
+            }
+#endif
+            // Check for limits of the line count in the frame.
+            //qInfo()<<">"<<line_offset<<"-"<<lines_count<<"-"<<step_cycle<<"="<<safety_cnt;
+            if(line_offset<(lines_count-line_jump))
+            {
+                line_offset = line_offset+line_jump;
+            }
+            else
+            {
+                // Field is done.
+                line_num += line_jump;
+                insertFieldEndLine(line_num);
 #ifdef VIP_EN_DBG_OUT
                 if((log_level&LOG_LINES)!=0)
                 {
-                    if(report==false)
-                    {
-                        qInfo()<<"[VIP] Filler line"<<line_num<<"generated";
-                    }
-                    else
-                    {
-                        qInfo()<<"[VIP] Empty line"<<line_num<<"generated";
-                    }
+                    qInfo()<<"[VIP] End-field line generated";
                 }
 #endif
-                // Check for limits of the line count in the frame.
-                //qInfo()<<">"<<line_offset<<"-"<<lines_count<<"-"<<step_cycle<<"="<<safety_cnt;
-                if(line_offset<(lines_count-line_jump))
-                {
-                    line_offset = line_offset+line_jump;
-                }
-                else
-                {
-                    // Field is done.
-                    line_num += line_jump;
-                    insertFieldEndLine(line_num);
-#ifdef VIP_EN_DBG_OUT
-                    if((log_level&LOG_LINES)!=0)
-                    {
-                        qInfo()<<"[VIP] End-field line generated";
-                    }
-#endif
-                    break;
-                }
+                break;
             }
-            while(safety_cnt>0);
-            step_cycle++;
         }
-        // Frame is done.
+        while(safety_cnt>0);
+        step_cycle++;
+    }
+    // Frame is done.
+    line_num += line_jump;
+
+    if(last_frame!=false)
+    {
+        insertFileEndLine(line_num);
         line_num += line_jump;
+    }
 
-        if((frame_cnt==0)&&(last_frame!=false))
-        {
-            insertFileEndLine(line_num);
-            line_num += line_jump;
-        }
-
-        insertFrameEndLine(line_num);
-        // Unlock shared access.
-        mtx_lines->unlock();
+    insertFrameEndLine(line_num);
+    // Unlock shared access.
+    mtx_lines->unlock();
 
 #ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_FRAME)!=0)
-        {
-            qInfo()<<"[VIP] Dummy frame"<<frame_counter<<"generated by"<<frame_timer.nsecsElapsed()/1000<<"us";
-        }
+    if((log_level&LOG_FRAME)!=0)
+    {
+        qInfo()<<"[VIP] Dummy frame"<<frame_counter<<"generated by"<<frame_timer.nsecsElapsed()/1000<<"us";
+    }
 #endif
 
-        if(report!=false)
-        {
-            // Notify about new lines from frame.
-            emit frameDecoded(frame_counter);
-            emit frameDropDetected();
-        }
-
-        // Count frames.
-        frame_counter++;
-
-        // Process Qt events in case of very corrupted file with many skipped frames.
-        QApplication::processEvents();
-        // Check if "stop" command has been issued.
-        if(new_state==STG_SRC_DET)
-        {
-            break;
-        }
+    if(report!=false)
+    {
+        // Notify about new lines from frame.
+        emit frameDecoded(frame_counter);
+        emit frameDropDetected();
     }
+
+    // Count frames.
+    frame_counter++;
 }
 
 //------------------------ Insert service line to signal that next lines will be for new file.
 void VideoInFFMPEG::insertNewFileLine()
 {
     VideoLine service_line;
-    // Set file path in service line.
+
     std::string file_name;
+
     QFileInfo source_file(src_path);
 #ifdef VIP_EN_DBG_OUT
     if((log_level&LOG_PROCESS)!=0)
@@ -979,55 +583,53 @@ void VideoInFFMPEG::insertNewFileLine()
     {
         file_name += "_B";
     }
-    file_name += "."+source_file.suffix().toStdString();            // File extension.
-
+    file_name += "."+source_file.suffix().toStdString();        // File extension.
+    // Set file path in service line.
     service_line.setServNewFile(file_name);
     service_line.frame_number = frame_counter;
     service_line.line_number = 0;
-    // Wait for enough space in output queue.
-    if(waitForOutQueue(1)!=false)
+    // Put service line into output queue.
+    outNewLine(&service_line);
+}
+
+//------------------------ Process a frame, received from FFMPEG.
+void VideoInFFMPEG::processFrame()
+{
+    // Check if received frame is a dummy for a missed frame.
+    if(evt_frames.front().height()==FFMPEGWrapper::DUMMY_HEIGTH)
     {
-        // Lock shared access.
-        mtx_lines->lock();
-        // Put service line into output queue.
-        outNewLine(&service_line);
-        // Unlock shared access.
-        mtx_lines->unlock();
+        int dummy_cnt;
+        // Take number of dropped frames, encoded in width of the image.
+        dummy_cnt = evt_frames.front().width();
+        // Remove processed frame from the queue.
+        evt_frames.pop_front();
+        evt_double.pop_front();
+        for(int32_t dummy_idx=0;dummy_idx<dummy_cnt;dummy_idx++)
+        {
+            // Insert a dummy in the output.
+            // Note: [insertDummyFrame()] can call [QApplication::processEvents()] and slot [receiveFrame()] will alter [evt_frames].
+            insertDummyFrame();
+            QApplication::processEvents();
+            if((event_usr&(EVT_USR_LOAD|EVT_USR_STOP|EVT_USR_UNLOAD))!=0)
+            {
+                break;
+            }
+        }
     }
-}
-
-//------------------------ Insert service line to signal that previous lines were last from the file.
-void VideoInFFMPEG::insertFileEndLine(uint16_t line_number)
-{
-    VideoLine service_line;
-    service_line.setServEndFile();
-    service_line.frame_number = frame_counter;
-    service_line.line_number = line_number;
-    // Put service line into output queue.
-    outNewLine(&service_line);
-    qInfo()<<"[VIP] File ended";
-}
-
-//------------------------ Insert service line to signal that field of the frame has ended.
-void VideoInFFMPEG::insertFieldEndLine(uint16_t line_number)
-{
-    VideoLine service_line;
-    service_line.setServEndField();
-    service_line.frame_number = frame_counter;
-    service_line.line_number = line_number;
-    // Put service line into output queue.
-    outNewLine(&service_line);
-}
-
-//------------------------ Insert service line to signal that frame has ended.
-void VideoInFFMPEG::insertFrameEndLine(uint16_t line_number)
-{
-    VideoLine service_line;
-    service_line.setServEndFrame();
-    service_line.frame_number = frame_counter;
-    service_line.line_number = line_number;
-    // Put service line into output queue.
-    outNewLine(&service_line);
+    else
+    {
+        bool img_double;
+        QImage task_img;
+        // Make copy of the frame from the queue.
+        task_img = evt_frames.front();
+        img_double = evt_double.front();
+        // Remove first frame from the queue.
+        evt_frames.pop_front();
+        evt_double.pop_front();
+        // Splice new frame into individual video lines.
+        // Note: [spliceFrame()] can call [QApplication::processEvents()] and slot [receiveFrame()] will alter [evt_frames] and [evt_double].
+        spliceFrame(&task_img, img_double);
+    }
 }
 
 //------------------------ Set debug logging level.
@@ -1052,37 +654,28 @@ void VideoInFFMPEG::setSourceLocation(QString in_path)
 {
     if(in_path.isEmpty()==false)
     {
-
-        // Add prefix for FFMPEG.
-        //in_path = QString("file:")+in_path;
-        //if(src_path!=in_path)
-        {
-            // Stop playback and splicing.
-            mediaStop();
-
-            src_path = in_path;
 #ifdef VIP_EN_DBG_OUT
-            if((log_level&LOG_SETTINGS)!=0)
-            {
-                qInfo()<<"[VIP] Source location set to"<<src_path;
-            }
+        if((log_level&LOG_SETTINGS)!=0)
+        {
+            qInfo()<<"[VIP] New source requested:"<<in_path;
+        }
 #endif
 
-            // Check file existance and availability.
-            QFile file_check(src_path, this);
-            if(file_check.exists()==false)
-            {
-                failToPlay(tr("Указанный файл источника не найден!"));
-            }
-            else if((file_check.permissions()&QFileDevice::ReadUser)==0)
-            {
-                failToPlay(tr("Недостаточно разрешений для чтения файла источника!"));
-            }
-            else
-            {
-                // Source is ready to be read.
-                new_state = STG_SRC_DET;
-            }
+        // Check file existance and availability.
+        QFile file_check(in_path, this);
+        if(file_check.exists()==false)
+        {
+            emit mediaError(tr("Указанный файл источника не найден!"));
+        }
+        else if((file_check.permissions()&QFileDevice::ReadUser)==0)
+        {
+            emit mediaError(tr("Недостаточно прав для чтения файла источника!"));
+        }
+        else
+        {
+            // Source is ready to be read.
+            event_usr |= EVT_USR_LOAD;
+            evt_source = in_path;
         }
     }
 }
@@ -1158,15 +751,97 @@ void VideoInFFMPEG::requestCurrentFineSettings()
     emit guiUpdFineSettings(vip_set);
 }
 
+//------------------------ Dump capture event flags.
+QString VideoInFFMPEG::logEventCapture(uint8_t in_evt)
+{
+    QString log_line;
+    log_line = "Capture events: ";
+    if((in_evt&EVT_CAP_OPEN)!=0)
+    {
+        log_line += "|OPEN";
+    }
+    if((in_evt&EVT_CAP_FRAME)!=0)
+    {
+        log_line += "|FRAME";
+    }
+    if((in_evt&EVT_CAP_CLOSE)!=0)
+    {
+        log_line += "|CLOSE";
+    }
+    if((in_evt&EVT_CAP_ERROR)!=0)
+    {
+        log_line += "|ERROR";
+    }
+    return log_line;
+}
+
+//------------------------ Dump capture user flags.
+QString VideoInFFMPEG::logEventUser(uint8_t in_evt)
+{
+    QString log_line;
+    log_line = "User events: ";
+    if((in_evt&EVT_USR_LOAD)!=0)
+    {
+        log_line += "|LOAD";
+    }
+    if((in_evt&EVT_USR_PLAY)!=0)
+    {
+        log_line += "|PLAY";
+    }
+    if((in_evt&EVT_USR_PAUSE)!=0)
+    {
+        log_line += "|PAUSE";
+    }
+    if((in_evt&EVT_USR_STOP)!=0)
+    {
+        log_line += "|STOP";
+    }
+    if((in_evt&EVT_USR_UNLOAD)!=0)
+    {
+        log_line += "|UNLOAD";
+    }
+    return log_line;
+}
+
+//------------------------ Dump processing state.
+QString VideoInFFMPEG::logState(uint8_t in_state)
+{
+    QString log_line;
+    if(in_state==STG_IDLE)
+    {
+        log_line = "IDLE";
+    }
+    else if(in_state==STG_LOADING)
+    {
+        log_line = "LOAD";
+    }
+    else if(in_state==STG_STOP)
+    {
+        log_line = "STOP";
+    }
+    else if(in_state==STG_PLAY)
+    {
+        log_line = "PLAY";
+    }
+    else if(in_state==STG_PAUSE)
+    {
+        log_line = "PAUSE";
+    }
+    else if(in_state==STG_STOPPING)
+    {
+        log_line = "STOPPING";
+    }
+    else if(in_state==STG_REOPEN)
+    {
+        log_line = "REOPEN";
+    }
+    return log_line;
+}
+
 //------------------------ Main execution loop.
 void VideoInFFMPEG::runFrameDecode()
 {
-    int av_res;
-    int64_t dts_diff;
-    bool new_file;
     QElapsedTimer timer;
-
-    dts_diff = 0;
 
     qInfo()<<"[VIP] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
     // Check working pointers.
@@ -1187,11 +862,6 @@ void VideoInFFMPEG::runFrameDecode()
     qInfo()<<"[VIP] FFMPEG avutil compile-time version:"<<log_line;
     log_line = QString::fromLocal8Bit(AV_STRINGIFY(LIBSWSCALE_VERSION));
     qInfo()<<"[VIP] FFMPEG swscale compile-time version:"<<log_line;
-
-    // Register all demuxers.
-    //avdevice_register_all();
-    // Register all codecs.
-    //avcodec_register_all();
 
     unsigned vers;
     // Dump run-time FFmpeg versions.
@@ -1220,357 +890,434 @@ void VideoInFFMPEG::runFrameDecode()
                " ("+QString::number(vers)+")";
     qInfo()<<"[VIP] FFMPEG swscale run-time version:"<<log_line;
 
+    qInfo()<<"[VIP] Starting FFMPEG thread...";
+    // Start the thread with FFMPEG wrapper.
+    ffmpeg_thread->start();
+
     // Inf. loop in a thread.
     while(finish_work==false)
     {
-        // Process Qt events.
+        // Process Qt events (collect event flags).
         QApplication::processEvents();
-        new_file = false;
         if(finish_work!=false)
         {
             // Break the loop and do nothing if got shutdown event.
             break;
         }
-        // Apply new state if required.
-        if(proc_state!=new_state)
+        if(proc_state==new_state)
         {
-            if(new_state==STG_PLAY)
+            // Current state is static, can process capture events.
+            // Check source capture events.
+            if(event_cap!=EVT_CAP_NO)
             {
-                // Try to start new playback.
-                if(proc_state==STG_PAUSE)
+                // Source capture events.
+#ifdef VIP_EN_DBG_OUT
+                if((log_level&LOG_PROCESS)!=0)
                 {
-                    // Playback was paused before - just resume.
-                    emit mediaPlaying(frames_total);
+                    qInfo()<<"[VIP]"<<logEventCapture(event_cap);
                 }
-                else
+#endif
+                if((event_cap&EVT_CAP_CLOSE)!=0)
                 {
-                    // Try to init new decoder.
-                    if(decoderInit()==VIP_RET_OK)
+                    // Source is closed.
+                    event_cap &= ~(EVT_CAP_CLOSE|EVT_CAP_OPEN|EVT_CAP_FRAME);
+                }
+                if((event_cap&EVT_CAP_OPEN)!=0)
+                {
+                    // Source is opened and ready to read.
+                    event_cap &= ~(EVT_CAP_OPEN|EVT_CAP_FRAME);
+                    if(proc_state==STG_LOADING)
                     {
-                        // Decoder init ok, playback ready to be started.
-                        emit mediaPlaying(frames_total);
-                        new_file = true;
+                        new_state = STG_STOP;
+                    }
+                    else
+                    {
+                        new_state = STG_IDLE;
+                    }
+                }
+                if((event_cap&EVT_CAP_FRAME)!=0)
+                {
+                    event_cap &= ~(EVT_CAP_FRAME);
+                    /*if(proc_state==STG_PLAY)
+                    {
+                        askNextFrame();
+                    }*/
+                }
+                if((event_cap&EVT_CAP_ERROR)!=0)
+                {
+                    // Capture error.
+                    event_cap &= ~(EVT_CAP_ERROR);
+                    if(proc_state==STG_LOADING)
+                    {
+                        // Was trying to opened the source but it never happened.
+                        new_state = STG_IDLE;
 #ifdef VIP_EN_DBG_OUT
                         if((log_level&LOG_PROCESS)!=0)
                         {
-                            qInfo()<<"[VIP] New file";
+                            qInfo()<<"[VIP] Unable to open file due to error:"<<evt_errcode;
                         }
 #endif
                     }
+                    else if((proc_state==STG_PLAY)||(proc_state==STG_PAUSE))
+                    {
+                        if(evt_errcode==FFMPEGWrapper::FFMERR_EOF)
+                        {
+                            // Playback stopped due to EOF.
+                            new_state = STG_REOPEN;
+#ifdef VIP_EN_DBG_OUT
+                            if((log_level&LOG_PROCESS)!=0)
+                            {
+                                qInfo()<<"[VIP] Got to EOF, re-opening...";
+                            }
+#endif
+                        }
+                        else
+                        {
+                            new_state = STG_STOPPING;
+#ifdef VIP_EN_DBG_OUT
+                            if((log_level&LOG_PROCESS)!=0)
+                            {
+                                qInfo()<<"[VIP] Error"<<evt_errcode<<"while playing, stopping...";
+                            }
+#endif
+                        }
+                    }
+                    // Report about the error.
+                    if(evt_errcode!=FFMPEGWrapper::FFMERR_EOF)
+                    {
+                        if(evt_errcode==FFMPEGWrapper::FFMERR_NO_SRC)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось открыть файл");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_NO_INFO)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось получить информацию о потоке видео");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_NO_VIDEO)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось найти поток видео");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_NO_DECODER)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось найти декодер для видео");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_NO_RAM_DEC)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось выделить ОЗУ для декодера видео");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_DECODER_PARAM)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось установить параметры для декодера видео");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_DECODER_START)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось запустить декодер видео");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_NO_RAM_FB)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось выделить ОЗУ для буфера кадра");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_NO_RAM_READ)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось считать пакет данных из декодера");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_CONV_INIT)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось инициализировать преобразователь кадра");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_FRM_CONV)
+                        {
+                            last_error_txt = tr("FFMPEG: Не удалось преобразовать формат кадра видео");
+                        }
+                        else if(evt_errcode==FFMPEGWrapper::FFMERR_NOT_INIT)
+                        {
+                            last_error_txt = tr("FFMPEG: Не задан источник видео");
+                        }
+                        else
+                        {
+                            last_error_txt = tr("FFMPEG: Неизвестная ошибка чтения видео");
+                        }
+                        emit mediaError(last_error_txt);
+                    }
                 }
             }
-            // No "else" to allow error fall through from [decoderInit()].
+        }
+        if(proc_state==new_state)
+        {
+            // Current state is static, can process user events.
+            if(event_usr!=EVT_USR_NO)
+            {
+                // User inputs.
+#ifdef VIP_EN_DBG_OUT
+                if((log_level&LOG_PROCESS)!=0)
+                {
+                    qInfo()<<"[VIP]"<<logEventUser(event_usr);
+                }
+#endif
+                if((event_usr&EVT_USR_UNLOAD)!=0)
+                {
+                    // User requested any source to be closed/released.
+                    // Clear events with less priority.
+                    event_usr &= ~(EVT_USR_LOAD|EVT_USR_STOP|EVT_USR_PLAY|EVT_USR_PAUSE);
+                    // Check current mode.
+                    if((proc_state==STG_PLAY)||(proc_state==STG_PAUSE))
+                    {
+                        // Playing old source or on pause.
+                        // First, go to STOPPING (to put service lines into queue), than repeat cycle.
+                        new_state = STG_STOPPING;
+                    }
+                    else
+                    {
+                        event_usr &= ~(EVT_USR_UNLOAD);
+                        new_state = STG_IDLE;
+                    }
+                }
+                else if((event_usr&EVT_USR_LOAD)!=0)
+                {
+                    // User requested new source to be opened.
+                    // Clear events with less priority.
+                    event_usr &= ~(EVT_USR_STOP|EVT_USR_PLAY|EVT_USR_PAUSE);
+                    // Check current mode.
+                    if((proc_state==STG_PLAY)||(proc_state==STG_PAUSE))
+                    {
+                        // Playing old source or on pause.
+                        // First, go to STOPPING (to put service lines into queue), than repeat cycle.
+                        new_state = STG_STOPPING;
+                        // Do not clear [EVT_USR_LOAD] so it can be picked up in [STG_STOPPING] state.
+                    }
+                    /*else if(proc_state==STG_STOPPING)
+                    {
+                        // Second part, after playback is properly finished, go to STOP.
+                        event_usr &= ~(EVT_USR_LOAD);
+                        new_state = STG_LOADING;
+                    }*/
+                    else if((proc_state==STG_IDLE)||(proc_state==STG_STOP))
+                    {
+                        // No playback and maybe no source.
+                        event_usr &= ~(EVT_USR_LOAD);
+                        new_state = STG_LOADING;
+                    }
+                }
+                else if((event_usr&EVT_USR_STOP)!=0)
+                {
+                    // User requested STOP.
+                    event_usr &= ~(EVT_USR_STOP|EVT_USR_PLAY|EVT_USR_PAUSE);
+                    if((proc_state==STG_PLAY)||(proc_state==STG_PAUSE))
+                    {
+                        new_state = STG_REOPEN;
+                    }
+                    else if(proc_state==STG_IDLE)
+                    {
+                        emit mediaNotFound();
+                    }
+                }
+                else if((event_usr&EVT_USR_PLAY)!=0)
+                {
+                    // User requested PLAY.
+                    event_usr &= ~(EVT_USR_PLAY|EVT_USR_PAUSE);
+                    if((proc_state==STG_STOP)||(proc_state==STG_PAUSE))
+                    {
+                        new_state = STG_PLAY;
+                    }
+                    else if(proc_state==STG_IDLE)
+                    {
+                        emit mediaNotFound();
+                    }
+                }
+                else if((event_usr&EVT_USR_PAUSE)!=0)
+                {
+                    // User toggled PAUSE.
+                    event_usr &= ~(EVT_USR_PAUSE);
+                    if(proc_state==STG_PLAY)
+                    {
+                        // Currently playing: go to PAUSE.
+                        new_state = STG_PAUSE;
+                    }
+                    else if(proc_state==STG_PAUSE)
+                    {
+                        // Currently on pause: go to PLAY.
+                        new_state = STG_PLAY;
+                    }
+                    else if(proc_state==STG_IDLE)
+                    {
+                        emit mediaNotFound();
+                    }
+                }
+            }
+        }
+        // Change states.
+        if(proc_state!=new_state)
+        {
+            // State has to be changed.
+#ifdef VIP_EN_DBG_OUT
+            if((log_level&LOG_PROCESS)!=0)
+            {
+                qInfo()<<"[VIP] State:"<<logState(proc_state)<<"->"<<logState(new_state);
+            }
+#endif
             if(new_state==STG_IDLE)
             {
-                // Free up resources.
-                decoderStop();
-                emit mediaError(last_error_txt);
-            }
-            else if(new_state==STG_SRC_DET)
-            {
-                if(dec_frame!=NULL)
-                {
-#ifdef VIP_EN_DBG_OUT
-                    if((log_level&LOG_FRAME)!=0)
-                    {
-                        qInfo()<<"[VIP] Inserting trailing frames...";
-                    }
-#endif
-                    // Insert two trailing empty frame to push out all audio data.
-                    insertDummyFrame(1, true, false);
-                }
-                // Free up resources.
-                decoderStop();
+                // Reset old path and frame counter.
+                resetCounters();
+                // Report about changing source.
+                emit mediaLoaded("");
                 emit mediaStopped();
+                emit closeDevice();
+            }
+            else if(new_state==STG_LOADING)
+            {
+                // Loading new source.
+                if((proc_state==STG_STOP)||(proc_state==STG_REOPEN))
+                {
+                    // Previous state was STOP, indicating that some other source was opened.
+                    emit closeDevice();
+                }
+                // Reset old path.
+                resetCounters();
+                // Report about changing source.
+                emit mediaLoaded("");
+                // Ask FFMPEG to open new source.
+                emit openDevice(evt_source, "");
+                // TODO: add watchdog.
+            }
+            else if(new_state==STG_STOP)
+            {
+                // Entering STOP mode.
+                if(proc_state==STG_LOADING)
+                {
+                    // Previous state was loading a new source.
+                    // Save new path to the source.
+                    src_path = evt_source;
+                    // Save new total frame count.
+                    frames_total = evt_frame_cnt;
+                    // Report about new opened source.
+                    emit mediaLoaded(src_path);
+                }
+                else if((proc_state==STG_PLAY)||(proc_state==STG_PAUSE))
+                {
+                    // Previous state was active playback.
+                }
+                // Reset counters.
+                frame_counter = 1;
+                new_file = true;
+                // Report about player entering STOP state (ready to play).
+                emit mediaStopped();
+            }
+            else if(new_state==STG_PLAY)
+            {
+                // Ask for a frame from the source.
+                askNextFrame();
+                // Prevent multiple [askNextFrame()] runs while FFMPEG starts decoding.
+                QThread::msleep(150);
+                // Report about going into PLAY state.
+                emit mediaPlaying(frames_total);
             }
             else if(new_state==STG_PAUSE)
             {
+                // Report about going into PAUSE state.
                 emit mediaPaused();
             }
             proc_state = new_state;
         }
-        // Do things.
-        if(proc_state==STG_IDLE)
+        else
         {
-            QThread::msleep(250);
-        }
-        else if((proc_state==STG_SRC_DET)||(proc_state==STG_PAUSE))
-        {
-            QThread::msleep(50);
-        }
-        else if(proc_state==STG_PLAY)
-        {
-            // Playback state.
-            // Cycle till read video frame or EOF.
-            while(1)
+            // State is static.
+            if((proc_state==STG_IDLE)||(proc_state==STG_STOP))
             {
-                // Read next packet into container.
-                timer.start();
-                av_res = av_read_frame(format_ctx, &dec_packet);
-#ifdef VIP_EN_DBG_OUT
-                if((log_level&LOG_FRAME)!=0)
+                // Wait for some input.
+                QThread::msleep(250);
+            }
+            else if(proc_state==STG_PLAY)
+            {
+                if(evt_frames.size()>0)
                 {
-                    qInfo()<<"[VIP] Packet read time:"<<timer.nsecsElapsed()/1000<<"us";
-                }
-#endif
-
-                if(av_res<0)
-                {
-                    if(av_res==AVERROR_EOF)
+                    if(step_play!=false)
                     {
-#ifdef VIP_EN_DBG_OUT
-                        if((log_level&LOG_PROCESS)!=0)
-                        {
-                            qInfo()<<"[VIP] End of file";
-                        }
-#endif
+                        // Stepped playback enabled.
+                        // Go to pause after this.
+                        new_state = STG_PAUSE;
+                    }
+                    // Check if there is enough space in the internal frame queue.
+                    else if(evt_frames.size()<10)
+                    {
+                        // Request next frame.
+                        askNextFrame();
+                    }
+                    // Processing received frames.
+                    processFrame();
+                }
+                else
+                {
+                    //askNextFrame();
+                    QThread::msleep(5);
+                }
+            }
+            else if(proc_state==STG_PAUSE)
+            {
+                // Finish playback already decoded frames.
+                if(evt_frames.size()>0)
+                {
+                    // Processing received frames.
+                    processFrame();
+                }
+                else
+                {
+                    QThread::msleep(100);
+                }
+            }
+            else if(proc_state==STG_STOPPING)
+            {
+                // Finish playback already decoded frames.
+                if(evt_frames.size()>0)
+                {
+                    // Processing received frames.
+                    processFrame();
+                }
+                else
+                {
+                    // Insert trailing frame with service lines.
+                    insertDummyFrame(true, false);
+                    // Check if there is unprocessed new source event.
+                    if((event_usr&EVT_USR_LOAD)!=0)
+                    {
+                        event_usr &= ~(EVT_USR_LOAD);
+                        // Load new source.
+                        new_state = STG_LOADING;
                     }
                     else
                     {
-                        char err_str[80];
-                        if(av_strerror(av_res, err_str, 80)==0)
-                        {
-                            qWarning()<<DBG_ANCHOR<<"[VIP] Error while reading a frame:"<<err_str;
-                        }
-                        else
-                        {
-                            qWarning()<<DBG_ANCHOR<<"[VIP] Error while reading a frame! Code:"<<av_res;
-                        }
-                    }
-                    break;
-                }
-                // Check if it is the video stream.
-                if(dec_packet.stream_index==stream_index)
-                {
-#ifdef VIP_EN_DBG_OUT
-                    if((log_level&LOG_PROCESS)!=0)
-                    {
-                        qInfo()<<"[VIP] Video packet found, decoding...";
-                    }
-#endif
-                    // It is - quit cycle and go decode.
-                    break;
-                }
-                else
-                {
-                    // It was not a video frame.
-                    // Free up memory from discarded packet.
-                    av_packet_unref(&dec_packet);
-                }
-            }
-            // Check packet read result.
-            if(av_res>=0)
-            {
-#ifdef VIP_EN_DBG_OUT
-                if((log_level&LOG_FRAME)!=0)
-                {
-                    qInfo()<<"[VIP] New frame at position"<<dec_packet.pos<<"bytes, dts:"<<dec_packet.dts<<"pts:"<<dec_packet.pts;
-                }
-#endif
-                // Decode packet.
-                timer.start();
-                av_res = avcodec_send_packet(video_dec_ctx, &dec_packet);
-#ifdef VIP_EN_DBG_OUT
-                if((log_level&LOG_FRAME)!=0)
-                {
-                    qInfo()<<"[VIP] Frame decode time:"<<timer.nsecsElapsed()/1000<<"us";
-                }
-#endif
-                bool skip_packet;
-                skip_packet = true;
-                if(av_res<0)
-                {
-                    // There was an error while decoding.
-#ifdef VIP_EN_DBG_OUT
-                    if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_FRAME)!=0))
-                    {
-                        if(av_res==AVERROR_EOF)
-                        {
-                            qInfo()<<"[VIP] Decoding finished: end of file";
-                        }
-                        else if(av_res==AVERROR(EAGAIN))
-                        {
-                            qInfo()<<"[VIP] Decoding error: not all frames are fetched!";
-                        }
-                        else if(av_res==AVERROR(EINVAL))
-                        {
-                            qInfo()<<"[VIP] Decoding error: decoder not ready or needs flush!";
-                        }
-                        else if(av_res==AVERROR(ENOMEM))
-                        {
-                            qInfo()<<"[VIP] Decoding error: not enough memory!";
-                        }
-                        else
-                        {
-                            qInfo()<<"[VIP] Decoding error: unknown FFMPEG error code"<<av_res;
-                        }
-                    }
-#endif
-                    // Unref frame if it will be not used by [avcodec_receive_frame()].
-                    av_packet_unref(&dec_packet);
-                    //mediaStop();
-                    new_state = failToPlay(tr("Не удалось декодировать поток источника"));
-                }
-                else
-                {
-                    // No error while decoding.
-                    do
-                    {
-                        // Read decoded frame from the packet.
-                        av_res = avcodec_receive_frame(video_dec_ctx, dec_frame);
-                        if((av_res==0)||(av_res==AVERROR(EAGAIN)))
-                        {
-                            // Check if new file has started.
-                            if(new_file!=false)
-                            {
-                                new_file = false;
-#ifdef VIP_EN_DBG_OUT
-                                if((log_level&LOG_FRAME)!=0)
-                                {
-                                    qInfo()<<"[VIP] Inserting leading service line...";
-                                }
-#endif
-                                // Put service line "new file" into queue.
-                                insertNewFileLine();
-                                // Reset frame size beforce splicing first real frame
-                                // to force reinit of image buffers.
-                                last_height = last_width = last_real_width = 0;
-                            }
-                        }
-                        if(av_res==0)
-                        {
-                            // No error with received frame.
-                            // Check if HW decoding is used.
-                            if(dec_frame->format==hw_fmt)
-                            {
-                                //AVFrame hw_frame;
-                                // Transfer frame data from accelerator.
-                                //av_hwframe_transfer_data(hw_frame);
-                                qWarning()<<DBG_ANCHOR<<"[VIP] HW decoding is not implemented!";
-                            }
-
-                            // Crop frame.
-                            if((vip_set.crop_left!=0)||(vip_set.crop_right!=0)||(vip_set.crop_top!=0)||(vip_set.crop_bottom!=0))
-                            {
-                                // Set crop parameters.
-                                dec_frame->crop_top = vip_set.crop_top;
-                                dec_frame->crop_bottom = vip_set.crop_bottom;
-                                dec_frame->crop_left = vip_set.crop_left;
-                                dec_frame->crop_right = vip_set.crop_right;
-                                // Apply cropping.
-                                av_res = av_frame_apply_cropping(dec_frame, AV_FRAME_CROP_UNALIGNED);
-                                if(av_res<0)
-                                {
-                                    qWarning()<<DBG_ANCHOR<<"[VIP] Crop failed!";
-                                }
-                            }
-
-                            // Found usefull data in the packet, allow auto-pause.
-                            skip_packet = false;
-                            if(detect_frame_drop!=false)
-                            {
-                                // Frame dropout detector is active.
-                                if(dts_detect==false)
-                                {
-                                    // It's the first frame since dropout detector was activated.
-                                    // Store DTS of the first decoded frame.
-                                    dts_detect = true;
-                                    last_dts = dec_frame->pkt_dts;
-                                    dts_diff = 0;
-                                }
-                                else
-                                {
-                                    // Calculate DTS difference between current and last frames.
-                                    dts_diff = (dec_frame->pkt_dts-last_dts)-dec_frame->pkt_duration;
-                                }
-#ifdef VIP_EN_DBG_OUT
-                                if((log_level&LOG_FRAME)!=0)
-                                {
-                                    qInfo()<<"[VIP] Units per frame:"<<dec_frame->pkt_duration<<"| current DTS:"<<dec_frame->pkt_dts<<"| diff:"<<dts_diff;
-                                }
-#endif
-                                // Save new "last DTS".
-                                last_dts = dec_frame->pkt_dts;
-                                // Check if current DTS is one step after previous.
-                                if((dts_diff>0)&&(dec_frame->pkt_duration>0))
-                                {
-#ifdef VIP_EN_DBG_OUT
-                                    if((log_level&LOG_PROCESS)!=0)
-                                    {
-                                        qInfo()<<"[VIP] Detected"<<dts_diff/dec_frame->pkt_duration<<"dropped frames in the stream!";
-                                    }
-#endif
-                                    // Insert dummy frames in place of droped frames.
-                                    insertDummyFrame((uint32_t)dts_diff/dec_frame->pkt_duration, false, true);
-                                    // Finally put good frame into queue.
-                                    // Cut frame into video lines and put those into output queue.
-                                    spliceFrame(dec_frame);
-                                }
-                                else
-                                {
-                                    // Cut frame into video lines and put those into output queue.
-                                    spliceFrame(dec_frame);
-                                }
-                            }
-                            else
-                            {
-#ifdef VIP_EN_DBG_OUT
-                                if((log_level&LOG_FRAME)!=0)
-                                {
-                                    qInfo()<<"[VIP] Units per frame:"<<dec_frame->pkt_duration<<"| current PTS:"<<dec_frame->pts<<"| current DTS:"<<dec_frame->pkt_dts<<"| diff:"<<dts_diff;
-                                }
-#endif
-                                // Reset DTS difference detector.
-                                dts_detect = false;
-                                // Cut frame into video lines and put those into output queue.
-                                spliceFrame(dec_frame);
-                            }
-                        }
-                        else if(av_res==AVERROR(EAGAIN))
-                        {
-                            // Not enough data to get the frame, need more data.
-#ifdef VIP_EN_DBG_OUT
-                            if((log_level&LOG_FRAME)!=0)
-                            {
-                                qInfo()<<"[VIP] Next packet needed for a frame...";
-                            }
-#endif
-                            continue;
-                        }
-                    }
-                    while(av_res==0);
-                    // Free up memory from processed packet.
-                    av_packet_unref(&dec_packet);
-                }
-                // Switch pause on if stepped playback is enabled and allowed.
-                if((step_play!=false)&&(skip_packet==false))
-                {
-                    // Check if playback should be stopped due to an error.
-                    if(new_state!=STG_IDLE)
-                    {
-                        new_state = STG_PAUSE;
-#ifdef VIP_EN_DBG_OUT
-                        if((log_level&LOG_PROCESS)!=0)
-                        {
-                            qInfo()<<"[VIP] Auto pausing...";
-                        }
-#endif
+                        // Now safely go to STOP.
+                        new_state = STG_STOP;
                     }
                 }
             }
-            else
+            else if(proc_state==STG_REOPEN)
             {
-                mediaStop();
+                // Finish playback already decoded frames.
+                if(evt_frames.size()>0)
+                {
+                    // Processing received frames.
+                    processFrame();
+                }
+                else
+                {
+                    // Insert trailing frame with service lines.
+                    insertDummyFrame(true, false);
+                    // Save current reopening path to event string ([src_path] will be cleared in [resetCounters()]).
+                    evt_source = src_path;
+                    // Reset everything.
+                    resetCounters();
+                    // Set new mode to LOADING to reload source from [evt_source].
+                    new_state = STG_LOADING;
+                }
             }
         }
-        else
+        if(proc_state>=STG_MAX)
         {
-            qWarning()<<DBG_ANCHOR<<"[VIP] -------------------- Impossible state detected in [VideoInFFMPEG::runFrameDecode()], breaking...";
+            qWarning()<<DBG_ANCHOR<<"[VIP] -------------------- Impossible state"<<proc_state<<"detected, breaking...";
             break;
         }
     }
-
-    freeFrameConverter();
 
     qInfo()<<"[VIP] Loop stop.";
     emit finished();
@@ -1579,81 +1326,115 @@ void VideoInFFMPEG::runFrameDecode()
 //------------------------ Start playback from current position.
 void VideoInFFMPEG::mediaPlay()
 {
-    if((proc_state==STG_SRC_DET)||(proc_state==STG_PAUSE))
-    {
-        new_state = STG_PLAY;
 #ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_PROCESS)!=0)
-        {
-            if(proc_state==STG_SRC_DET)
-            {
-                qInfo()<<"[VIP] Starting playback...";
-            }
-            else
-            {
-                qInfo()<<"[VIP] Resuming playback...";
-            }
-        }
-#endif
-    }
-    else
+    if((log_level&LOG_PROCESS)!=0)
     {
-#ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_PROCESS)!=0)
-        {
-            qInfo()<<"[VIP] Unable to start playback.";
-        }
-#endif
+        qInfo()<<"[VIP] User requested PLAY";
     }
+#endif
+    event_usr |= EVT_USR_PLAY;
 }
 
 //------------------------ Pause playback.
 void VideoInFFMPEG::mediaPause()
 {
-    if(proc_state==STG_PLAY)
-    {
-        new_state = STG_PAUSE;
 #ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_PROCESS)!=0)
-        {
-            qInfo()<<"[VIP] Pausing...";
-        }
-#endif
-    }
-#ifdef VIP_EN_DBG_OUT
-    else
+    if((log_level&LOG_PROCESS)!=0)
     {
-        if((log_level&LOG_PROCESS)!=0)
-        {
-            qInfo()<<"[VIP] Unable to pause: no playback.";
-        }
+        qInfo()<<"[VIP] User toggled PAUSE";
     }
 #endif
+    event_usr |= EVT_USR_PAUSE;
 }
 
 //------------------------ Stop playback.
 void VideoInFFMPEG::mediaStop()
 {
-    if((proc_state==STG_PLAY)||(proc_state==STG_PAUSE))
-    {
-        new_state = STG_SRC_DET;
 #ifdef VIP_EN_DBG_OUT
-        if((log_level&LOG_PROCESS)!=0)
-        {
-            qInfo()<<"[VIP] Stopping playback...";
-        }
-#endif
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[VIP] User requested STOP";
     }
+#endif
+    event_usr |= EVT_USR_STOP;
+}
+
+//------------------------ Close the source.
+void VideoInFFMPEG::mediaUnload()
+{
+#ifdef VIP_EN_DBG_OUT
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[VIP] User requested UNLOAD";
+    }
+#endif
+    event_usr |= EVT_USR_UNLOAD;
 }
 
 //------------------------ Set the flag to break execution loop and exit.
 void VideoInFFMPEG::stop()
 {
 #ifdef VIP_EN_DBG_OUT
-    qInfo()<<"[VIP] Received termination request";
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[VIP] Received termination request";
+    }
 #endif
-
     finish_work = true;
     mediaStop();
-    proc_state = new_state = STG_SRC_DET;
+    proc_state = new_state = STG_STOP;
+}
+
+//------------------------ Capture is opened and ready.
+void VideoInFFMPEG::captureReady(int in_width, int in_height, uint32_t in_frames, float in_fps)
+{
+    // Decoder init ok, playback ready to be started.
+#ifdef VIP_EN_DBG_OUT
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[VIP] New source,"<<in_frames<<"frames at resolution:"<<in_width<<"x"<<in_height<<"@"<<in_fps;
+    }
+#endif
+    evt_frame_cnt = in_frames;
+    event_cap |= EVT_CAP_OPEN;
+}
+
+
+//------------------------ Capture is closed.
+void VideoInFFMPEG::captureClosed()
+{
+#ifdef VIP_EN_DBG_OUT
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[VIP] Capture has closed";
+    }
+#endif
+    event_cap |= EVT_CAP_CLOSE;
+}
+
+//------------------------ Something went wrong with capture process.
+void VideoInFFMPEG::captureError(uint32_t in_err)
+{
+#ifdef VIP_EN_DBG_OUT
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[VIP] Error occured during capture";
+    }
+#endif
+    evt_errcode = in_err;
+    event_cap |= EVT_CAP_ERROR;
+}
+
+//------------------------ Receive new frame from FFMPEG.
+void VideoInFFMPEG::receiveFrame(QImage in_frame, bool in_double)
+{
+#ifdef VIP_EN_DBG_OUT
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[VIP] Received new frame, current frame:"<<frame_counter<<", queue:"<<evt_frames.size();
+    }
+#endif
+    evt_frames.push_back(in_frame);
+    evt_double.push_back(in_double);
+    event_cap |= EVT_CAP_FRAME;
 }

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>974</width>
-    <height>564</height>
+    <width>1030</width>
+    <height>586</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -30,8 +30,27 @@
           <string>Параметры захвата</string>
          </property>
          <layout class="QGridLayout" name="gridLayout">
+          <item row="2" column="0">
+           <widget class="QLabel" name="lblResolution">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Разрешение:</string>
+            </property>
+           </widget>
+          </item>
           <item row="3" column="1">
            <widget class="QSpinBox" name="spbXOffset">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="suffix">
              <string> пикс.</string>
             </property>
@@ -45,6 +64,12 @@
           </item>
           <item row="2" column="1">
            <widget class="QSpinBox" name="spbSetWidth">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="suffix">
              <string> пикс.</string>
             </property>
@@ -61,6 +86,12 @@
           </item>
           <item row="4" column="1" colspan="2">
            <widget class="QSpinBox" name="spbSetFPS">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="suffix">
              <string> кадр/сек</string>
             </property>
@@ -71,7 +102,7 @@
              <number>60</number>
             </property>
             <property name="value">
-             <number>60</number>
+             <number>30</number>
             </property>
            </widget>
           </item>
@@ -88,8 +119,14 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="0">
+          <item row="7" column="0">
            <widget class="QLabel" name="lblUsing">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Применено:</string>
             </property>
@@ -97,15 +134,27 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="lblPreset">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Предустановка:</string>
             </property>
            </widget>
           </item>
-          <item row="6" column="1" colspan="2">
+          <item row="7" column="1" colspan="2">
            <widget class="QLineEdit" name="edtApplied">
             <property name="enabled">
              <bool>false</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
             </property>
             <property name="mouseTracking">
              <bool>false</bool>
@@ -120,6 +169,12 @@
           </item>
           <item row="4" column="0">
            <widget class="QLabel" name="lblFramerate">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Частота кадров:</string>
             </property>
@@ -127,6 +182,12 @@
           </item>
           <item row="3" column="0">
            <widget class="QLabel" name="lblOffset">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Смещение:</string>
             </property>
@@ -147,6 +208,12 @@
           </item>
           <item row="2" column="2">
            <widget class="QSpinBox" name="spbSetHeight">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="suffix">
              <string> пикс.</string>
             </property>
@@ -161,15 +228,14 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="lblResolution">
-            <property name="text">
-             <string>Разрешение:</string>
-            </property>
-           </widget>
-          </item>
           <item row="3" column="2">
            <widget class="QSpinBox" name="spbYOffset">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="suffix">
              <string> пикс.</string>
             </property>
@@ -181,7 +247,7 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="1" colspan="2">
+          <item row="6" column="1" colspan="2">
            <widget class="QPushButton" name="btnApply">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -204,6 +270,49 @@
             </property>
             <property name="text">
              <string>Настройки устройства по умолчанию</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1" colspan="2">
+           <widget class="QComboBox" name="lbxColorCh">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <item>
+             <property name="text">
+              <string>Яркость (канал Y)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Красный (канал R)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Зелёный (канал G)</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Синий (канал B)</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="lblColorCh">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Цветовой канал:</string>
             </property>
            </widget>
           </item>

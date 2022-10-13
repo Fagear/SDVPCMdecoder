@@ -12,8 +12,9 @@ Binarizer::Binarizer()
     in_def_coord.clear();
     in_max_hysteresis_depth = HYST_DEPTH_SAFE;
     in_max_shift_stages = SHIFT_STAGES_MIN;
-    do_ref_lvl_sweep = false;
     do_coord_search = true;
+    do_start_mark_sweep = true;
+    do_ref_lvl_sweep = false;
     force_bit_picker = false;
 
     proc_state = STG_REF_FIND;
@@ -401,14 +402,14 @@ uint8_t Binarizer::processLine()
     if(video_line==NULL)
     {
 #ifdef LB_EN_DBG_OUT
-        qWarning()<<DBG_ANCHOR<<"[LB] Null pointer for video line provided in [Binarizer::processLine()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[LB] Null pointer for video line provided, exiting...";
 #endif
         return (uint8_t)LB_RET_NULL_VIDEO;
     }
     if(out_pcm_line==NULL)
     {
 #ifdef LB_EN_DBG_OUT
-        qWarning()<<DBG_ANCHOR<<"[LB] Null pointer for PCM line provided in [Binarizer::processLine()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[LB] Null pointer for PCM line provided, exiting...";
 #endif
         return (uint8_t)LB_RET_NULL_PCM;
     }
@@ -507,7 +508,7 @@ uint8_t Binarizer::processLine()
         if(line_length<out_pcm_line->getBitsPerSourceLine())
         {
 #ifdef LB_EN_DBG_OUT
-            qWarning()<<DBG_ANCHOR<<"[LB] Line is too short ("<<line_length<<") for PCM data in [Binarizer::processLine()], exiting...";
+            qWarning()<<DBG_ANCHOR<<"[LB] Line is too short ("<<line_length<<") for PCM data, exiting...";
             qWarning()<<DBG_ANCHOR<<"[LB] Minimal size:"<<out_pcm_line->getBitsPerSourceLine();
 #endif
             return (uint8_t)LB_RET_SHORT_LINE;
@@ -729,14 +730,14 @@ uint8_t Binarizer::processLine()
                                 // STC-007 processing.
                                 STC007Line *temp_stc;
                                 temp_stc = static_cast<STC007Line *>(out_pcm_line);
-                                // Force find markers for the line.
-                                findSTC007Markers(temp_stc);
-                                // Revert to provided coordinates after those were overwritten by search.
-                                out_pcm_line->coords = in_def_coord;
                                 // Check if valid data without markers is allowed.
                                 if(digi_set.en_good_no_marker==false)
                                 {
                                     // Binarization without markers for STC-007 is not allowed.
+                                    // Force find markers for the line.
+                                    findSTC007Coordinates(temp_stc);
+                                    // Revert to provided coordinates after those were overwritten by search.
+                                    out_pcm_line->coords = in_def_coord;
                                     if(temp_stc->hasMarkers()==false)
                                     {
                                         // At least one marker was NOT found.
@@ -752,7 +753,7 @@ uint8_t Binarizer::processLine()
                             }
                         }
                         // Try to read PCM data with provided parameters.
-                        readPCMdata(out_pcm_line, 0, false);
+                        readPCMdata(out_pcm_line);
                         // Check the result.
                         if(out_pcm_line->isCRCValid()!=false)
                         {
@@ -882,7 +883,7 @@ uint8_t Binarizer::processLine()
                             else
                             {
                                 // Find coordinates for PCM START and STOP markers ([findPCMmarkers()] resets all data coordinates).
-                                findSTC007Markers(temp_stc);
+                                findSTC007Coordinates(temp_stc);
                             }
                             // Check if markers were found at all.
                             if(temp_stc->hasMarkers()!=false)
@@ -892,7 +893,7 @@ uint8_t Binarizer::processLine()
                                 if((in_def_coord.areValid()==false)||(temp_stc->coords!=in_def_coord))
                                 {
                                     // Markers were found, try to decode data (with the same hysteresis/pixel-shifting preset as on previous stages).
-                                    readPCMdata(out_pcm_line, 0, true);
+                                    readPCMdata(out_pcm_line);
                                     if(out_pcm_line->isCRCValid()!=false)
                                     {
                                         // Set the flag that data was decoded using external parameters.
@@ -1223,7 +1224,7 @@ uint8_t Binarizer::processLine()
                             else
                             {
                                 // Try to find PCM markers in the line.
-                                findSTC007Markers(temp_stc);
+                                findSTC007Coordinates(temp_stc);
                             }
                             if(temp_stc->hasMarkers()==false)
                             {
@@ -1278,7 +1279,9 @@ uint8_t Binarizer::processLine()
                 {
                     qInfo()<<"[LB] ---------- Hysteresis depth (max.):"<<hysteresis_depth_lim;
                     qInfo()<<"[LB] ---------- Pixel-shift stages (max.):"<<shift_stages_lim;
-                    if((log_level&LOG_PIXELS)!=0)
+                }
+                if((log_level&LOG_RAWBIN)!=0)
+                {
                     {
                         uint8_t pixel_val;
                         uint16_t pixel_hop;
@@ -1514,7 +1517,7 @@ uint8_t Binarizer::processLine()
             else
             {
 #ifdef LB_EN_DBG_OUT
-                qWarning()<<DBG_ANCHOR<<"[LB] -------------------- Impossible state detected in [Binarizer::processLine()], breaking...";
+                qWarning()<<DBG_ANCHOR<<"[LB] -------------------- Impossible state detected, breaking...";
 #endif
                 break;
             }
@@ -1523,7 +1526,7 @@ uint8_t Binarizer::processLine()
             if(stage_count>STG_MAX)
             {
 #ifdef LB_EN_DBG_OUT
-                qWarning()<<DBG_ANCHOR<<"[LB] -------------------- Inf. loop detected in [Binarizer::processLine()], breaking...";
+                qWarning()<<DBG_ANCHOR<<"[LB] -------------------- Inf. loop detected, breaking...";
 #endif
                 break;
             }
@@ -1573,7 +1576,7 @@ uint8_t Binarizer::getPixelBrightness(uint16_t x_coord)
 {
     if(video_line==NULL)
     {
-        qWarning()<<DBG_ANCHOR<<"[LB] Video line has NULL pointer in [Binarizer::getPixelBrightness()]!";
+        qWarning()<<DBG_ANCHOR<<"[LB] Video line has NULL pointer!";
         return 0;
     }
     else
@@ -1588,14 +1591,14 @@ uint8_t Binarizer::getPixelBrightness(uint16_t x_coord)
             else
             {
                 // Pixel coordinate out of bounds.
-                qWarning()<<DBG_ANCHOR<<"[LB] Out-of-bound pixel coordinate in [Binarizer::getPixelBrightness()]! ("<<x_coord<<") while max per line is"<<(video_line->pixel_data.size());
+                qWarning()<<DBG_ANCHOR<<"[LB] Out-of-bound pixel coordinate! ("<<x_coord<<") while max per line is"<<(video_line->pixel_data.size());
                 return 0;
             }
         }
         else
         {
             // Pixel coordinate out of bounds.
-            qWarning()<<DBG_ANCHOR<<"[LB] Out-of-bound pixel coordinate in [Binarizer::getPixelBrightness()]! ("<<x_coord<<") while max per scan is"<<scan_end;
+            qWarning()<<DBG_ANCHOR<<"[LB] Out-of-bound pixel coordinate! ("<<x_coord<<") while max per scan is"<<scan_end;
             return 0;
         }
     }
@@ -1731,7 +1734,7 @@ void Binarizer::findMostFrequentCRC(crc_handler_t *crc_array, uint8_t *valid_cnt
 #ifdef LB_EN_DBG_OUT
     if((*valid_cnt)>1)
     {
-        if(((suppress_log==false)||((log_level&LOG_SWEEP)!=0))&&(no_log==false))
+        if(((suppress_log==false)||((log_level&LOG_REF_SWEEP)!=0))&&(no_log==false))
         {
             qInfo()<<"[LB] More than one ("<<(*valid_cnt)<<") 'good' CRC found! Collision detected.";
             for(uint8_t i=1;i<=(*valid_cnt);i++)
@@ -3571,7 +3574,7 @@ uint8_t Binarizer::calcRefLevelByPPB(uint8_t lvl_black, uint8_t lvl_white)
     // STC-007: 137 bits
     // ArVid Audio: 155 bits
     // PCM-16x0: 193 bits
-    if(((log_level&LOG_PIXELS)!=0)||((log_level&LOG_PROCESS)!=0))
+    if(((log_level&LOG_RAWBIN)!=0)||((log_level&LOG_PROCESS)!=0))
     {
         if(est_ppb_by0==0)
         {
@@ -3620,7 +3623,7 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
     STC007Line temp_stc;
     PCMLine *dummy_line;
 
-    suppress_log = !(((log_level&LOG_PROCESS)!=0)&&((log_level&LOG_SWEEP)!=0));
+    suppress_log = !(((log_level&LOG_PROCESS)!=0)&&((log_level&LOG_REF_SWEEP)!=0));
 
     if(pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
     {
@@ -3662,7 +3665,7 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
 
 #ifdef LB_EN_DBG_OUT
     QString log_line;
-    if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_SWEEP)!=0))
+    if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_REF_SWEEP)!=0))
     {
         log_line.sprintf("[LB] Reference level sweep: [%03u...%03u]", low_lvl, high_lvl);
         qInfo()<<log_line;
@@ -3696,7 +3699,7 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
                 {
                     // Both markers are required to produce valid CRC.
                     // Find coordinates for PCM START and STOP markers with current reference level.
-                    findSTC007Markers(&temp_stc, suppress_log);
+                    findSTC007Coordinates(&temp_stc, suppress_log);
                     if(temp_stc.hasMarkers()==false)
                     {
                         // At least one marker was not found.
@@ -3709,7 +3712,7 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
             {
                 // Both markers are present or are not required.
 #ifdef LB_EN_DBG_OUT
-                if((log_level&LOG_SWEEP)!=0)
+                if((log_level&LOG_REF_SWEEP)!=0)
                 {
                     log_line.sprintf("[LB] External coordinates for first-try run provided: [%03u|%04u]", in_def_coord.data_start, in_def_coord.data_stop);
                     qInfo()<<log_line;
@@ -3726,7 +3729,7 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
         if(dummy_line->isCRCValid()==false)
         {
 #ifdef LB_EN_DBG_OUT
-            if((log_level&LOG_SWEEP)!=0)
+            if((log_level&LOG_REF_SWEEP)!=0)
             {
                 qInfo()<<"[LB] Searching for data coordinates...";
             }
@@ -3747,12 +3750,12 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
             else if(pcm_line->getPCMType()==PCMLine::TYPE_STC007)
             {
                 // Find coordinates for PCM START and STOP markers with current reference level.
-                findSTC007Markers(&temp_stc, suppress_log);
+                findSTC007Coordinates(&temp_stc, suppress_log);
             }
             if(dummy_line->hasDataCoordSet()!=false)
             {
 #ifdef LB_EN_DBG_OUT
-                if((log_level&(LOG_SWEEP))!=0)
+                if((log_level&(LOG_REF_SWEEP))!=0)
                 {
                     qInfo()<<"[LB] Data coordinates ok, starting binarization...";
                 }
@@ -3820,7 +3823,7 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
         }
 #ifdef LB_EN_DBG_OUT
         //if(suppress_log==false)
-        if((log_level&(LOG_SWEEP))!=0)
+        if((log_level&(LOG_REF_SWEEP))!=0)
         {
             if(read_result==REF_CRC_OK)
             {
@@ -3909,7 +3912,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
     if(valid_crc_cnt>0)
     {
         // Find the most frequent one (or invalidate all of CRCs if failed).
-        findMostFrequentCRC(crc_stats, &valid_crc_cnt, true, ((log_level&LOG_SWEEP)==0));
+        findMostFrequentCRC(crc_stats, &valid_crc_cnt, true, ((log_level&LOG_REF_SWEEP)==0));
 
 #ifdef LB_EN_DBG_OUT
         if(suppress_log==false)
@@ -3931,7 +3934,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
             if(crc_stats[0].result<digi_set.min_valid_crcs)
             {
 #ifdef LB_EN_DBG_OUT
-                if((suppress_log==false)||((log_level&LOG_SWEEP)!=0))
+                if((suppress_log==false)||((log_level&LOG_REF_SWEEP)!=0))
                 {
                     log_line.sprintf("[LB] Too narrow region (%u CRCs), skipping...", crc_stats[0].result);
                     qInfo()<<log_line;
@@ -3964,7 +3967,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
             STC007Line *temp_stc;
             temp_stc = static_cast<STC007Line *>(pcm_line);
             // Set marker statuses.
-            findSTC007Markers(temp_stc, suppress_log);
+            findSTC007Coordinates(temp_stc, suppress_log);
         }
         // Limit final [readPCMdata()] stages to that of the picked level.
         hysteresis_depth_lim = target_settings.hyst_dph;
@@ -3998,7 +4001,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
             }
         }*/
 #ifdef LB_EN_DBG_OUT
-        if((suppress_log==false)||((log_level&LOG_SWEEP)!=0))
+        if((suppress_log==false)||((log_level&LOG_REF_SWEEP)!=0))
         {
             textDumpCRCSweep(scan_sweep_crcs, 0, 255, pcm_line->ref_level, fast_ref);
             log_line.sprintf("[LB] Good reference: [%03u] with hyst.: [%u], shift st.: [%u], data coord.: [%03d|%04d]",
@@ -4012,7 +4015,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
     {
         // No good reference level was found.
 #ifdef LB_EN_DBG_OUT
-        if((suppress_log==false)||((log_level&LOG_SWEEP)!=0))
+        if((suppress_log==false)||((log_level&LOG_REF_SWEEP)!=0))
         {
             textDumpCRCSweep(scan_sweep_crcs, 0, 255, 0xFFFF, fast_ref);
         }
@@ -4065,7 +4068,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
                 STC007Line *temp_stc;
                 temp_stc = static_cast<STC007Line *>(pcm_line);
                 // Set marker statuses.
-                findSTC007Markers(temp_stc, suppress_log);
+                findSTC007Coordinates(temp_stc, suppress_log);
             }
             /*for(uint16_t index=0;index<256;index++)
             {
@@ -4144,7 +4147,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
         hysteresis_depth_lim = HYST_DEPTH_MIN;
         shift_stages_lim = SHIFT_STAGES_MIN;
 #ifdef LB_EN_DBG_OUT
-        if((suppress_log==false)||((log_level&LOG_SWEEP)!=0))
+        if((suppress_log==false)||((log_level&LOG_REF_SWEEP)!=0))
         {
             textDumpCRCSweep(scan_sweep_crcs, 0, pcm_line->white_level, 0xFFFF, pcm_line->ref_level);
             log_line.sprintf("[LB] Invalid reference: [%03u] with hyst.: [%u], shift st.: [%u], data coord.: [%03d|%04d]",
@@ -5303,6 +5306,330 @@ uint8_t Binarizer::searchPCM16X0Data(PCM16X0SubLine *pcm_line, CoordinatePair da
     }
 }
 
+//------------------------ Try to find PCM data coordinates for STC-007/PCM-F1 with provided hysteresis for reference level.
+//------------------------ Find START (1010) and STOP (01111) line markers and calculate data coordinates from there.
+void Binarizer::searchSTC007Markers(STC007Line *stc_line, uint8_t hyst_lvl, bool no_log)
+{
+    bool suppress_log;
+    uint8_t marker_detect_stage, pixel_val;
+    uint8_t bin_level, bin_low, bin_high;
+    uint16_t pixel, pixel_limit;
+    uint16_t mark_st_1bit_start,    // Pixel coordinate of the start of the 1st "1" START bits.
+             mark_st_1bit_end,      // Pixel coordinate of the end of the 1st "1" START bits and of the start of the 1st "0" START bits.
+             mark_st_3bit_start,    // Pixel coordinate of the start of the 2nd "1" START bits and of the end of the 1st "0" START bits.
+             mark_st_3bit_end,      // Pixel coordinate of the end of the 2nd "1" START bits and of the start of the 2nd "0" START bits.
+             mark_ed_bit_start,     // Pixel coordinate of the start of the "1111" STOP bits and of the end of the "0" STOP bit.
+             mark_ed_bit_end;       // Pixel coordinate of the end of the "1111" STOP bits.
+
+    // Perform marker binarization and find coordinates of PCM START marker.
+    marker_detect_stage = STC007Line::MARK_ST_START;
+    mark_st_1bit_start = mark_st_1bit_end = mark_st_3bit_start = mark_st_3bit_end = 0;
+
+    suppress_log = !((log_level&LOG_COORD)!=0);
+
+    // Get binarization levels.
+    bin_level = (stc_line->ref_level);
+    // Calculate low and high levels for hysteresis.
+    bin_low = getLowLevel(bin_level, hyst_lvl);
+    if(bin_low<digi_set.min_ref_lvl)
+    {
+        bin_low = digi_set.min_ref_lvl;
+    }
+    bin_high = bin_level;   //bin_high = getHighLevel(bin_level, hyst_lvl);
+
+    // Calculate maximum pixel number for the marker search (limit for 1-st bit + 4 bits x PPB + margin).
+    pixel_limit = mark_start_max+estimated_ppb*5;
+    // Clip the limit if necessary.
+    if(pixel_limit>line_length)
+    {
+        pixel_limit = line_length;
+    }
+    pixel = scan_start;
+#ifdef LB_EN_DBG_OUT
+    QString log_line;
+    if(((suppress_log==false)||((log_level&LOG_PROCESS)!=0))&&(no_log==false))
+    {
+        qInfo()<<"[LB] ---------- STC-007 marker search starting...";
+        log_line.sprintf("[LB] Searching START marker, detection in range [%03u...%03u], full marker in [%03u...%03u]",
+                         scan_start, mark_start_max, scan_start, pixel_limit);
+        qInfo()<<log_line;
+        log_line.sprintf("[LB] Ref. levels for marker search: [%03u|%03u]", bin_low, bin_high);
+        qInfo()<<log_line;
+    }
+#endif
+    // Forward bit search from left to right.
+    while(pixel<pixel_limit)
+    {
+        // Get pixel brightness level (8 bit grayscale).
+        pixel_val = getPixelBrightness(pixel);
+#ifdef LB_LOG_MARKER_VERBOSE
+        if((suppress_log==false)&&(no_log==false))
+        {
+            log_line.sprintf("[LB] Pixel %04u val.: %03u, ref.: %03u|%03u",
+                             pixel, pixel_val, bin_low, bin_high);
+            qInfo()<<log_line;
+        }
+#endif
+        if(marker_detect_stage==STC007Line::MARK_ST_START)
+        {
+            // Check smaller limit for the first START bit only.
+            if(pixel>mark_start_max)
+            {
+#ifdef LB_EN_DBG_OUT
+                if((suppress_log==false)&&(no_log==false))
+                {
+                    log_line.sprintf("[LB-%03u] No START-bit[1] found within limits [%03u:%03u], search stopped!", bin_level, scan_start, mark_start_max);
+                    qInfo()<<log_line;
+                }
+#endif
+                // Stop the search.
+                break;
+            }
+            // Detect /\ transition to first "1" marker bit.
+            if(pixel_val>=bin_low)
+            {
+                // Save pixel coordinate of the beginning of 1st START bit.
+                mark_st_1bit_start = pixel;
+                // Update START marker detection stage.
+                marker_detect_stage = STC007Line::MARK_ST_TOP_1;
+#ifdef LB_LOG_MARKER_VERBOSE
+                if((suppress_log==false)&&(no_log==false))
+                {
+                    qInfo()<<"[LB] Got 0->1 transition of ongoing START-bit[1]";
+                }
+#endif
+            }
+        }
+        else if(marker_detect_stage==STC007Line::MARK_ST_TOP_1)
+        {
+            // Detect \/ transition to first "0" marker bit.
+            if(pixel_val<bin_low)
+            {
+                // Save pixel coordinate of the end of 1st START bit.
+                mark_st_1bit_end = pixel;
+                // Update START marker detection stage.
+                marker_detect_stage = STC007Line::MARK_ST_BOT_1;
+#ifdef LB_EN_DBG_OUT
+                if((suppress_log==false)&&(no_log==false))
+                {
+                    log_line.sprintf("[LB-%03u] START-bit[1] found at [%03u:%03u]", bin_level, mark_st_1bit_start, mark_st_1bit_end);
+                    qInfo()<<log_line;
+                }
+#endif
+            }
+        }
+        else if(marker_detect_stage==STC007Line::MARK_ST_BOT_1)
+        {
+            // Detect /\ transition to second "1" marker bit.
+            if(pixel_val>=bin_high)
+            {
+                // Save pixel coordinate of the beginning of 3rd START bit.
+                mark_st_3bit_start = pixel;
+                // Check if detected "0 bit" complies with required length.
+                if(((mark_st_3bit_start-mark_st_1bit_end)>(estimated_ppb*2))||((mark_st_3bit_start-mark_st_1bit_end)<(estimated_ppb/2)))
+                {
+                    // Reset search if length is inadequate.
+                    marker_detect_stage = STC007Line::MARK_ST_START;
+#ifdef LB_EN_DBG_OUT
+                    if((suppress_log==false)&&(no_log==false))
+                    {
+                        log_line.sprintf("[LB-%03u] Erroneous START-bit[2] at [%03u:%03u], restarting...", bin_level, mark_st_1bit_end, mark_st_3bit_start);
+                        qInfo()<<log_line;
+                    }
+#endif
+                }
+                else
+                {
+                    // Update START marker detection stage.
+                    marker_detect_stage = STC007Line::MARK_ST_TOP_2;
+#ifdef LB_EN_DBG_OUT
+                    if((suppress_log==false)&&(no_log==false))
+                    {
+                        log_line.sprintf("[LB-%03u] START-bit[2] found at [%03u:%03u]", bin_level, mark_st_1bit_end, mark_st_3bit_start);
+                        qInfo()<<log_line;
+                    }
+#endif
+                }
+            }
+        }
+        else if(marker_detect_stage==STC007Line::MARK_ST_TOP_2)
+        {
+            // Detect \/ transition to second "0" marker bit.
+            if(pixel_val<bin_high)
+            {
+                // Save pixel coordinate of the end of 3rd START bit.
+                mark_st_3bit_end = pixel;
+                // Check if detected "1 bit" complies with required length.
+                if(((mark_st_3bit_end-mark_st_3bit_start)>(estimated_ppb*2))||((mark_st_3bit_end-mark_st_3bit_start)<(estimated_ppb/2)))
+                {
+                    // Reset search if length is inadequate.
+                    marker_detect_stage = STC007Line::MARK_ST_START;
+#ifdef LB_EN_DBG_OUT
+                    if((suppress_log==false)&&(no_log==false))
+                    {
+                        log_line.sprintf("[LB-%03u] Erroneous START-bit[3] at [%03u:%03u], restarting...", bin_level, mark_st_3bit_start, mark_st_3bit_end);
+                        qInfo()<<log_line;
+                    }
+#endif
+                }
+                else
+                {
+                    // Update START marker detection stage.
+                    marker_detect_stage = STC007Line::MARK_ST_BOT_2;
+#ifdef LB_EN_DBG_OUT
+                    if((suppress_log==false)&&(no_log==false))
+                    {
+                        log_line.sprintf("[LB-%03u] START-bit[3] found at [%03u:%03u]", bin_level, mark_st_3bit_start, mark_st_3bit_end);
+                        qInfo()<<log_line;
+                    }
+#endif
+                    // Stop START marker search.
+                    break;
+                }
+            }
+        }
+        // Go to next pixel in the line.
+        pixel++;
+    }
+
+    // Store final state.
+    stc_line->mark_st_stage = marker_detect_stage;
+    // Save marker start coordinate.
+    stc_line->marker_start_bg_coord = mark_st_1bit_start;
+    stc_line->marker_start_ed_coord = mark_st_3bit_end;
+#ifdef LB_EN_DBG_OUT
+    if((suppress_log==false)&&(no_log==false))
+    {
+        if(stc_line->hasStartMarker()==false)
+        {
+            log_line.sprintf("[LB-%03u] START marker was NOT found!", bin_level);
+            qInfo()<<log_line;
+        }
+    }
+#endif
+
+    // Refine coordinates of PCM STOP marker with new reference level.
+    // Update STOP marker detection stage and coordinates.
+    marker_detect_stage = STC007Line::MARK_ED_START;
+    mark_ed_bit_start = mark_ed_bit_end = 0;
+    // Perform PCM STOP-marker refinement (after reference adjustment) only if PCM START-marker was detected.
+    if(stc_line->hasStartMarker())
+    {
+        bin_low = bin_level;
+        // Calculate minimum pixel number for the marker search.
+        if(mark_end_min>(estimated_ppb*6))
+        {
+            pixel_limit = mark_end_min-estimated_ppb*6;
+        }
+        else
+        {
+            pixel_limit = 0;
+        }
+        pixel = scan_end;
+#ifdef LB_EN_DBG_OUT
+        if((suppress_log==false)&&(no_log==false))
+        {
+            log_line.sprintf("[LB] Searching STOP marker, detection in range [%04u...%04u], full marker in [%04u...%04u]",
+                             pixel, mark_end_min, pixel, pixel_limit);
+            qInfo()<<log_line;
+        }
+#endif
+        // Backwards bit search from right to left.
+        while(pixel>pixel_limit)
+        {
+            // Get pixel brightness level (8 bit grayscale).
+            pixel_val = getPixelBrightness(pixel);
+#ifdef LB_LOG_MARKER_VERBOSE
+            if((suppress_log==false)&&(no_log==false))
+            {
+                log_line.sprintf("[LB] Pixel %04u val.: %03u, ref.: %03u|%03u",
+                                 pixel, pixel_val, bin_low, bin_high);
+                qInfo()<<log_line;
+            }
+#endif
+            if(marker_detect_stage==STC007Line::MARK_ED_START)
+            {
+                // Check additional limit on start of the STOP marker.
+                if(pixel<mark_end_min)
+                {
+#ifdef LB_EN_DBG_OUT
+                    if((suppress_log==false)&&(no_log==false))
+                    {
+                        log_line.sprintf("[LB-%03u] No STOP maker started within limits [%03u:%03u], search stopped!", bin_level, scan_end, mark_end_min);
+                        qInfo()<<log_line;
+                    }
+#endif
+                    // Stop the search.
+                    break;
+                }
+                // Detect /\ transition to "1" marker bit.
+                if(pixel_val>=bin_low)
+                {
+                    // Save pixel coordinate of the end of STOP marker (4-bit wide).
+                    mark_ed_bit_end = (pixel+1);
+                    // Update STOP marker detection stage.
+                    marker_detect_stage=STC007Line::MARK_ED_TOP;
+#ifdef LB_LOG_MARKER_VERBOSE
+                    if((suppress_log==false)&&(no_log==false))
+                    {
+                        qInfo()<<"[LB] Got 0->1 transition from the end of STOP-marker";
+                    }
+#endif
+                }
+            }
+            else if(marker_detect_stage==STC007Line::MARK_ED_TOP)
+            {
+                // Detect \/ transition to "0" marker bit.
+                if(pixel_val<bin_high)
+                {
+                    // Save pixel coordinate of the start of STOP marker (4-bit wide).
+                    mark_ed_bit_start = (pixel+1);
+                    // Update STOP marker detection stage.
+                    marker_detect_stage = STC007Line::MARK_ED_BOT;
+                    // Check if "1" bit length is of correct length.
+                    if(((mark_ed_bit_end-mark_ed_bit_start)>=(estimated_ppb*2))&&((mark_ed_bit_end-mark_ed_bit_start)<=(estimated_ppb*5)))
+                    //if((mark_ed_bit_end-mark_ed_bit_start)>=(estimated_ppb*2))
+                    {
+                        // Update STOP marker detection stage.
+                        marker_detect_stage = STC007Line::MARK_ED_LEN_OK;
+#ifdef LB_EN_DBG_OUT
+                        if((suppress_log==false)&&(no_log==false))
+                        {
+                            log_line.sprintf("[LB-%03u] STOP-marker updated to be at [%03u:%03u]", bin_level, mark_ed_bit_start, mark_ed_bit_end);
+                            qInfo()<<log_line;
+                        }
+#endif
+                        // Finish STOP marker search.
+                        break;
+                    }
+                    else
+                    {
+                        // Wrong "1" bit length, probably noise - reset state machine.
+                        marker_detect_stage = STC007Line::MARK_ED_START;
+#ifdef LB_EN_DBG_OUT
+                        if((suppress_log==false)&&(no_log==false))
+                        {
+                            log_line.sprintf("[LB-%03u] Erroneous STOP-marker at [%03u:%03u], restarting...", bin_level, mark_ed_bit_start, mark_ed_bit_end);
+                            qInfo()<<log_line;
+                        }
+#endif
+                    }
+                }
+            }
+            // Go to previous pixel in the line.
+            pixel--;
+        }
+        // Store final state.
+        stc_line->mark_ed_stage = marker_detect_stage;
+    }
+    // Save data coordinates.
+    stc_line->coords.setCoordinates(mark_st_1bit_end, mark_ed_bit_start);
+    // Save marker stop coordinate.
+    stc_line->marker_stop_ed_coord = mark_ed_bit_end;
+    // Set data coordinates state.
+    stc_line->setDataCoordinatesState(stc_line->hasMarkers());
+}
+
 //------------------------ Try to find PCM data coordinates for PCM-1.
 //------------------------ Sweep beginning and ending data coordinates,
 //------------------------ taking provided data coordinates as center point,
@@ -5751,324 +6078,74 @@ bool Binarizer::findPCM16X0Coordinates(PCM16X0SubLine *pcm16x0_line, CoordinateP
 }
 
 //------------------------ Try to find PCM data coordinates for STC-007/PCM-F1.
-//------------------------ Find START (1010) and STOP (01111) line markers and calculate data coordinates from there.
-void Binarizer::findSTC007Markers(STC007Line *stc_line, bool no_log)
+//------------------------ Coordinates are derived from START and STOP markers' coordinates.
+//------------------------ This function also performs reference level sweep for START marker if allowed.
+void Binarizer::findSTC007Coordinates(STC007Line *stc_line, bool no_log)
 {
     bool suppress_log;
-    uint8_t marker_detect_stage, pixel_val;
-    uint8_t bin_level, bin_low, bin_high, hyst_lvl;
-    uint16_t pixel, pixel_limit;
-    uint16_t mark_st_1bit_start,    // Pixel coordinate of the start of the 1st "1" START bits.
-             mark_st_1bit_end,      // Pixel coordinate of the end of the 1st "1" START bits and of the start of the 1st "0" START bits.
-             mark_st_3bit_start,    // Pixel coordinate of the start of the 2nd "1" START bits and of the end of the 1st "0" START bits.
-             mark_st_3bit_end,      // Pixel coordinate of the end of the 2nd "1" START bits and of the start of the 2nd "0" START bits.
-             mark_ed_bit_start,     // Pixel coordinate of the start of the "1111" STOP bits and of the end of the "0" STOP bit.
-             mark_ed_bit_end;       // Pixel coordinate of the end of the "1111" STOP bits.
-
-    // Perform marker binarization and find coordinates of PCM START marker.
-    marker_detect_stage = STC007Line::MARK_ST_START;
-    mark_st_1bit_start = mark_st_1bit_end = mark_st_3bit_start = mark_st_3bit_end = 0;
+    uint8_t best_hyst;
+    STC007Line temp_line;
+    CoordinatePair temp_coords;
+    std::vector<CoordinatePair> coord_list;
 
     suppress_log = !((log_level&LOG_COORD)!=0);
-
-    // Get binarization levels.
-    bin_level = (stc_line->ref_level);
-    // Calculate low and high levels for hysteresis.
-    // Test revealed that ref. level hysteresis for marker detection produces worse results.
-    hyst_lvl = 0;
-    bin_low = getLowLevel(bin_level, hyst_lvl);
-    bin_high = getHighLevel(bin_level, hyst_lvl);
-
-    // Calculate maximum pixel number for the marker search (limit for 1-st bit + 4 bits x PPB + margin).
-    pixel_limit = mark_start_max+estimated_ppb*5;
-    // Clip the limit if necessary.
-    if(pixel_limit>line_length)
+    // Preset default hysteresis level (hysteresis off).
+    best_hyst = 0;
+    // Check if START-marker sweep is enabled.
+    if(do_start_mark_sweep!=false)
     {
-        pixel_limit = line_length;
-    }
-    pixel = scan_start;
-#ifdef LB_EN_DBG_OUT
-    QString log_line;
-    if(((suppress_log==false)||((log_level&LOG_PROCESS)!=0))&&(no_log==false))
-    {
-        qInfo()<<"[LB] ---------- STC-007 marker search starting...";
-        log_line.sprintf("[LB] Searching START marker, detection in range [%03u...%03u], full marker in [%03u...%03u]",
-                         scan_start, mark_start_max, scan_start, pixel_limit);
-        qInfo()<<log_line;
-        log_line.sprintf("[LB] Ref. level for marker search: %03u", bin_level);
-        qInfo()<<log_line;
-    }
-#endif
-    // Forward bit search from left to right.
-    while(pixel<pixel_limit)
-    {
-        // Get pixel brightness level (8 bit grayscale).
-        pixel_val = getPixelBrightness(pixel);
-#ifdef LB_LOG_MARKER_VERBOSE
-        if((suppress_log==false)&&(no_log==false))
+        // Copy reference level from input PCM line.
+        temp_line = *stc_line;
+        // Cycle through hysteresis levels.
+        for(uint8_t hyst_idx=0;hyst_idx<24;hyst_idx++)
         {
-            log_line.sprintf("[LB] Pixel %04u val.: %03u, ref.: %03u|%03u",
-                             pixel, pixel_val, bin_low, bin_high);
-            qInfo()<<log_line;
-        }
-#endif
-        if(marker_detect_stage==STC007Line::MARK_ST_START)
-        {
-            // Check smaller limit for the first START bit only.
-            if(pixel>mark_start_max)
+            // Search for markers with current hysteresis level.
+            searchSTC007Markers(&temp_line, hyst_idx, true);
+            // Check if markers were found.
+            if(temp_line.hasMarkers()!=false)
             {
-#ifdef LB_EN_DBG_OUT
-                if((suppress_log==false)&&(no_log==false))
-                {
-                    log_line.sprintf("[LB-%03u] No START-bit[1] found within limits [%03u:%03u], search stopped!", bin_level, scan_start, mark_start_max);
-                    qInfo()<<log_line;
-                }
-#endif
-                // Stop the search.
-                break;
-            }
-            // Detect /\ transition to first "1" marker bit.
-            if(pixel_val>=bin_low)
-            {
-                // Save pixel coordinate of the beginning of 1st START bit.
-                mark_st_1bit_start = pixel;
-                // Update START marker detection stage.
-                marker_detect_stage = STC007Line::MARK_ST_TOP_1;
-#ifdef LB_LOG_MARKER_VERBOSE
-                if((suppress_log==false)&&(no_log==false))
-                {
-                    qInfo()<<"[LB] Got 0->1 transition of ongoing START-bit[1]";
-                }
-#endif
+                temp_coords = temp_line.coords;
+                temp_coords.reference = hyst_idx;
+                temp_coords.not_sure = false;
+                // Save result with valid data coordinates.
+                coord_list.push_back(temp_coords);
             }
         }
-        else if(marker_detect_stage==STC007Line::MARK_ST_TOP_1)
+        if(coord_list.size()>0)
         {
-            // Detect \/ transition to first "0" marker bit.
-            if(pixel_val<bin_high)
-            {
-                // Save pixel coordinate of the end of 1st START bit.
-                mark_st_1bit_end = pixel;
-                // Update START marker detection stage.
-                marker_detect_stage = STC007Line::MARK_ST_BOT_1;
-#ifdef LB_EN_DBG_OUT
-                if((suppress_log==false)&&(no_log==false))
-                {
-                    log_line.sprintf("[LB-%03u] START-bit[1] found at [%03u:%03u]", bin_level, mark_st_1bit_start, mark_st_1bit_end);
-                    qInfo()<<log_line;
-                }
-#endif
-            }
-        }
-        else if(marker_detect_stage==STC007Line::MARK_ST_BOT_1)
-        {
-            // Detect /\ transition to second "1" marker bit.
-            if(pixel_val>=bin_low)
-            {
-                // Save pixel coordinate of the beginning of 3rd START bit.
-                mark_st_3bit_start = pixel;
-                // Check if detected "0 bit" complies with required length.
-                if(((mark_st_3bit_start-mark_st_1bit_end)>(estimated_ppb*2))||((mark_st_3bit_start-mark_st_1bit_end)<(estimated_ppb/2)))
-                {
-                    // Reset search if length is inadequate.
-                    marker_detect_stage = STC007Line::MARK_ST_START;
-#ifdef LB_EN_DBG_OUT
-                    if((suppress_log==false)&&(no_log==false))
-                    {
-                        log_line.sprintf("[LB-%03u] Erroneous START-bit[2] at [%03u:%03u], restarting...", bin_level, mark_st_1bit_end, mark_st_3bit_start);
-                        qInfo()<<log_line;
-                    }
-#endif
-                }
-                else
-                {
-                    // Update START marker detection stage.
-                    marker_detect_stage = STC007Line::MARK_ST_TOP_2;
-#ifdef LB_EN_DBG_OUT
-                    if((suppress_log==false)&&(no_log==false))
-                    {
-                        log_line.sprintf("[LB-%03u] START-bit[2] found at [%03u:%03u]", bin_level, mark_st_1bit_end, mark_st_3bit_start);
-                        qInfo()<<log_line;
-                    }
-#endif
-                }
-            }
-        }
-        else if(marker_detect_stage==STC007Line::MARK_ST_TOP_2)
-        {
-            // Detect \/ transition to second "0" marker bit.
-            if(pixel_val<bin_high)
-            {
-                // Save pixel coordinate of the end of 3rd START bit.
-                mark_st_3bit_end = pixel;
-                // Check if detected "1 bit" complies with required length.
-                if(((mark_st_3bit_end-mark_st_3bit_start)>(estimated_ppb*2))||((mark_st_3bit_end-mark_st_3bit_start)<(estimated_ppb/2)))
-                {
-                    // Reset search if length is inadequate.
-                    marker_detect_stage = STC007Line::MARK_ST_START;
-#ifdef LB_EN_DBG_OUT
-                    if((suppress_log==false)&&(no_log==false))
-                    {
-                        log_line.sprintf("[LB-%03u] Erroneous START-bit[3] at [%03u:%03u], restarting...", bin_level, mark_st_3bit_start, mark_st_3bit_end);
-                        qInfo()<<log_line;
-                    }
-#endif
-                }
-                else
-                {
-                    // Update START marker detection stage.
-                    marker_detect_stage = STC007Line::MARK_ST_BOT_2;
-#ifdef LB_EN_DBG_OUT
-                    if((suppress_log==false)&&(no_log==false))
-                    {
-                        log_line.sprintf("[LB-%03u] START-bit[3] found at [%03u:%03u]", bin_level, mark_st_3bit_start, mark_st_3bit_end);
-                        qInfo()<<log_line;
-                    }
-#endif
-                    // Stop START marker search.
-                    break;
-                }
-            }
-        }
-        // Go to next pixel in the line.
-        pixel++;
-    }
-
-    // Store final state.
-    stc_line->mark_st_stage = marker_detect_stage;
-    // Save marker start coordinate.
-    stc_line->marker_start_bg_coord = mark_st_1bit_start;
-    stc_line->marker_start_ed_coord = mark_st_3bit_end;
-#ifdef LB_EN_DBG_OUT
-    if((suppress_log==false)&&(no_log==false))
-    {
-        if(stc_line->hasStartMarker()==false)
-        {
-            log_line.sprintf("[LB-%03u] START marker was NOT found!", bin_level);
-            qInfo()<<log_line;
+            // Sort coordinates list.
+            std::sort(coord_list.begin(), coord_list.end());
+            // Pick first in the list as the best one (and replace the default one).
+            best_hyst = coord_list[0].reference;
         }
     }
-#endif
-
-    // Refine coordinates of PCM STOP marker with new reference level.
-    // Update STOP marker detection stage and coordinates.
-    marker_detect_stage = STC007Line::MARK_ED_START;
-    mark_ed_bit_start = mark_ed_bit_end = 0;
-    // Perform PCM STOP-marker refinement (after reference adjustment) only if PCM START-marker was detected.
-    if(stc_line->hasStartMarker())
-    {
-        // Calculate minimum pixel number for the marker search.
-        if(mark_end_min>(estimated_ppb*6))
-        {
-            pixel_limit = mark_end_min-estimated_ppb*6;
-        }
-        else
-        {
-            pixel_limit = 0;
-        }
-        pixel = scan_end;
 #ifdef LB_EN_DBG_OUT
-        if((suppress_log==false)&&(no_log==false))
+    if((do_start_mark_sweep!=false)&&(no_log==false))
+    {
+        QString log_line;
+        if(best_hyst!=0)
         {
-            log_line.sprintf("[LB] Searching STOP marker, detection in range [%04u...%04u], full marker in [%04u...%04u]",
-                             pixel, mark_end_min, pixel, pixel_limit);
-            qInfo()<<log_line;
-        }
-#endif
-        // Backwards bit search from right to left.
-        while(pixel>pixel_limit)
-        {
-            // Get pixel brightness level (8 bit grayscale).
-            pixel_val = getPixelBrightness(pixel);
-#ifdef LB_LOG_MARKER_VERBOSE
-            if((suppress_log==false)&&(no_log==false))
+            if((log_level&LOG_PROCESS)!=0)
             {
-                log_line.sprintf("[LB] Pixel %04u val.: %03u, ref.: %03u|%03u",
-                                 pixel, pixel_val, bin_low, bin_high);
+                log_line.sprintf("[LB] Line [%03u:%03u] START marker hysteresis detected: [%02u]",
+                                 stc_line->frame_number,
+                                 stc_line->line_number,
+                                 best_hyst);
                 qInfo()<<log_line;
             }
-#endif
-            if(marker_detect_stage==STC007Line::MARK_ED_START)
-            {
-                // Check additional limit on start of the STOP marker.
-                if(pixel<mark_end_min)
-                {
-    #ifdef LB_EN_DBG_OUT
-                    if((suppress_log==false)&&(no_log==false))
-                    {
-                        log_line.sprintf("[LB-%03u] No STOP maker started within limits [%03u:%03u], search stopped!", bin_level, scan_end, mark_end_min);
-                        qInfo()<<log_line;
-                    }
-    #endif
-                    // Stop the search.
-                    break;
-                }
-                // Detect /\ transition to "1" marker bit.
-                if(pixel_val>=bin_low)
-                {
-                    // Save pixel coordinate of the end of STOP marker (4-bit wide).
-                    mark_ed_bit_end = (pixel+1);
-                    // Update STOP marker detection stage.
-                    marker_detect_stage=STC007Line::MARK_ED_TOP;
-#ifdef LB_LOG_MARKER_VERBOSE
-                    if((suppress_log==false)&&(no_log==false))
-                    {
-                        qInfo()<<"[LB] Got 0->1 transition from the end of STOP-marker";
-                    }
-#endif
-                }
-            }
-            else if(marker_detect_stage==STC007Line::MARK_ED_TOP)
-            {
-                // Detect \/ transition to "0" marker bit.
-                if(pixel_val<bin_high)
-                {
-                    // Save pixel coordinate of the start of STOP marker (4-bit wide).
-                    mark_ed_bit_start = (pixel+1);
-                    // Update STOP marker detection stage.
-                    marker_detect_stage = STC007Line::MARK_ED_BOT;
-                    // Check if "1" bit length is of correct length.
-                    if(((mark_ed_bit_end-mark_ed_bit_start)>=(estimated_ppb*2))&&((mark_ed_bit_end-mark_ed_bit_start)<=(estimated_ppb*5)))
-                    //if((mark_ed_bit_end-mark_ed_bit_start)>=(estimated_ppb*2))
-                    {
-                        // Update STOP marker detection stage.
-                        marker_detect_stage = STC007Line::MARK_ED_LEN_OK;
-#ifdef LB_EN_DBG_OUT
-                        if((suppress_log==false)&&(no_log==false))
-                        {
-                            log_line.sprintf("[LB-%03u] STOP-marker updated to be at [%03u:%03u]", bin_level, mark_ed_bit_start, mark_ed_bit_end);
-                            qInfo()<<log_line;
-                        }
-#endif
-                        // Finish STOP marker search.
-                        break;
-                    }
-                    else
-                    {
-                        // Wrong "1" bit length, probably noise - reset state machine.
-                        marker_detect_stage = STC007Line::MARK_ED_START;
-#ifdef LB_EN_DBG_OUT
-                        if((suppress_log==false)&&(no_log==false))
-                        {
-                            log_line.sprintf("[LB-%03u] Erroneous STOP-marker at [%03u:%03u], restarting...", bin_level, mark_ed_bit_start, mark_ed_bit_end);
-                            qInfo()<<log_line;
-                        }
-#endif
-                    }
-                }
-            }
-            // Go to previous pixel in the line.
-            pixel--;
         }
-        // Store final state.
-        stc_line->mark_ed_stage = marker_detect_stage;
+        if((suppress_log==false)&&(coord_list.size()>0))
+        {
+            for(uint8_t hyst_idx=0;hyst_idx<coord_list.size();hyst_idx++)
+            {
+                log_line.sprintf("[LB] Hyst.: [%02u], coords.: [%03u:%04u]", coord_list[hyst_idx].reference, coord_list[hyst_idx].data_start, coord_list[hyst_idx].data_stop);
+                qInfo()<<log_line;
+            }
+        }
     }
-    // Save data coordinates.
-    stc_line->coords.setCoordinates(mark_st_1bit_end, mark_ed_bit_start);
-    // Save marker stop coordinate.
-    stc_line->marker_stop_ed_coord = mark_ed_bit_end;
-    // Set data coordinates state.
-    stc_line->setDataCoordinatesState(stc_line->hasMarkers());
+#endif
+    // Make final markers/coordinates search with set hysteresis level.
+    searchSTC007Markers(stc_line, best_hyst, no_log);
 }
 
 //------------------------ Bruteforce pick bits that were cut off the line.
@@ -7006,11 +7083,10 @@ uint8_t Binarizer::fillPCM1(PCM1Line *fill_pcm_line, uint8_t ref_delta, uint8_t 
 
 #ifdef LB_EN_DBG_OUT
     QString log_line;
-    if(((log_level&LOG_PIXELS)!=0)&&(no_log==false))
+    if(((log_level&LOG_RAWBIN)!=0)&&(no_log==false))
     {
-        log_line = "[LB] Pixel shift stage: ";
-        log_line += QString::number(shift_stg);
-        log_line += ", coordinates: ";
+        log_line.sprintf("[LB] Line [%03u:%03u] PS: [%01u], HL: [%01u], coords: ",
+                         fill_pcm_line->frame_number, fill_pcm_line->line_number, shift_stg, ref_delta);
         pcm_word = 0;
         word_bit_pos = 0;
         for(pcm_bit=0;pcm_bit<=(PCM1Line::BITS_PCM_DATA-1);pcm_bit++)
@@ -7223,11 +7299,10 @@ uint8_t Binarizer::fillPCM16X0(PCM16X0SubLine *fill_pcm_line, uint8_t ref_delta,
     }
 
 #ifdef LB_EN_DBG_OUT
-    if(((log_level&LOG_PIXELS)!=0)&&(no_log==false))
+    if(((log_level&LOG_RAWBIN)!=0)&&(no_log==false))
     {
-        log_line = "[LB] Pixel shift stage: ";
-        log_line += QString::number(shift_stg);
-        log_line += ", coordinates: ";
+        log_line.sprintf("[LB] Line [%03u:%03u] PS: [%01u], HL: [%01u], coords: ",
+                         fill_pcm_line->frame_number, fill_pcm_line->line_number, shift_stg, ref_delta);
         pcm_word = 0;
         word_bit_pos = 0;
         for(uint8_t pcm_bit=start_bit;pcm_bit<=stop_bit;pcm_bit++)
@@ -7397,11 +7472,10 @@ uint8_t Binarizer::fillSTC007(STC007Line *fill_pcm_line, uint8_t ref_delta, uint
 
 #ifdef LB_EN_DBG_OUT
     QString log_line;
-    if(((log_level&LOG_PIXELS)!=0)&&(no_log==false))
+    if(((log_level&LOG_RAWBIN)!=0)&&(no_log==false))
     {
-        log_line = "[LB] Pixel shift stage: ";
-        log_line += QString::number(shift_stg);
-        log_line += ", coordinates: ";
+        log_line.sprintf("[LB] Line [%03u:%03u] PS: [%01u], HL: [%01u], coords: ",
+                         fill_pcm_line->frame_number, fill_pcm_line->line_number, shift_stg, ref_delta);
         pcm_word = 0;
         word_bit_pos = 0;
         for(uint8_t pcm_bit=0;pcm_bit<=(STC007Line::BITS_PCM_DATA-1);pcm_bit++)
@@ -7556,14 +7630,14 @@ uint8_t Binarizer::fillDataWords(PCMLine *fill_pcm_line, uint8_t ref_delta, uint
     if(ref_delta>HYST_DEPTH_MAX)
     {
 #ifdef LB_EN_DBG_OUT
-        qWarning()<<DBG_ANCHOR<<"[LB] Hysteresis level out-of-bounds in [Binarizer::fillDataWords()] with level:"<<ref_delta;
+        qWarning()<<DBG_ANCHOR<<"[LB] Hysteresis level out-of-bounds with level:"<<ref_delta;
 #endif
         return STG_NO_GOOD;
     }
     if(shift_stg>SHIFT_STAGES_MAX)
     {
 #ifdef LB_EN_DBG_OUT
-        qWarning()<<DBG_ANCHOR<<"[LB] Pixel-shifting stages out-of-bounds in [Binarizer::fillDataWords()] with stage:"<<shift_stg;
+        qWarning()<<DBG_ANCHOR<<"[LB] Pixel-shifting stages out-of-bounds with stage:"<<shift_stg;
 #endif
         return STG_NO_GOOD;
     }

@@ -12,7 +12,8 @@ public:
         COLOR_BW,               // Use all colors, process Y (brightness) channel.
         COLOR_R,                // Use only red channel.
         COLOR_G,                // Use only green channel.
-        COLOR_B                 // Use only blue channel.
+        COLOR_B,                // Use only blue channel.
+        COLOR_MAX
     };
 
 public:

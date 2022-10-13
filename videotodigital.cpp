@@ -778,12 +778,6 @@ void VideoToDigital::doBinarize()
                     // Determine if current line is from even field.
                     even_line = ((source_line.line_number%2)==0);
 
-                    // Set logging parameters.
-                    if((log_level&Binarizer::LOG_PROCESS)!=0)
-                    {
-                        log_level |= Binarizer::LOG_COORD;
-                    }
-
                     line_converter.setLogLevel(log_level);
                     // Set parameters for converter.
                     line_converter.setMode(binarization_mode);
@@ -1004,7 +998,7 @@ void VideoToDigital::doBinarize()
 #ifdef LB_EN_DBG_OUT
                                         if(((log_level&Binarizer::LOG_PROCESS)!=0)||((log_level&Binarizer::LOG_LINE_DUMP)!=0))
                                         {
-                                            qInfo()<<"[V2D] First line in new field is safe to process (Header at the top)";
+                                            qInfo()<<"[V2D] First line with PCM in new field is safe to process (Header at the top)";
                                         }
 #endif
                                     }
@@ -1035,7 +1029,7 @@ void VideoToDigital::doBinarize()
 #ifdef LB_EN_DBG_OUT
                                         if(((log_level&Binarizer::LOG_PROCESS)!=0)||((log_level&Binarizer::LOG_LINE_DUMP)!=0))
                                         {
-                                            qInfo()<<"[V2D] First line in new field is safe to process (Control Block at the top)";
+                                            qInfo()<<"[V2D] First line with PCM in new field is safe to process (Control Block at the top)";
                                         }
 #endif
                                     }
@@ -1166,7 +1160,7 @@ void VideoToDigital::doBinarize()
 #ifdef LB_EN_DBG_OUT
                                         if(((log_level&Binarizer::LOG_PROCESS)!=0)||((log_level&Binarizer::LOG_LINE_DUMP)!=0))
                                         {
-                                            qInfo()<<"[V2D] First line in new field: unsafe to process!";
+                                            qInfo()<<"[V2D] First line with PCM in new field: unsafe to process!";
                                         }
 #endif
                                     }
@@ -1442,11 +1436,11 @@ void VideoToDigital::doBinarize()
                                     {
                                         if(field_state==FIELD_SAFE)
                                         {
-                                            qInfo()<<"[V2D] First line in new field: safe to process, but bad CRC";
+                                            qInfo()<<"[V2D] First line with PCM in new field: safe to process, but bad CRC";
                                         }
                                         else if(field_state==FIELD_UNSAFE)
                                         {
-                                            qInfo()<<"[V2D] First line in new field: unsafe to process and already bad CRC";
+                                            qInfo()<<"[V2D] First line with PCM in new field: unsafe to process and already bad CRC";
                                         }
                                     }
 #endif

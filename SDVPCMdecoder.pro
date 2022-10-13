@@ -70,7 +70,8 @@ SOURCES += main.cpp\
     pcm16x0subline.cpp \
     samples2audio.cpp \
     samples2wav.cpp \
-    capt_sel.cpp
+    capt_sel.cpp \
+    ffmpegwrapper.cpp
 
 HEADERS  += mainwindow.h \
     videoline.h \
@@ -107,7 +108,8 @@ HEADERS  += mainwindow.h \
     pcm16x0subline.h \
     samples2audio.h \
     samples2wav.h \
-    capt_sel.h
+    capt_sel.h \
+    ffmpegwrapper.h
 
 FORMS    += mainwindow.ui \
     fine_bin_set.ui \

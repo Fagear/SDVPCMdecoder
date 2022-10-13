@@ -324,7 +324,7 @@
             <string>СТАРТ/СТОП исходное видео</string>
            </property>
            <property name="checkable">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
            <property name="default">
             <bool>true</bool>
@@ -355,6 +355,9 @@
          </item>
          <item>
           <widget class="QPushButton" name="btnPause">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
              <horstretch>0</horstretch>
@@ -380,7 +383,7 @@
             <string>Пауза</string>
            </property>
            <property name="checkable">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -4700,6 +4703,7 @@ Q-коррекций:</string>
     </property>
     <addaction name="actLoadPCM"/>
     <addaction name="actOpenCapture"/>
+    <addaction name="actCloseSource"/>
     <addaction name="separator"/>
     <addaction name="actExit"/>
    </widget>
@@ -4715,7 +4719,7 @@ Q-коррекций:</string>
       <string>Вывод отладочной информации в консоль</string>
      </property>
      <property name="title">
-      <string>Обработка кадра</string>
+      <string>Захват и декодирование видео</string>
      </property>
      <property name="icon">
       <iconset resource="icons.qrc">
@@ -4725,7 +4729,6 @@ Q-коррекций:</string>
      <addaction name="actVIPProcess"/>
      <addaction name="actVIPFrame"/>
      <addaction name="actVIPLine"/>
-     <addaction name="actVIPPixel"/>
      <addaction name="separator"/>
      <addaction name="actVIPOff"/>
     </widget>
@@ -4737,7 +4740,7 @@ Q-коррекций:</string>
       <string>Вывод отладочной информации в консоль</string>
      </property>
      <property name="title">
-      <string>Бинаризация</string>
+      <string>Поиск данных, бинаризация</string>
      </property>
      <property name="icon">
       <iconset resource="icons.qrc">
@@ -4745,9 +4748,10 @@ Q-коррекций:</string>
      </property>
      <addaction name="actLBSettings"/>
      <addaction name="actLBProcess"/>
-     <addaction name="actLBPixels"/>
      <addaction name="actLBBright"/>
      <addaction name="actLBSweep"/>
+     <addaction name="actLBCoords"/>
+     <addaction name="actLBRawBin"/>
      <addaction name="actGenLines"/>
      <addaction name="separator"/>
      <addaction name="actLBOff"/>
@@ -4984,12 +4988,12 @@ Q-коррекций:</string>
     <string>Общий процесс</string>
    </property>
   </action>
-  <action name="actLBPixels">
+  <action name="actLBRawBin">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Координаты пикселей, сырые данные</string>
+    <string>Сырые данные при бинаризации</string>
    </property>
   </action>
   <action name="actLBBright">
@@ -5413,6 +5417,19 @@ Q-коррекций:</string>
    </property>
    <property name="shortcut">
     <string notr="true">Ctrl+I</string>
+   </property>
+  </action>
+  <action name="actCloseSource">
+   <property name="text">
+    <string>Закрыть источник</string>
+   </property>
+  </action>
+  <action name="actLBCoords">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Координаты данных</string>
    </property>
   </action>
  </widget>

@@ -7,6 +7,7 @@ CoordinatePair::CoordinatePair()
 
 CoordinatePair::CoordinatePair(const CoordinatePair &in_object)
 {
+    reference = in_object.reference;
     data_start = in_object.data_start;
     data_stop = in_object.data_stop;
     from_doubled = in_object.from_doubled;
@@ -17,6 +18,7 @@ CoordinatePair& CoordinatePair::operator= (const CoordinatePair &in_object)
 {
     if(this==&in_object) return *this;
 
+    reference = in_object.reference;
     data_start = in_object.data_start;
     data_stop = in_object.data_stop;
     from_doubled = in_object.from_doubled;
@@ -72,6 +74,18 @@ bool CoordinatePair::operator< (const CoordinatePair &in_object)
         {
             return true;
         }
+        else if(data_stop==in_object.data_stop)
+        {
+            // 3rd, sort by [reference] field from max to min.
+            if(reference<in_object.reference)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
         else
         {
             return false;
@@ -86,6 +100,7 @@ bool CoordinatePair::operator< (const CoordinatePair &in_object)
 //------------------------ Reset all fields.
 void CoordinatePair::clear()
 {
+    reference = 0;
     data_start = NO_COORD_LEFT;
     data_stop = NO_COORD_RIGHT;
     from_doubled = not_sure = false;

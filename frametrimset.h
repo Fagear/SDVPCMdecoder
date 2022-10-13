@@ -14,6 +14,7 @@ public:
     };
 
 public:
+    uint8_t reference;          // General purpose field.
     int16_t data_start;         // Pixel coordinate of PCM data start.
     int16_t data_stop;          // Pixel coordinate of PCM data stop.
     bool from_doubled;          // Was source of these coordinates a doubled-width [VideoLine]?

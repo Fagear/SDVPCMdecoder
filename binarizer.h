@@ -178,10 +178,10 @@ public:
     {
         LOG_SETTINGS = (1<<0),  // External operations with settings.
         LOG_PROCESS = (1<<1),   // General stage-by-stage logging.
-        LOG_COORD = (1<<2),     // Data coordinates search.
-        LOG_PIXELS = (1<<3),    // Output pixel coordinates and string of binarized data.
-        LOG_BRIGHT = (1<<4),    // Output brightness spread data.
-        LOG_SWEEP = (1<<5),     // Output full process of reference level sweeping.
+        LOG_BRIGHT = (1<<2),    // Output brightness spread data.
+        LOG_REF_SWEEP = (1<<3), // Output full process of reference level sweeping.
+        LOG_COORD = (1<<4),     // Data coordinates search.
+        LOG_RAWBIN = (1<<5),    // Output string of raw binarized data.
         LOG_READING = (1<<6),   // Final binarization run.
         LOG_LINE_DUMP = (1<<7), // Output resulting line.
     };
@@ -247,8 +247,9 @@ private:
     CoordinatePair in_def_coord;        // External default data pixel coordinates.
     uint8_t in_max_hysteresis_depth;    // Maximum depth of reference level hysteresis sweeping.
     uint8_t in_max_shift_stages;        // Maximum number of active pixel-shifting stages.
-    bool do_ref_lvl_sweep;              // Setting for performing full reference level sweep to determine best value.
-    bool do_coord_search;               // Setting for temporary override [digi_set.en_coord_search].
+    bool do_coord_search;               // Setting for performing data coordinates detection.
+    bool do_start_mark_sweep;           // Setting for performing START-marker search reference level hysteresis sweep.
+    bool do_ref_lvl_sweep;              // Setting for performing full reference level sweep to determine best reference level.
     bool force_bit_picker;              // Setting for forcing bit-limited Bit Picker even if coordinates do not clip.
 
     uint8_t proc_state;                 // State of processing.
@@ -323,9 +324,10 @@ private:
     // Data coordinates detection (Macro-TBC).
     uint8_t searchPCM1Data(PCM1Line *pcm_line, CoordinatePair data_loc);
     uint8_t searchPCM16X0Data(PCM16X0SubLine *pcm_line, CoordinatePair data_loc);
+    void searchSTC007Markers(STC007Line *stc_line, uint8_t hyst_lvl, bool no_log = false);
     bool findPCM1Coordinates(PCM1Line *pcm1_line, CoordinatePair coord_history);
     bool findPCM16X0Coordinates(PCM16X0SubLine *pcm16x0_line, CoordinatePair coord_history);
-    void findSTC007Markers(STC007Line *stc_line, bool no_log = false);
+    void findSTC007Coordinates(STC007Line *stc_line, bool no_log = false);
     // Lost bits recovery.
     uint8_t pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log = false);
     uint8_t pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log = false);

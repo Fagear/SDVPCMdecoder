@@ -293,6 +293,7 @@ private:
     uint32_t stat_max_di_time;
     uint16_t stat_blocks_per_frame;
     uint8_t stat_ref_level;
+    uint32_t stat_total_frame_cnt;
     uint32_t stat_read_frame_cnt;
     uint32_t stat_drop_frame_cnt;
     uint32_t stat_no_pcm_cnt;
@@ -356,6 +357,7 @@ private slots:
     void playVideo();
     void pauseVideo();
     void loadVideo();
+    void unloadSource();
     void loadPicture();
     void exitAction();
 
@@ -402,6 +404,8 @@ private slots:
     void clearAllLogging();                 // Turn off all debug logging.
 
     // Player state reactions.
+    void playerNoSource();                  // React on video decoder asking for a source.
+    void playerLoaded(QString);             // React on video decoder loading a new source.
     void playerStarted(uint32_t);           // React on video decoder starting playback.
     void playerStopped();                   // React on video decoder stopping playback.
     void playerPaused();                    // React on video decoder pausing playback.
@@ -502,6 +506,7 @@ signals:
     void newFineReset();
     void guiUpdFineDrawDeint(bool);
 
+    void doPlayUnload();
     void doPlayStart();
     void doPlayPause();
     void doPlayStop();

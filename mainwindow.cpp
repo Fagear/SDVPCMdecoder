@@ -57,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent) :
     stat_max_di_time = 0;
     stat_blocks_per_frame = 0;
     stat_ref_level = 0;
+    stat_total_frame_cnt = 0;
     stat_read_frame_cnt = 0;
     stat_drop_frame_cnt = 0;
     stat_no_pcm_cnt = 0;
@@ -153,9 +154,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(newTargetPath(QString)), VIN_worker, SLOT(setSourceLocation(QString)));
     connect(this, SIGNAL(newStepPlay(bool)), VIN_worker, SLOT(setStepPlay(bool)));
     connect(this, SIGNAL(newFrameDropDetection(bool)), VIN_worker, SLOT(setDropDetect(bool)));
+    connect(this, SIGNAL(doPlayUnload()), VIN_worker, SLOT(mediaUnload()));
     connect(this, SIGNAL(doPlayStart()), VIN_worker, SLOT(mediaPlay()));
     connect(this, SIGNAL(doPlayPause()), VIN_worker, SLOT(mediaPause()));
     connect(this, SIGNAL(doPlayStop()), VIN_worker, SLOT(mediaStop()));
+    connect(VIN_worker, SIGNAL(mediaNotFound()), this, SLOT(playerNoSource()));
+    connect(VIN_worker, SIGNAL(mediaLoaded(QString)), this, SLOT(playerLoaded(QString)));
     connect(VIN_worker, SIGNAL(mediaPlaying(uint32_t)), this, SLOT(playerStarted(uint32_t)));
     connect(VIN_worker, SIGNAL(mediaPaused()), this, SLOT(playerPaused()));
     connect(VIN_worker, SIGNAL(mediaStopped()), this, SLOT(playerStopped()));
@@ -168,6 +172,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->mnLanguage, SIGNAL(triggered(QAction*)), this, SLOT(setLang(QAction*)));
 
     connect(ui->btnOpen, SIGNAL(clicked(bool)), this, SLOT(loadVideo()));
+    connect(ui->actCloseSource, SIGNAL(triggered(bool)), this, SLOT(unloadSource()));
     connect(ui->btnPlay, SIGNAL(clicked(bool)), this, SLOT(playVideo()));
     connect(ui->btnPause, SIGNAL(clicked(bool)), this, SLOT(pauseVideo()));
 
@@ -222,13 +227,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actVIPProcess, SIGNAL(triggered(bool)), this, SLOT(updateSetVIPLog()));
     connect(ui->actVIPFrame, SIGNAL(triggered(bool)), this, SLOT(updateSetVIPLog()));
     connect(ui->actVIPLine, SIGNAL(triggered(bool)), this, SLOT(updateSetVIPLog()));
-    connect(ui->actVIPPixel, SIGNAL(triggered(bool)), this, SLOT(updateSetVIPLog()));
     connect(ui->actVIPOff, SIGNAL(triggered(bool)), this, SLOT(clearVIPLog()));
     connect(ui->actLBSettings, SIGNAL(triggered(bool)), this, SLOT(updateSetLBLog()));
     connect(ui->actLBProcess, SIGNAL(triggered(bool)), this, SLOT(updateSetLBLog()));
-    connect(ui->actLBPixels, SIGNAL(triggered(bool)), this, SLOT(updateSetLBLog()));
     connect(ui->actLBBright, SIGNAL(triggered(bool)), this, SLOT(updateSetLBLog()));
     connect(ui->actLBSweep, SIGNAL(triggered(bool)), this, SLOT(updateSetLBLog()));
+    connect(ui->actLBCoords, SIGNAL(triggered(bool)), this, SLOT(updateSetLBLog()));
+    connect(ui->actLBRawBin, SIGNAL(triggered(bool)), this, SLOT(updateSetLBLog()));
     connect(ui->actGenLines, SIGNAL(triggered(bool)), this, SLOT(updateSetLBLog()));
     connect(ui->actLBOff, SIGNAL(triggered(bool)), this, SLOT(clearLBLog()));
     connect(ui->actDISettings, SIGNAL(triggered(bool)), this, SLOT(updateSetDILog()));
@@ -1030,7 +1035,6 @@ void MainWindow::setVIPLogMode()
     if(ui->actVIPProcess->isChecked()!=false) ext_log_vip |= VideoInFFMPEG::LOG_PROCESS;
     if(ui->actVIPFrame->isChecked()!=false) ext_log_vip |= VideoInFFMPEG::LOG_FRAME;
     if(ui->actVIPLine->isChecked()!=false) ext_log_vip |= VideoInFFMPEG::LOG_LINES;
-    if(ui->actVIPPixel->isChecked()!=false) ext_log_vip |= VideoInFFMPEG::LOG_PIXELS;
     emit newVIPLogLevel(ext_log_vip);
 }
 
@@ -1040,9 +1044,10 @@ void MainWindow::setLBLogMode()
     uint8_t ext_log_lb = 0;
     if(ui->actLBSettings->isChecked()!=false) ext_log_lb |= Binarizer::LOG_SETTINGS;
     if(ui->actLBProcess->isChecked()!=false) ext_log_lb |= Binarizer::LOG_PROCESS;
-    if(ui->actLBPixels->isChecked()!=false) ext_log_lb |= Binarizer::LOG_PIXELS;
     if(ui->actLBBright->isChecked()!=false) ext_log_lb |= Binarizer::LOG_BRIGHT;
-    if(ui->actLBSweep->isChecked()!=false) ext_log_lb |= Binarizer::LOG_SWEEP;
+    if(ui->actLBSweep->isChecked()!=false) ext_log_lb |= Binarizer::LOG_REF_SWEEP;
+    if(ui->actLBCoords->isChecked()!=false) ext_log_lb |= Binarizer::LOG_COORD;
+    if(ui->actLBRawBin->isChecked()!=false) ext_log_lb |= Binarizer::LOG_RAWBIN;
     if(ui->actGenLines->isChecked()!=false) ext_log_lb |= Binarizer::LOG_LINE_DUMP;
     emit newV2DLogLevel(ext_log_lb);
 }
@@ -1316,15 +1321,15 @@ void MainWindow::readGUISettings()
     ui->actVIPProcess->setChecked(settings_hdl.value("process", false).toBool());
     ui->actVIPFrame->setChecked(settings_hdl.value("frames", false).toBool());
     ui->actVIPLine->setChecked(settings_hdl.value("lines", false).toBool());
-    ui->actVIPPixel->setChecked(settings_hdl.value("pixels", false).toBool());
     settings_hdl.endGroup();
 
     settings_hdl.beginGroup("debug_binarizer");
     ui->actLBSettings->setChecked(settings_hdl.value("settings", false).toBool());
     ui->actLBProcess->setChecked(settings_hdl.value("process", false).toBool());
-    ui->actLBPixels->setChecked(settings_hdl.value("pixels", false).toBool());
     ui->actLBBright->setChecked(settings_hdl.value("brightness", false).toBool());
     ui->actLBSweep->setChecked(settings_hdl.value("sweep", false).toBool());
+    ui->actLBCoords->setChecked(settings_hdl.value("coordinates", false).toBool());
+    ui->actLBRawBin->setChecked(settings_hdl.value("raw_bin", false).toBool());
     ui->actGenLines->setChecked(settings_hdl.value("dump_lines", false).toBool());
     settings_hdl.endGroup();
 
@@ -1371,6 +1376,7 @@ void MainWindow::readGUISettings()
 }
 
 //------------------------ Clear decoded PCM buffer.
+// TODO: depracate
 void MainWindow::clearPCMQueue()
 {
     vl_lock.lock();
@@ -1437,32 +1443,16 @@ void MainWindow::setLang(QAction *in_act)
 //------------------------ Start video playback/decode.
 void MainWindow::playVideo()
 {
-    ui->btnPlay->setChecked(false);
-    if(v_decoder_state==VDEC_IDLE)
+    ui->btnPlay->setEnabled(false);
+    ui->btnPause->setEnabled(false);
+    if(v_decoder_state==VDEC_STOP)
     {
-        //ui->btnPlay->setEnabled(false);
-        ui->btnOpen->setEnabled(false);
-        ui->actLoadPCM->setEnabled(false);
-        this->loadVideo();
-    }
-    else if(v_decoder_state==VDEC_STOP)
-    {
-        clearStat();
-        clearPCMQueue();
-        ui->btnPlay->setEnabled(false);
-        ui->btnPause->setEnabled(false);
+        qDebug()<<"[M] Play request";
         emit doPlayStart();
     }
-    else if(v_decoder_state==VDEC_PAUSE)
+    else
     {
-        ui->btnPlay->setEnabled(false);
-        ui->btnPause->setEnabled(false);
-        emit doPlayStop();
-    }
-    else if(v_decoder_state==VDEC_PLAY)
-    {
-        ui->btnPlay->setEnabled(false);
-        ui->btnPause->setEnabled(false);
+        qDebug()<<"[M] Stop request";
         emit doPlayStop();
     }
 }
@@ -1470,17 +1460,8 @@ void MainWindow::playVideo()
 //------------------------ Pause video playback/decode.
 void MainWindow::pauseVideo()
 {
-    ui->btnPause->setChecked(false);
-    if(v_decoder_state==VDEC_PLAY)
-    {
-        ui->btnPause->setEnabled(false);
-        emit doPlayPause();
-    }
-    else if(v_decoder_state==VDEC_PAUSE)
-    {
-        ui->btnPause->setEnabled(false);
-        emit doPlayStart();
-    }
+    ui->btnPause->setEnabled(false);
+    emit doPlayPause();
 }
 
 void MainWindow::loadVideo()
@@ -1490,17 +1471,7 @@ void MainWindow::loadVideo()
         qInfo()<<"[M] Creating 'Open video' dialog...";
     }
     QString file_path;
-    bool player_resume;
-    player_resume = false;
-    if(v_decoder_state==VDEC_PLAY)
-    {
-        player_resume = true;
-        emit doPlayPause();
-    }
-    else if(ui->btnPlay->isChecked()!=false)
-    {
-        player_resume = true;
-    }
+
     file_path = QFileDialog::getOpenFileName(this,
                                              tr("Открыть видео с PCM"),
                                              QDir::currentPath(),
@@ -1513,18 +1484,22 @@ void MainWindow::loadVideo()
         {
             qInfo()<<"[M] File selected:"<<file_path;
         }
-        ui->lblFileName->setText(file_path);
-
-        emit doPlayStop();
 
         QFileInfo in_file(file_path);
 
         // Signal about new source file.
         emit newTargetPath(file_path);
 
+        ui->btnOpen->setEnabled(false);
+        ui->btnPlay->setEnabled(false);
+        ui->btnPlay->setChecked(false);
+        ui->btnPlay->repaint();
+        ui->btnPause->setEnabled(false);
+        ui->btnPause->setChecked(false);
+        ui->btnPause->repaint();
+
         // Clear PCM lines queue.
-        clearPCMQueue();
-        clearStat();
+        //clearPCMQueue();
 
         // Set current application directory to source file's path.
         QDir::setCurrent(in_file.absolutePath());
@@ -1534,10 +1509,11 @@ void MainWindow::loadVideo()
         settings_hdl.setValue("path", in_file.absolutePath());
         settings_hdl.endGroup();
     }
-    else if(player_resume!=false)
-    {
-        emit doPlayStart();
-    }
+}
+
+void MainWindow::unloadSource()
+{
+    emit doPlayUnload();
 }
 
 void MainWindow::loadPicture()
@@ -1550,27 +1526,12 @@ void MainWindow::loadPicture()
 
 void MainWindow::exitAction()
 {
-    /*if(input_FPU->isRunning()==false)
-    {
-        qInfo()<<"[M] Video Input Processor crashed!";
-    }
-    if(conv_V2D->isRunning()==false)
-    {
-        qInfo()<<"[M] Binarizer crashed!";
-    }
-    if(conv_L2B->isRunning()==false)
-    {
-        qInfo()<<"[M] Deinterleaver crashed!";
-    }
-    if(audio_PU->isRunning()==false)
-    {
-        qInfo()<<"[M] Audio Processor crashed!";
-    }*/
     if((log_level&LOG_PROCESS)!=0)
     {
         qInfo()<<"[M] Exiting...";
     }
     emit doPlayStop();
+    emit doPlayUnload();
     this->close();
 }
 
@@ -2179,7 +2140,6 @@ void MainWindow::updateSetVIPLog()
     settings_hdl.setValue("process", ui->actVIPProcess->isChecked());
     settings_hdl.setValue("frames", ui->actVIPFrame->isChecked());
     settings_hdl.setValue("lines", ui->actVIPLine->isChecked());
-    settings_hdl.setValue("pixels", ui->actVIPPixel->isChecked());
     settings_hdl.endGroup();
     setVIPLogMode();
 }
@@ -2191,9 +2151,10 @@ void MainWindow::updateSetLBLog()
     settings_hdl.beginGroup("debug_binarizer");
     settings_hdl.setValue("settings", ui->actLBSettings->isChecked());
     settings_hdl.setValue("process", ui->actLBProcess->isChecked());
-    settings_hdl.setValue("pixels", ui->actLBPixels->isChecked());
     settings_hdl.setValue("brightness", ui->actLBBright->isChecked());
     settings_hdl.setValue("sweep", ui->actLBSweep->isChecked());
+    settings_hdl.setValue("coordinates", ui->actLBCoords->isChecked());
+    settings_hdl.setValue("raw_bin", ui->actLBRawBin->isChecked());
     settings_hdl.setValue("dump_lines", ui->actGenLines->isChecked());
     settings_hdl.endGroup();
     setLBLogMode();
@@ -2251,7 +2212,6 @@ void MainWindow::clearVIPLog()
     ui->actVIPProcess->setChecked(false);
     ui->actVIPFrame->setChecked(false);
     ui->actVIPLine->setChecked(false);
-    ui->actVIPPixel->setChecked(false);
     // Update setting storage and actual flags.
     updateSetVIPLog();
 }
@@ -2262,9 +2222,10 @@ void MainWindow::clearLBLog()
     // Clear marks.
     ui->actLBSettings->setChecked(false);
     ui->actLBProcess->setChecked(false);
-    ui->actLBPixels->setChecked(false);
     ui->actLBBright->setChecked(false);
     ui->actLBSweep->setChecked(false);
+    ui->actLBCoords->setChecked(false);
+    ui->actLBRawBin->setChecked(false);
     ui->actGenLines->setChecked(false);
     // Update setting storage and actual flags.
     updateSetLBLog();
@@ -2313,13 +2274,51 @@ void MainWindow::clearAllLogging()
 }
 
 //------------------------
+void MainWindow::playerNoSource()
+{
+    // Open dialog for selecting a file.
+    ui->btnOpen->setEnabled(true);
+    ui->btnPlay->setEnabled(true);
+    ui->btnPlay->setCheckable(false);
+    ui->btnPlay->setChecked(false);
+    ui->btnPlay->repaint();
+    ui->btnPause->setEnabled(false);
+    ui->btnPause->setCheckable(false);
+    ui->btnPause->setChecked(false);
+    ui->btnPause->repaint();
+    v_decoder_state = VDEC_STOP;
+    // TODO: remember last source type and open dialog accordingly.
+    loadVideo();
+}
+
+//------------------------
+void MainWindow::playerLoaded(QString in_path)
+{
+    ui->lblFileName->setText(in_path);
+    ui->btnOpen->setEnabled(true);
+    ui->btnPlay->setEnabled(true);
+    ui->btnPlay->setCheckable(false);
+    ui->btnPlay->setChecked(false);
+    ui->btnPlay->repaint();
+    ui->btnPause->setEnabled(true);
+    ui->btnPause->setCheckable(false);
+    ui->btnPause->setChecked(false);
+    ui->btnPause->repaint();
+}
+
+//------------------------
 void MainWindow::playerStarted(uint32_t in_frames_total)
 {
-    ui->lcdTotalNumber->display((int)in_frames_total);
+    stat_total_frame_cnt = in_frames_total;
     ui->btnOpen->setEnabled(true);
-    ui->btnPause->setEnabled(true);
     ui->btnPlay->setEnabled(true);
+    ui->btnPlay->setCheckable(true);
     ui->btnPlay->setChecked(true);
+    ui->btnPlay->repaint();
+    ui->btnPause->setEnabled(true);
+    ui->btnPause->setCheckable(false);
+    ui->btnPause->setChecked(false);
+    ui->btnPause->repaint();
     v_decoder_state = VDEC_PLAY;
 }
 
@@ -2327,10 +2326,14 @@ void MainWindow::playerStarted(uint32_t in_frames_total)
 void MainWindow::playerStopped()
 {
     ui->btnOpen->setEnabled(true);
-    ui->btnPause->setEnabled(true);
     ui->btnPlay->setEnabled(true);
+    ui->btnPlay->setCheckable(false);
     ui->btnPlay->setChecked(false);
+    ui->btnPlay->repaint();
+    ui->btnPause->setEnabled(false);
+    ui->btnPause->setCheckable(false);
     ui->btnPause->setChecked(false);
+    ui->btnPause->repaint();
     v_decoder_state = VDEC_STOP;
 }
 
@@ -2338,10 +2341,14 @@ void MainWindow::playerStopped()
 void MainWindow::playerPaused()
 {
     ui->btnOpen->setEnabled(true);
-    ui->btnPause->setEnabled(true);
     ui->btnPlay->setEnabled(true);
+    ui->btnPlay->setCheckable(true);
     ui->btnPlay->setChecked(true);
+    ui->btnPlay->repaint();
+    ui->btnPause->setEnabled(true);
+    ui->btnPause->setCheckable(true);
     ui->btnPause->setChecked(true);
+    ui->btnPause->repaint();
     v_decoder_state = VDEC_PAUSE;
 }
 
@@ -2349,10 +2356,14 @@ void MainWindow::playerPaused()
 void MainWindow::playerError(QString error_text)
 {
     ui->btnOpen->setEnabled(true);
-    ui->btnPause->setEnabled(true);
     ui->btnPlay->setEnabled(true);
+    ui->btnPlay->setCheckable(false);
     ui->btnPlay->setChecked(false);
+    ui->btnPlay->repaint();
+    ui->btnPause->setEnabled(true);
+    ui->btnPause->setCheckable(false);
     ui->btnPause->setChecked(false);
+    ui->btnPause->repaint();
     ui->lblFileName->clear();
     v_decoder_state = VDEC_IDLE;
     this->displayErrorMessage(error_text);
@@ -2405,10 +2416,7 @@ void MainWindow::updateGUIByTimer()
     }
 
     // Update decoder stats.
-    if(stat_read_frame_cnt>ui->lcdTotalNumber->value())
-    {
-        ui->lcdTotalNumber->display((int)stat_read_frame_cnt);
-    }
+    ui->lcdTotalNumber->display((int)stat_total_frame_cnt);
     ui->lcdReadFrames->display((int)stat_read_frame_cnt);
     ui->lcdFrameDrop->display((int)stat_drop_frame_cnt);
     if(set_pcm_type==LIST_TYPE_PCM1)
@@ -3005,7 +3013,16 @@ void MainWindow::updateStatsVideoLineTime(uint32_t line_time)
 //------------------------ Update stats after VIP has read a frame.
 void MainWindow::updateStatsVIPFrame(uint32_t frame_no)
 {
-    stat_read_frame_cnt++;
+    //stat_read_frame_cnt++;
+    stat_read_frame_cnt = frame_no;
+    if((frame_no==0)||(frame_no==1))
+    {
+        clearStat();
+    }
+    if(stat_read_frame_cnt>stat_total_frame_cnt)
+    {
+        stat_total_frame_cnt = stat_read_frame_cnt;
+    }
 
     QString log_line;
     if(lines_per_video!=0)
@@ -3197,7 +3214,8 @@ void MainWindow::updateStatsBlockTime(STC007DataBlock in_block)
 void MainWindow::updateStatsDIFrame(uint32_t frame_no)
 {
     // Update GUI.
-    stat_processed_frame_cnt++;
+    //stat_processed_frame_cnt++;
+    stat_processed_frame_cnt = frame_no;
 
     if(stat_blocks_per_frame==0) stat_blocks_per_frame = 1;
 

@@ -47,7 +47,7 @@ extern "C"
 #define FRAMES_READ_AHEAD_MAX       3       // Maximum number of frames read ahead.
 #define FRAMES_ASM_BUF_MAX          4       // Maximum number of frames in the buffer after binarization.
 
-#define LINES_PER_FRAME_MAX         600     // Total number of lines in the frame maximum for the source.
+#define LINES_PER_FRAME_MAX         640     // Total number of lines in the frame maximum for the source.
 #define LINES_PER_NTSC_FIELD        245     // PCM lines in one field of a NTSC frame.
 #define LINES_PER_PAL_FIELD         294     // PCM lines in one field of a PAL frame.
 
