@@ -100,6 +100,14 @@ void capt_sel::enableOffset()
     ui->spbYOffset->setEnabled(true);
 }
 
+//------------------------ Stop capturing.
+void capt_sel::stopCapture()
+{
+    // Close current capture if any.
+    emit closeDevice();
+    QApplication::processEvents();
+}
+
 //------------------------ Clear preview area.
 void capt_sel::stopPreview()
 {
@@ -107,9 +115,6 @@ void capt_sel::stopPreview()
     disconnect(capt_dev, SIGNAL(newImage(QImage,bool)), this, SLOT(redrawPreview(QImage,bool)));
     // Stop preview updating.
     capture_poll.stop();
-    // Close current capture if any.
-    emit closeDevice();
-    QApplication::processEvents();
     // Fill preview with gray.
     preview_pix.fill(Qt::darkGray);
     pixels->setPixmap(preview_pix);
@@ -119,6 +124,8 @@ void capt_sel::stopPreview()
 //------------------------ Refresh list of capture devices available in the system.
 void capt_sel::usrRefresh()
 {
+    // Stop previous capture.
+    stopCapture();
     // Stop preview updating.
     stopPreview();
     // Clear device list and block it.
@@ -203,6 +210,7 @@ void capt_sel::selectDevice()
     {
         // Disable offset controls (used only for screen capture).
         disableOffset();
+        stopCapture();
         return;
     }
 
@@ -297,6 +305,7 @@ void capt_sel::pollCapture()
 //------------------------ FFMPEG thread took too long to respond.
 void capt_sel::lostFFMPEG()
 {
+    stopCapture();
     // Disable preview updating.
     stopPreview();
     // Display error dialog.
@@ -377,7 +386,6 @@ void capt_sel::captureClosed()
     // Stop FFMPEG watchdog.
     capt_busy.stop();
     // Disable deffered frame request.
-    //capture_poll.stop();
     stopPreview();
 }
 
@@ -453,10 +461,14 @@ void capt_sel::redrawPreview(QImage in_image, bool in_double)
     Q_UNUSED(in_double)
     uint32_t draw_rate;
     capt_busy.stop();
+    if(in_image.isNull()!=false)
+    {
+        return;
+    }
     draw_rate = capt_meas.elapsed();
     if(in_image.height()!=FFMPEGWrapper::DUMMY_HEIGTH)
     {
-        qDebug()<<"[CSEL] New image";
+        //qDebug()<<"[CSEL] New image";
         // Update pixmap.
         pixels->setPixmap(QPixmap::fromImage(in_image.copy()));
         //ui->viewport->viewport()->repaint();
@@ -464,13 +476,13 @@ void capt_sel::redrawPreview(QImage in_image, bool in_double)
         {
             // Frame updating took too long, rate is already lower than is should be, request new frame ASAP.
             pollCapture();
-            qInfo()<<"Redraw in"<<draw_rate<<"(too slow)";
+            //qInfo()<<"Redraw in"<<draw_rate<<"(too slow)";
         }
         else
         {
             // Calculate how many ms is left for waiting.
             capture_poll.setInterval(capture_rate - (uint8_t)draw_rate);
-            qInfo()<<"Redraw in"<<draw_rate<<", timer set to"<<capture_poll.interval();
+            //qInfo()<<"Redraw in"<<draw_rate<<", timer set to"<<capture_poll.interval();
             capture_poll.start();
         }
     }

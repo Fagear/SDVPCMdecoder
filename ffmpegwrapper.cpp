@@ -709,7 +709,7 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     }
 
     video_dec_ctx->flags |= AV_CODEC_FLAG_OUTPUT_CORRUPT;       // Allow processing corrupted streams.
-    video_dec_ctx->flags2 |= AV_CODEC_FLAG2_FAST|AV_CODEC_FLAG2_CHUNKS;
+    video_dec_ctx->flags2 |= /*AV_CODEC_FLAG2_FAST|*/AV_CODEC_FLAG2_CHUNKS;
     // Try to enable multithreaded single-frame decoding.
     if(QThread::idealThreadCount()>4)
     {
@@ -864,13 +864,14 @@ void FFMPEGWrapper::slotGetNextFrame()
                     missed_frames = (uint32_t)dts_diff/dec_frame->pkt_duration;
                     //qDebug()<<"[FFWR] Droped"<<missed_frames<<"frames! DTS:"<<dec_frame->pkt_dts<<"Diff.:"<<dts_diff<<"| Duration:"<<dec_frame->pkt_duration;
                     // Limit maximum number of dropped frames.
-                    if(missed_frames>DUMM_CNT_MAX)
+                    if(missed_frames>DUMMY_CNT_MAX)
                     {
-                        missed_frames = DUMM_CNT_MAX;
+                        missed_frames = DUMMY_CNT_MAX;
                     }
                     // Report missed frames.
+                    // Encode number of dropped frame in the width of the image.
                     QImage dummy_image(missed_frames, DUMMY_HEIGTH, QImage::Format_Grayscale8);
-                    // Convert QImage to QPixmap for displaying.
+                    // Send QImage for displaying.
                     emit newImage(dummy_image.copy(), last_double);
                 }
             }
@@ -879,6 +880,7 @@ void FFMPEGWrapper::slotGetNextFrame()
                 // Reset DTS difference detector.
                 dts_detected = false;
             }
+            //qDebug()<<"[FFWR] Frame size:"<<dec_frame->width<<"x"<<dec_frame->height;
             // Make sure that frame converter is setup properly.
             if(keepFrameInCheck(dec_frame)==false)
             {
@@ -895,6 +897,7 @@ void FFMPEGWrapper::slotGetNextFrame()
                 slotCloseInput();
                 return;
             }
+            //qDebug()<<"[FFWR] Resized to size:"<<last_width<<"x"<<last_height<<"with result:"<<av_res;
             // Check target pixel format.
             if(target_pixfmt==(AVPixelFormat)BUF_FMT_BW)
             {
@@ -905,7 +908,8 @@ void FFMPEGWrapper::slotGetNextFrame()
                              av_res,                            // Height of the output slice.
                              video_dst_linesize[PLANE_Y],
                              QImage::Format_Grayscale8);
-                // Convert QImage to QPixmap for displaying.
+                //qDebug()<<conv_image.width()<<"x"<<conv_image.height();
+                // Send QImage for displaying.
                 emit newImage(conv_image.copy(), last_double);
             }
             else
@@ -920,7 +924,7 @@ void FFMPEGWrapper::slotGetNextFrame()
                                  av_res,                        // Height of the output slice.
                                  video_dst_linesize[PLANE_R],
                                  QImage::Format_Grayscale8);
-                    // Convert QImage to QPixmap for displaying.
+                    // Send QImage for displaying.
                     emit newImage(conv_image.copy(), last_double);
                 }
                 else if(crop_n_color.colors==vid_preset_t::COLOR_B)
@@ -932,7 +936,7 @@ void FFMPEGWrapper::slotGetNextFrame()
                                  av_res,                        // Height of the output slice.
                                  video_dst_linesize[PLANE_B],
                                  QImage::Format_Grayscale8);
-                    // Convert QImage to QPixmap for displaying.
+                    // Send QImage for displaying.
                     emit newImage(conv_image.copy(), last_double);
                 }
                 else
@@ -944,7 +948,7 @@ void FFMPEGWrapper::slotGetNextFrame()
                                  av_res,                        // Height of the output slice.
                                  video_dst_linesize[PLANE_G],
                                  QImage::Format_Grayscale8);
-                    // Convert QImage to QPixmap for displaying.
+                    // Send QImage for displaying.
                     emit newImage(conv_image.copy(), last_double);
                 }
             }

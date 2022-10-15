@@ -67,6 +67,7 @@ public slots:
     void setSampleRate(uint16_t in_rate);
     void prepareNewFile();
     void saveAudio(int16_t in_left, int16_t in_right);
+    void saveAudio(PCMSamplePair in_audio);
     void purgeBuffer();
     void stopOutput();
 

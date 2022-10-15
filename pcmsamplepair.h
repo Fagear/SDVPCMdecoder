@@ -5,6 +5,7 @@
 #include <string>
 #include "config.h"
 
+//------------------------ Single 16-bit audio sample container.
 class PCMSample
 {
     // Bits placeholders in debug log string.
@@ -39,6 +40,7 @@ public:
     void setProcessed();
     void setValidityByBlock();
     int16_t getValue();
+    uint16_t getAmplitude();
     uint64_t getIndex();
     bool isSilent();
     bool isValid();
@@ -46,6 +48,7 @@ public:
     std::string dumpWordsString();
 };
 
+//------------------------ [PCMSample] pair container.
 class PCMSamplePair
 {
 public:

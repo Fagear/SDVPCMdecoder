@@ -13,10 +13,10 @@ Q_DECLARE_METATYPE(VCapList)
 Q_DECLARE_METATYPE(VideoLine)
 Q_DECLARE_METATYPE(PCM1Line)
 Q_DECLARE_METATYPE(PCM1SubLine)
-Q_DECLARE_METATYPE(PCM1DataBlock)
 Q_DECLARE_METATYPE(PCM16X0SubLine)
-Q_DECLARE_METATYPE(PCM16X0DataBlock)
 Q_DECLARE_METATYPE(STC007Line)
+Q_DECLARE_METATYPE(PCM1DataBlock)
+Q_DECLARE_METATYPE(PCM16X0DataBlock)
 Q_DECLARE_METATYPE(STC007DataBlock)
 Q_DECLARE_METATYPE(vid_preset_t)
 Q_DECLARE_METATYPE(bin_preset_t)
@@ -25,10 +25,7 @@ Q_DECLARE_METATYPE(FrameAsmDescriptor)
 Q_DECLARE_METATYPE(FrameAsmPCM1)
 Q_DECLARE_METATYPE(FrameAsmPCM16x0)
 Q_DECLARE_METATYPE(FrameAsmSTC007)
-
-//__FILE__
-//__LINE__
-//__FUNCTION__
+Q_DECLARE_METATYPE(PCMSamplePair)
 
 int main(int argc, char *argv[])
 {
@@ -56,16 +53,17 @@ int main(int argc, char *argv[])
     qRegisterMetaType<VideoLine>("VideoLine");
     qRegisterMetaType<PCM1Line>("PCM1Line");
     qRegisterMetaType<PCM1SubLine>("PCM1SubLine");
-    qRegisterMetaType<PCM1DataBlock>("PCM1DataBlock");
     qRegisterMetaType<PCM16X0SubLine>("PCM16X0SubLine");
-    qRegisterMetaType<PCM16X0DataBlock>("PCM16X0DataBlock");
     qRegisterMetaType<STC007Line>("STC007Line");
+    qRegisterMetaType<PCM1DataBlock>("PCM1DataBlock");
+    qRegisterMetaType<PCM16X0DataBlock>("PCM16X0DataBlock");
     qRegisterMetaType<STC007DataBlock>("STC007DataBlock");
     qRegisterMetaType<FrameBinDescriptor>("FrameBinDescriptor");
     qRegisterMetaType<FrameAsmDescriptor>("FrameAsmDescriptor");
     qRegisterMetaType<FrameAsmPCM1>("FrameAsmPCM1");
     qRegisterMetaType<FrameAsmPCM16x0>("FrameAsmPCM16x0");
     qRegisterMetaType<FrameAsmSTC007>("FrameAsmSTC007");
+    qRegisterMetaType<PCMSamplePair>("PCMSamplePair");
 
     // Set misc. app stuff.
     QCoreApplication::setOrganizationName(APP_ORG_NAME);

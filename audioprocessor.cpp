@@ -1359,17 +1359,16 @@ void AudioProcessor::outputWordPair()
     // Check if output to file is enabled.
     if(out_to_wav!=false)
     {
-        wav_output.saveAudio(prebuffer.front().samples[PCMSamplePair::CH_LEFT].audio_word,
-                             prebuffer.front().samples[PCMSamplePair::CH_RIGHT].audio_word);
+        wav_output.saveAudio(prebuffer.front());
         // Restart close timeout timer.
         emit reqTimerRestart();
     }
     // Check if output to audio device is enabled.
     if(out_to_live!=false)
     {
-        sc_output.saveAudio(prebuffer.front().samples[PCMSamplePair::CH_LEFT].audio_word,
-                            prebuffer.front().samples[PCMSamplePair::CH_RIGHT].audio_word);
+        sc_output.saveAudio(prebuffer.front());
     }
+    emit outSamples(prebuffer.front());
     // Remove data point from the output queue.
     prebuffer.pop_front();
 }
@@ -1447,10 +1446,10 @@ void AudioProcessor::setFileName(QString in_name)
         }
 #endif
         //dumpBuffer();
-        std::string file_name;
-        file_name = in_name.toStdString();
+        std::string non_unicode_name;
+        non_unicode_name = in_name.toLocal8Bit().toStdString();
         wav_output.purgeBuffer();
-        wav_output.setName(file_name);
+        wav_output.setName(non_unicode_name);
         wav_output.prepareNewFile();
         emit newSource();
     }

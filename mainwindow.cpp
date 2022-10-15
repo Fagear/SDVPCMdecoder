@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         stat_tracking_arr.pop();
     }
-    stat_video_tracking.lines_odd = stat_video_tracking.lines_pcm_odd = stat_video_tracking.lines_bad_odd = 0;
+    stat_video_tracking.clear();
     stat_vlines_time_per_frame = 0;
     stat_min_vip_time = 0xFFFFFFFF;
     stat_max_vip_time = 0;
@@ -72,6 +72,8 @@ MainWindow::MainWindow(QWidget *parent) :
     stat_mask_cnt = 0;
     stat_processed_frame_cnt = 0;
     stat_line_cnt = 0;
+
+    vu_left = vu_right = 0;
 
     ui->lblVersion->setText("v"+QString(APP_VERSION)+" ("+QString(COMPILE_DATE)+")");
 
@@ -110,6 +112,8 @@ MainWindow::MainWindow(QWidget *parent) :
     // Инициализация хранилища настроек.
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
     qInfo()<<"[M] Settings path:"<<settings_hdl.fileName();
+
+    this->setWindowTitle(APP_NAME_LONG);
 
     // Create pallettes.
     QBrush brs_redlabel(QColor(255, 60, 45, 255));
@@ -377,6 +381,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(AP_worker, SIGNAL(guiAddMute(uint16_t)), this, SLOT(updateStatsMutes(uint16_t)));
     connect(AP_worker, SIGNAL(guiAddMask(uint16_t)), this, SLOT(updateStatsMaskes(uint16_t)));
     connect(AP_worker, SIGNAL(guiLivePB(bool)), this, SLOT(livePBUpdate(bool)));
+    connect(AP_worker, SIGNAL(outSamples(PCMSamplePair)), this, SLOT(updateVU(PCMSamplePair)));
 
     connect(this, SIGNAL(newFineReset()), this, SLOT(setDefaultFineSettings()));
     connect(this, SIGNAL(newFineReset()), VIN_worker, SLOT(setDefaultFineSettings()));
@@ -728,6 +733,9 @@ void MainWindow::setGUILanguage(QString in_locale, bool suppress)
     disableGUIEvents();
     // Update window strings.
     ui->retranslateUi(this);
+    // Re-open visualizations to update strings.
+    reopenVisSource();
+    reopenVisualizers();
     // Re-apply all GUI settings.
     readGUISettings();
 }
@@ -1603,7 +1611,7 @@ void MainWindow::clearStat()
     {
         stat_tracking_arr.pop();
     }
-    stat_video_tracking.lines_odd = stat_video_tracking.lines_pcm_odd = stat_video_tracking.lines_bad_odd = 0;
+    stat_video_tracking.clear();
     stat_read_frame_cnt = 0;
     stat_drop_frame_cnt = 0;
     stat_no_pcm_cnt = 0;
@@ -2300,7 +2308,7 @@ void MainWindow::playerLoaded(QString in_path)
     ui->btnPlay->setCheckable(false);
     ui->btnPlay->setChecked(false);
     ui->btnPlay->repaint();
-    ui->btnPause->setEnabled(true);
+    ui->btnPause->setEnabled(false);
     ui->btnPause->setCheckable(false);
     ui->btnPause->setChecked(false);
     ui->btnPause->repaint();
@@ -2360,7 +2368,7 @@ void MainWindow::playerError(QString error_text)
     ui->btnPlay->setCheckable(false);
     ui->btnPlay->setChecked(false);
     ui->btnPlay->repaint();
-    ui->btnPause->setEnabled(true);
+    ui->btnPause->setEnabled(false);
     ui->btnPause->setCheckable(false);
     ui->btnPause->setChecked(false);
     ui->btnPause->repaint();
@@ -2428,8 +2436,6 @@ void MainWindow::updateGUIByTimer()
     }
     else if(set_pcm_type==LIST_TYPE_PCM16X0)
     {
-        //ui->pgrTracking->setMaximum(stat_video_tracking.lines_odd);
-        //ui->pgrDataQuality->setMaximum(stat_video_tracking.lines_odd);
         ui->pgrTracking->setMaximum(frame_asm_pcm16x0.odd_std_lines+frame_asm_pcm16x0.even_std_lines);
         ui->pgrTracking->setValue(frame_asm_pcm16x0.odd_data_lines+frame_asm_pcm16x0.even_data_lines);
         ui->pgrDataQuality->setMaximum(frame_asm_pcm16x0.odd_std_lines+frame_asm_pcm16x0.even_std_lines);
@@ -2442,15 +2448,7 @@ void MainWindow::updateGUIByTimer()
         ui->pgrDataQuality->setMaximum(frame_asm_stc007.odd_std_lines+frame_asm_stc007.even_std_lines);
         ui->pgrDataQuality->setValue(frame_asm_stc007.odd_valid_lines+frame_asm_stc007.even_valid_lines);
     }
-    /*if(stat_video_tracking.lines_pcm_odd>(ui->pgrTracking->maximum()))
-    {
-        ui->pgrTracking->setValue(ui->pgrTracking->maximum());
-    }
-    else
-    {
-        ui->pgrTracking->setValue(stat_video_tracking.lines_pcm_odd);
-    }*/
-    //ui->pgrDataQuality->setValue(stat_video_tracking.lines_pcm_odd-stat_video_tracking.lines_bad_odd);
+
     ui->lcdRefLevel->display((int)stat_ref_level);
     ui->lcdNoPCM->display((int)stat_no_pcm_cnt);
     ui->lcdCrcErr->display((int)stat_crc_err_cnt);
@@ -2465,6 +2463,27 @@ void MainWindow::updateGUIByTimer()
     ui->lcdMute->display((int)stat_mute_cnt);
     ui->lcdMask->display((int)stat_mask_cnt);
     ui->lcdProcessedFrames->display((int)stat_processed_frame_cnt);
+
+    // Update VU-meters.
+    ui->pgrVULeft->setValue(vu_left);
+    ui->pgrVURight->setValue(vu_right);
+    // Decay VU-meters.
+    if(vu_left>6)
+    {
+        vu_left -= 6;
+    }
+    else if(vu_left>0)
+    {
+        vu_left--;
+    }
+    if(vu_right>6)
+    {
+        vu_right -= 6;
+    }
+    else if(vu_right>0)
+    {
+        vu_right--;
+    }
 
     // Update queue fills.
     size_t buf_size;
@@ -3069,7 +3088,9 @@ void MainWindow::updateStatsVideoTracking(FrameBinDescriptor in_tracking)
     }
 
     stat_no_pcm_cnt += (in_tracking.lines_odd-in_tracking.lines_pcm_odd);
+    stat_no_pcm_cnt += (in_tracking.lines_even-in_tracking.lines_pcm_even);
     stat_crc_err_cnt += in_tracking.lines_bad_odd;
+    stat_crc_err_cnt += in_tracking.lines_bad_even;
 
     // Report the number of the binarized frame.
     emit newFrameBinarized(in_tracking.frame_id);
@@ -3239,6 +3260,28 @@ void MainWindow::updateStatsDIFrame(uint32_t frame_no)
     stat_blocks_per_frame = 0;
     stat_min_di_time = 0xFFFFFFFF;
     stat_max_di_time = 0;
+}
+
+//------------------------ Update VU indicators.
+void MainWindow::updateVU(PCMSamplePair in_samples)
+{
+    uint16_t amp_left, amp_right;
+    // Get rectified sample for left channel.
+    amp_left = in_samples.samples[PCMSamplePair::CH_LEFT].getAmplitude();
+    // Convert to logarithmic scale 8-bit level.
+    amp_left = sample2vu[amp_left];
+    // Do the same for right channel.
+    amp_right = in_samples.samples[PCMSamplePair::CH_RIGHT].getAmplitude();
+    amp_right = sample2vu[amp_right];
+    // Make current VU meters levels not less than current level from samples.
+    if(vu_left<(uint8_t)amp_left)
+    {
+        vu_left = (uint8_t)amp_left;
+    }
+    if(vu_right<(uint8_t)amp_right)
+    {
+        vu_right = (uint8_t)amp_right;
+    }
 }
 
 //------------------------ Perform internal test of CRCC within PCM line.

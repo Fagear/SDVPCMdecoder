@@ -8,17 +8,18 @@
 
 #define PCM_LINE_MAX_PS_STAGES      5       // Maximum supported number of pixel-shifting stages.
 
-// Pixel shift from calculated bit coordinate on the beginning of the line per shift stage.
+// Pixel shift from calculated bit center coordinate on the beginning of the line per shift stage.
 static const int8_t PIX_SH_BG_TBL[PCM_LINE_MAX_PS_STAGES] =
 {
     0, 1, -1, 2, -2/*, 0, -1, -1, 0, 1, 1*/
 };
-// Pixel shift from calculated bit coordinate on the ending of the line per shift stage.
+// Pixel shift from calculated bit center coordinate on the ending of the line per shift stage.
 static const int8_t PIX_SH_ED_TBL[PCM_LINE_MAX_PS_STAGES] =
 {
     0, 1, -1, 2, -2/*, 1, 0, 1, -1, 0, -1*/
 };
 
+//------------------------ PCM line container (base class).
 class PCMLine
 {
 public:

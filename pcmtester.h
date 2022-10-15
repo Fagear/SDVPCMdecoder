@@ -13,6 +13,7 @@
 #include "stc007deinterleaver.h"
 #include "stc007line.h"
 
+//------------------------ Class for testing various functions of PCM decoder.
 class PCMTester : public QObject
 {
     Q_OBJECT

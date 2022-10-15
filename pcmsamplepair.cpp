@@ -77,6 +77,19 @@ int16_t PCMSample::getValue()
     return audio_word;
 }
 
+//------------------------ Get amlitude of the sample (rectify audio).
+uint16_t PCMSample::getAmplitude()
+{
+    if(audio_word<0)
+    {
+        return (uint16_t)(0-audio_word);
+    }
+    else
+    {
+        return (uint16_t)audio_word;
+    }
+}
+
 //------------------------ Get index of the sample;
 uint64_t PCMSample::getIndex()
 {

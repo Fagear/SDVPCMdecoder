@@ -200,6 +200,30 @@ void SamplesToAudio::saveAudio(int16_t in_left, int16_t in_right)
     audio.push(in_sample);
 }
 
+//------------------------ Save audio data from data block into buffer (blocking).
+void SamplesToAudio::saveAudio(PCMSamplePair in_audio)
+{
+    //qInfo()<<"[TA] Saving...";
+#ifdef TA_EN_DBG_OUT
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        if(audio.full()!=false)
+        {
+            qInfo()<<"[TA] Waiting for free space in the buffer...";
+        }
+    }
+#endif
+    // Check available space in buffer.
+    while(audio.full()!=false)
+    {
+        purgeBuffer();
+    };
+    sample_pair_t in_sample;
+    in_sample.word_left = in_audio.samples[PCMSamplePair::CH_LEFT].audio_word;
+    in_sample.word_right = in_audio.samples[PCMSamplePair::CH_RIGHT].audio_word;
+    audio.push(in_sample);
+}
+
 //------------------------ Output all data from the buffer into sound device.
 void SamplesToAudio::purgeBuffer()
 {

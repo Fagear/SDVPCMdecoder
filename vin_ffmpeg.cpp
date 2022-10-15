@@ -43,36 +43,6 @@ VideoInFFMPEG::VideoInFFMPEG(QObject *parent) : QObject(parent)
     finish_work = false;
 }
 
-//------------------------ Clip bottom of the frame if does not fit into the buffer.
-uint16_t VideoInFFMPEG::getFinalHeight(uint16_t in_height)
-{
-    uint16_t new_height;
-    if(in_height>MAX_VLINE_QUEUE_SIZE)
-    {
-        new_height = MAX_VLINE_QUEUE_SIZE-10;
-    }
-    else
-    {
-        new_height = in_height;
-    }
-    return new_height;
-}
-
-//------------------------ Resize frame to a wider one.
-uint16_t VideoInFFMPEG::getFinalWidth(uint16_t in_width)
-{
-    uint16_t new_width;
-    if(hasWidthDoubling(in_width)==false)
-    {
-        new_width = in_width;
-    }
-    else
-    {
-        new_width = in_width*2;
-    }
-    return new_width;
-}
-
 //------------------------ Reset all counters and stats per source.
 void VideoInFFMPEG::resetCounters()
 {
@@ -90,9 +60,9 @@ void VideoInFFMPEG::resetCounters()
 //------------------------ Check if provided width should be doubled.
 bool VideoInFFMPEG::hasWidthDoubling(uint16_t in_width)
 {
-    if(in_width<MAX_DOUBLE_WIDTH)
+    if(in_width<FFMPEGWrapper::MAX_DBL_WIDTH)
     {
-        if(in_width>MIN_DOUBLE_WIDTH)
+        if(in_width>FFMPEGWrapper::MIN_DBL_WIDTH)
         {
             return true;
         }
@@ -238,7 +208,7 @@ void VideoInFFMPEG::insertFrameEndLine(uint16_t line_number)
     outNewLine(&service_line);
 }
 
-//------------------------ Splice frame into individual video lines.
+//------------------------ Splice frame into individual video lines and perform deinterlacing.
 void VideoInFFMPEG::spliceFrame(QImage *in_frame, bool in_double)
 {
     uint8_t line_jump, field_idx;
@@ -571,6 +541,7 @@ void VideoInFFMPEG::insertNewFileLine()
     file_name = source_file.absolutePath().toStdString();       // File path.
     file_name += "/";                                           // Should be fine for cross-platform Qt file operations.
     file_name += source_file.completeBaseName().toStdString();  // File name.
+    // Add suffix for selected primary color channel.
     if(vip_set.colors==vid_preset_t::COLOR_R)
     {
         file_name += "_R";
@@ -592,7 +563,7 @@ void VideoInFFMPEG::insertNewFileLine()
     outNewLine(&service_line);
 }
 
-//------------------------ Process a frame, received from FFMPEG.
+//------------------------ Process first frame from the queue, received from FFMPEG.
 void VideoInFFMPEG::processFrame()
 {
     // Check if received frame is a dummy for a missed frame.
@@ -914,6 +885,7 @@ void VideoInFFMPEG::runFrameDecode()
 #ifdef VIP_EN_DBG_OUT
                 if((log_level&LOG_PROCESS)!=0)
                 {
+                    qInfo()<<"[VIP] State:"<<logState(proc_state);
                     qInfo()<<"[VIP]"<<logEventCapture(event_cap);
                 }
 #endif
@@ -937,11 +909,8 @@ void VideoInFFMPEG::runFrameDecode()
                 }
                 if((event_cap&EVT_CAP_FRAME)!=0)
                 {
+                    // New frame received and put into [evt_frames] queue.
                     event_cap &= ~(EVT_CAP_FRAME);
-                    /*if(proc_state==STG_PLAY)
-                    {
-                        askNextFrame();
-                    }*/
                 }
                 if((event_cap&EVT_CAP_ERROR)!=0)
                 {
@@ -1051,6 +1020,7 @@ void VideoInFFMPEG::runFrameDecode()
 #ifdef VIP_EN_DBG_OUT
                 if((log_level&LOG_PROCESS)!=0)
                 {
+                    qInfo()<<"[VIP] State:"<<logState(proc_state);
                     qInfo()<<"[VIP]"<<logEventUser(event_usr);
                 }
 #endif
@@ -1431,10 +1401,20 @@ void VideoInFFMPEG::receiveFrame(QImage in_frame, bool in_double)
 #ifdef VIP_EN_DBG_OUT
     if((log_level&LOG_PROCESS)!=0)
     {
-        qInfo()<<"[VIP] Received new frame, current frame:"<<frame_counter<<", queue:"<<evt_frames.size();
+        if(in_frame.isNull()==false)
+        {
+            qInfo()<<"[VIP] Received new frame"<<in_frame.width()<<"x"<<in_frame.height()<<", current frame:"<<frame_counter<<", queue:"<<evt_frames.size();
+        }
+        else
+        {
+            qWarning()<<DBG_ANCHOR<<"[VIP] Received NULL frame! Frame index:"<<frame_counter;
+        }
     }
 #endif
-    evt_frames.push_back(in_frame);
-    evt_double.push_back(in_double);
-    event_cap |= EVT_CAP_FRAME;
+    if(in_frame.isNull()==false)
+    {
+        evt_frames.push_back(in_frame);
+        evt_double.push_back(in_double);
+        event_cap |= EVT_CAP_FRAME;
+    }
 }

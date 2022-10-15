@@ -29,7 +29,7 @@
       </font>
      </property>
      <property name="text">
-      <string>Декодер видео-PCM</string>
+      <string>SDVPCM: декодер PCM аудио из SD видео</string>
      </property>
     </widget>
    </item>

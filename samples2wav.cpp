@@ -153,6 +153,36 @@ void SamplesToWAV::saveAudio(int16_t in_left, int16_t in_right)
     }
 }
 
+//------------------------ Save audio data from data block into buffer.
+void SamplesToWAV::saveAudio(PCMSamplePair in_audio)
+{
+    // Check available space in buffer.
+    if((TW_AUD_BUF_SIZE-cur_pos)<=1)
+    {
+        // Buffer is full, need to dump its content into output file.
+        purgeBuffer();
+    }
+    // Again check available space in buffer.
+    if((TW_AUD_BUF_SIZE-cur_pos)>1)
+    {
+        // There is enough space for one sample pair.
+        // Copy audio samples.
+        audio.words[cur_pos++] = in_audio.samples[PCMSamplePair::CH_LEFT].audio_word;
+        audio.words[cur_pos++] = in_audio.samples[PCMSamplePair::CH_RIGHT].audio_word;
+        // Copy samplerate.
+        sample_rate = in_audio.getSampleRate();
+    }
+    else
+    {
+#ifdef TW_EN_DBG_OUT
+        // No space.
+        qWarning()<<DBG_ANCHOR<<"[TW] Buffer overflow!";
+#endif
+        // Drop the buffer.
+        cur_pos = 0;
+    }
+}
+
 //------------------------ Output all data from the buffer into file.
 void SamplesToWAV::purgeBuffer()
 {
@@ -320,7 +350,7 @@ void SamplesToWAV::updateHeader()
     writing_pos = file_hdl.tellp();
 
     // 2 channels with one sample per channel, one sample = 2 bytes.
-    byte_rate = sample_rate*4;
+    byte_rate = sample_rate*PCMSamplePair::CH_MAX*2;
 
     // Seek to "file size" field.
     file_hdl.seekp(4, std::ios::beg);

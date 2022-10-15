@@ -21,6 +21,7 @@ namespace Ui {
 class capt_sel;
 }
 
+//------------------------ Capture device selection dialog.
 class capt_sel : public QDialog
 {
     Q_OBJECT
@@ -54,7 +55,7 @@ private:
     Ui::capt_sel *ui;
     QGraphicsScene *scene;
     QGraphicsPixmapItem *pixels;
-    QPixmap preview_pix;
+    QPixmap preview_pix;                // Blank screen for preview.
     QThread *ffmpeg_thread;             // Thread for FFMPEG wrapper.
     FFMPEGWrapper *capt_dev;            // FFMPEG Qt-wrapper.
     QTimer capture_poll;                // Timer for polling opened capture device for new frames.
@@ -71,6 +72,7 @@ public:
 private:
     void disableOffset();
     void enableOffset();
+    void stopCapture();
     void stopPreview();
 
 private slots:

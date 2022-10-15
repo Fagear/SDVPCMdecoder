@@ -2,15 +2,15 @@
 * binarizer.h
 *
 * Created:          2020-03
-* Modified:         2021-11-18
+* Modified:         2022-10-14
 * Author:           Maksim Kryukov aka Fagear (fagear@mail.ru)
 *
 * Description:      Binarizator module.
 *
 *                   This module takes one video line (of type [VideoLine]) and performs:
-*                       - AGC (Automatic Gain Control), detecting BLACK and WHITE levels;
+*                       - AGC (Automatic Gain Control), statistically detecting BLACK and WHITE levels;
 *                       - Automatic reference level detection, detecting the best threshold for binarization;
-*                       - TBC (Time-Based Correction), detecting horizontal offset of the PCM data;
+*                       - TBC (Time-Based Correction), detecting horizontal offset of the PCM data in the line;
 *                       - binarization with set mode;
 *                       - Brute force picking bits that were cut off the edge of the video line (for PCM-1 and PCM-16x0).
 *
@@ -18,12 +18,15 @@
 *                   that are set with [setMode()].
 *
 *                   Output of the [processLine()] is one [PCMLine]
-*                   which contains data bits and misc. information about source video line and its settings.
+*                   which contains data bits and misc. information about source video line and its parameters.
 *
 *                   Binarization process can be much faster with use of
 *                   [setGoodParameters()], [setReferenceLevel()] and [setDataCoordinates()] functions,
 *                   providing those with known good reference level and data coordinates
 *                   from [PCMLine] object which has [isCRCvalid()] set to "true".
+*                   If those parameters are set than [Binarizer] skips most of the processing and tries
+*                   to read PCM data directly. And only if does not succeed than it restarts and
+*                   performs all stages of detecting optimal parameters for binarizing the line.
 *
 *                   The goal of the [Binarizer] is to get valid CRC for the [PCMLine]
 *                   iteratively adjusting various parameters of binarization process,
@@ -34,40 +37,80 @@
 *                       - Set pointer to the output PCM line with [setOutput()];
 *                       - Set mode to desired speed/quality with [setMode()];
 *                       - Call [processLine()] to perform binarization of video line.
-*                       -- optional: if binarization produces a good CRC (PCMLine.isCRCValid())
+*                       -- optional: if binarization produces a good CRC (PCMLine.isCRCValid()==true)
 *                                    provide "good" parameters from the result to [Binarizer]
 *                                    by calling [setGoodParameters()] with "good" [PCMLine] as an argument
-*                                    or [setBWLevels()], [setReferenceLevel()], [setDataCoordinates()],
-*                                    that will significantly increase binarization speed on other
+*                                    or by calling [setBWLevels()], [setReferenceLevel()], [setDataCoordinates()]:
+*                                    that will significantly increase binarization speed on next
 *                                    [processLine()] calls.
 *                                    Those "good" parameters can be reset by calling [setGoodParameters()]
 *                                    with no parameters.
 *
+*                   Go get the most data from noisy and/or low-band video signals [Binarizer] implements such features as:
+*                       - Pixel-Shifer (Micro-TBC)
+*                       - Reference level hysteresis
+*
+*                   [Binarizer] performs binarization by pre-calculating pixel coordinates for centers of each bit in the PCM line
+*                   using start and stop data coordinates ([PCMLine.coords]) and [getBitsBetweenDataCoordinates()] of [PCMLine].
+*                   Sometimes those coordinates may be inaccurate (start/stop coordinates have some error or rounding errors during calculations)
+*                   or there can be preshoot/overshoot of the brightness transitions in the video line
+*                   or there may be some dropouts, noise, OSD in the video.
+*                   To mitigate all that Pixel-Shifer is used. If valid CRC can not be obtained with straight calculated coordinates,
+*                   [Binarizer] tries to shift (up to [SHIFT_STAGES_MAX] times) bits' coordinates from calculated centers
+*                   to one or the other side (see [PIX_SH_BG_TBL] in [PCMLine]) until CRC becomes valid.
+*
+*                   Low-band video signals greatly reduce fidelity, bit transitions become very slow and smeared
+*                   and it may be impossible to correctly determine what's "0" and what's "1" with single reference level.
+*                   With slow brightness transitions levels of "0"s rise up and levels of "1" pull down and more important than that
+*                   level of each bit becomes dependent on what was before it in the line.
+*                   To combat that [Binarizer] calculates two reference levels
+*                   by adding and substracting the same small value of brightness from the single reference level.
+*                   After that binarization is performed conditionally: previous bit state determines
+*                   which of the two new reference levels (LOW and HIGH) is used to determine state of the current bit.
+*                   That's called "reference level hysteresis" and [Binarizer] can try up to [HYST_DEPTH_MAX] times
+*                   to widen that hysteresis window to obtain valid CRC.
+*
+*                   STC-007/PCM-F1 formats have START ("1010") and STOP ("01111") markers at the edges of the line,
+*                   making it pretty easy to find data coordinates (Macro-TBC).
 *                   PCM-1 and PCM-16x0 formats do not have distinct markers to determine data coordinates,
 *                   so TBC for those formats is done via brute-force sweeping START and STOP coordinates until CRCs are good.
 *                   That is extremely resource heavy and slow.
-*                   Automatic coordinates search (Marco-TBC) can be enabled/disabled by [setCoordinatesSearch()].
+*                   Automatic coordinates search (Macro-TBC) can be enabled/disabled by [setCoordinatesSearch()].
 *
-*                   Final data coordinates... can be NEGATIVE and can exceed limits of source video line.
+*                   Final data coordinates... can be NEGATIVE (for PCM-1 and PCM-16x0) and exceed limits of source video line.
 *                   That happens because PCM data can be cut off the screen with bad video capture.
-*                   And so START coordinate can be more to the left that the first pixel in video line (0) and
-*                   STOP coordinate can be more to the right that the last pixel in video line.
+*                   START coordinate can be more to the left than the first pixel in video line (0) and
+*                   STOP coordinate can be more to the right than the last pixel in video line.
 *                   Also that means that some PCM data is lost from the source video.
 *                   AND that data may be brute-force picked for good CRC, because [Binarizer]
-*                   can determine how many bits were cut from the video on each side.
-*                   Automatic bit-picker can be enabled/disabled by [setBitPicker()].
+*                   can determine how many bits were cut from the video line on each side.
+*                   Automatic brute-force Bit-Picker can be enabled/disabled by [setBitPicker()].
+*
+*                   [Binarizer] fully depends on valid CRC to produce good result because it is closed-loop system based on CRC respond.
+*                   But CRC does not directly correlate to the only possible data set, CRC collisions are a thing.
+*                   Because of that [Binarizer] implements several measures to counteract false-positive CRCs from collisions.
+*                   For example, on many stages of processing statistics in form of array of [crc_handler_t] are collected
+*                   and than [findMostFrequentCRC()], [invalidateNonFrequentCRCs()] and [pickLevelByCRCStats()] are used
+*                   to determine if there is the only one valid CRC for the line and if not, which of "valid" CRCs is the most frequent.
+*                   If there no CRC with significantly higher encounter frequency, all "valid" CRCs are invalidated.
+*                   Better safe than sorry.
+*                   Is it even possible to get a collision on ~100 bits of data? Absolutely yes.
+*                   Some tests showed up to 20 (!) "valid" CRCs for the same line in worst case scenarios.
+*
 */
 
 #ifndef BINARIZER_H
 #define BINARIZER_H
+
+#ifndef QT_VERSION
+    #undef LB_EN_DBG_OUT
+#endif
 
 #include <mutex>
 #include <thread>
 #include <stdint.h>
 #include <string>
 #include <vector>
-#include <QElapsedTimer>
-#include <QDebug>
 #include "config.h"
 #include "bin_preset_t.h"
 #include "frametrimset.h"
@@ -76,12 +119,10 @@
 #include "stc007line.h"
 #include "videoline.h"
 
-#ifndef QT_VERSION
-    #undef LB_EN_DBG_OUT
-#endif
-
 #ifdef LB_EN_DBG_OUT
-    //#define LB_LOG_BW_VERBOSE       1       // Produce verbose output for B&W search process.
+    #include <QElapsedTimer>
+    #include <QDebug>
+//#define LB_LOG_BW_VERBOSE       1       // Produce verbose output for B&W search process.
     //#define LB_LOG_MARKER_VERBOSE   1       // Produce verbose output for START/STOP marker search process.
 #endif
 
@@ -89,8 +130,8 @@
     #define getPixelBrightness(x_coord) video_line->pixel_data[x_coord]
 #endif
 
+//------------------------ Element of statistics array for CRC verification.
 // TODO: convert [crc_handler_t] from [int16_t] to [CoordinatePair].
-// Element of statistics array for CRC verification.
 typedef struct
 {
     uint8_t result;         // CRC state for the line.
@@ -101,6 +142,7 @@ typedef struct
     int16_t data_stop;      // Coordinate of data stop in the line for current CRC.
 } crc_handler_t;
 
+//------------------------ Single-line binarizer class.
 // TODO: add counters for left/right bits instead of [en_bit_picker] in [bin_preset_t] and fine settings in GUI
 // TODO: add preset/override for data coordinates and reference level in [bin_preset_t] and fine settings in GUI
 class Binarizer
@@ -328,7 +370,7 @@ private:
     bool findPCM1Coordinates(PCM1Line *pcm1_line, CoordinatePair coord_history);
     bool findPCM16X0Coordinates(PCM16X0SubLine *pcm16x0_line, CoordinatePair coord_history);
     void findSTC007Coordinates(STC007Line *stc_line, bool no_log = false);
-    // Lost bits recovery.
+    // Lost bits recovery (Bit Picker).
     uint8_t pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log = false);
     uint8_t pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log = false);
     // Binarization (with reference level hysteresis and pixel-shifting Micro-TBC).

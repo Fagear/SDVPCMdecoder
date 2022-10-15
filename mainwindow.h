@@ -15,8 +15,7 @@
 #include <QRect>
 #include <QSettings>
 #include <QString>
-#include <QStyleFactory>
-#include <QTextCodec>
+//#include <QTextCodec>
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
@@ -32,6 +31,7 @@
 #include "fine_vidin_set.h"
 #include "frame_vis.h"
 #include "frametrimset.h"
+#include "lookup.h"
 #include "pcm16x0datastitcher.h"
 #include "pcm16x0subline.h"
 #include "pcm1datastitcher.h"
@@ -41,11 +41,11 @@
 #include "stc007datablock.h"
 #include "stc007deinterleaver.h"
 #include "stc007line.h"
+#include "pcmsamplepair.h"
 #include "pcmtester.h"
 #include "samples2wav.h"
 #include "videotodigital.h"
 #include "renderpcm.h"
-//#include "ui_about.h"
 #include "videoline.h"
 #include "vin_ffmpeg.h"
 
@@ -225,8 +225,8 @@ public:
 private:
     Ui::MainWindow *ui;
     QTranslator trUI;
-    VideoInFFMPEG *VIN_worker;
-    VideoToDigital *V2D_worker;
+    VideoInFFMPEG *VIN_worker;              // Video input processor (captures, decodes video and slices frames into lines).
+    VideoToDigital *V2D_worker;             // Video to digital converter, performes binarization and data stabilization.
     PCM1DataStitcher *L2B_PCM1_worker;
     PCM16X0DataStitcher *L2B_PCM16X0_worker;
     STC007DataStitcher *L2B_STC007_worker;
@@ -310,6 +310,8 @@ private:
     uint32_t stat_mask_cnt;
     uint32_t stat_processed_frame_cnt;
     uint32_t stat_line_cnt;
+    uint8_t vu_left;
+    uint8_t vu_right;
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -445,6 +447,8 @@ private slots:
     void updateStatsMaskes(uint16_t);       // Update stats with new value for masked samples.
     void updateStatsBlockTime(STC007DataBlock); // Update stats after DI has finished a data block and provided spent time count.
     void updateStatsDIFrame(uint32_t);      // Update stats after DI has finished a frame.
+
+    void updateVU(PCMSamplePair);
 
     // Self-test start and result reactions.
     void testStartCRCC();                   // Perform internal test of CRCC within PCM line.

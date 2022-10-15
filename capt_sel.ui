@@ -470,13 +470,12 @@
   <tabstop>spbXOffset</tabstop>
   <tabstop>spbYOffset</tabstop>
   <tabstop>spbSetFPS</tabstop>
+  <tabstop>lbxColorCh</tabstop>
   <tabstop>btnApply</tabstop>
-  <tabstop>edtApplied</tabstop>
   <tabstop>listWidget</tabstop>
   <tabstop>btnRefresh</tabstop>
-  <tabstop>viewport</tabstop>
-  <tabstop>btnSave</tabstop>
   <tabstop>btnClose</tabstop>
+  <tabstop>btnSave</tabstop>
  </tabstops>
  <resources/>
  <connections/>

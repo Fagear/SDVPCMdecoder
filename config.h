@@ -22,9 +22,10 @@ extern "C"
 #define APP_ORG_NAME    QString("Fagear")
 #define APP_ORG_HTTP    QString("http://fagear.ru")
 #define APP_NAME        QString("Video PCM decoder")
+#define APP_NAME_LONG   (QObject::tr("SDVPCM: декодер PCM аудио из SD видео"))
 #define APP_EXEC        QString("SDVPCMdecoder")
 #define APP_VERSION     "0.99.4"
-#define APP_INI_NAME    QString("pcmdecode")
+#define APP_INI_NAME    QString("sdv2pcm")
 #define APP_LANG_PATH   (qApp->applicationDirPath())
 
 #define GLOBAL_DEBUG_EN     1       // Enable any debug console output.

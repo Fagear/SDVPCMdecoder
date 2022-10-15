@@ -109,7 +109,8 @@ HEADERS  += mainwindow.h \
     samples2audio.h \
     samples2wav.h \
     capt_sel.h \
-    ffmpegwrapper.h
+    ffmpegwrapper.h \
+    lookup.h
 
 FORMS    += mainwindow.ui \
     fine_bin_set.ui \

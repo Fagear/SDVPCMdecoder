@@ -6,21 +6,21 @@
 #include <QDebug>
 #include <QImage>
 #include <QObject>
-#include <QPixmap>
 #include <QThread>
 #include <QString>
 #include "config.h"
 #include "vid_preset_t.h"
 
-#define FFWR_WIN_GDI_NAME       tr("Захват экрана Windows GDI")
+#define FFWR_WIN_GDI_NAME       (QObject::tr("Захват экрана Windows GDI"))
 #define FFWR_WIN_GDI_CLASS      "gdigrab"
 #define FFWR_WIN_GDI_CAP        "desktop"
-#define FFWR_WIN_DSHOW_NAME     tr("Захват экрана Windows DirectShow")
+#define FFWR_WIN_DSHOW_NAME     (QObject::tr("Захват экрана Windows DirectShow"))
 #define FFWR_WIN_DSHOW_CLASS    "dshow"
 #define FFWR_WIN_DSHOW_CAP      "screen-capture-recorder"
 #define FFWR_LIN_X11_CLASS      "x11grab"
 #define FFWRL_MAC_AVF_CLASS     "avfoundation"
 
+//------------------------ Video capture device descriptor.
 class VCapDevice
 {
 public:
@@ -35,6 +35,7 @@ public:
     void clear();
 };
 
+//------------------------ Video capture devices list.
 class VCapList
 {
 public:
@@ -47,6 +48,7 @@ public:
     void clear();
 };
 
+//------------------------ Qt-wrapper for FFMPEG for capturing video.
 class FFMPEGWrapper : public QObject
 {
     Q_OBJECT
@@ -84,7 +86,7 @@ public:
     // Resolution for dummy frame.
     enum
     {
-        DUMM_CNT_MAX = 1024,
+        DUMMY_CNT_MAX = 1024,
         DUMMY_WIDTH = 16,
         DUMMY_HEIGTH = 8
     };
@@ -112,24 +114,24 @@ public:
     // Color plane IDs.
     enum
     {
-        PLANE_Y = 0,                    // Plane for Y level.
-        PLANE_G = 0,                    // Plane for GREEN color.
-        PLANE_B = 1,                    // Plane for BLUE color.
-        PLANE_R = 2                     // Plane for RED color.
+        PLANE_Y = 0,                    // Plane for Y level with AV_PIX_FMT_YUV420P pixel format.
+        PLANE_G = 0,                    // Plane for GREEN color with AV_PIX_FMT_GBRP pixel format.
+        PLANE_B = 1,                    // Plane for BLUE color with AV_PIX_FMT_GBRP pixel format.
+        PLANE_R = 2                     // Plane for RED color with AV_PIX_FMT_GBRP pixel format.
     };
 
 private:
     AVFormatContext *format_ctx;        // Context for FFMPEG format.
-    AVCodecContext *video_dec_ctx;      // Context for FFMPEG decoder.
     const AVCodec *v_decoder;           // Codec structure.
     int stream_index;                   // Current open video stream index.
+    AVCodecContext *video_dec_ctx;      // Context for FFMPEG decoder.
     AVFrame *dec_frame;                 // Frame holder for FFMPEG decoded frame.
     AVPacket dec_packet;                // Packet container for FFMPEG decoder.
+    uint8_t *video_dst_data[4];         // Container for frame data from the decoder.
+    int video_dst_linesize[4];          // Container for frame parameters from the decoder.
     SwsContext *conv_ctx;               // Context for FFMPEG frame converter.
     bool img_buf_free;                  // Final frame buffer was not allocated.
     bool source_open;                   // Source is open.
-    uint8_t *video_dst_data[4];         // Container for frame data from the decoder.
-    int video_dst_linesize[4];          // Container for frame parameters from the decoder.
     AVPixelFormat last_frame_fmt;       // Last frame format.
     AVPixelFormat target_pixfmt;        // Pixel format for final frame (set in [initFrameConverter()]).
     uint32_t frame_count;

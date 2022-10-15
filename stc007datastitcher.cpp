@@ -20,7 +20,7 @@ STC007DataStitcher::STC007DataStitcher(QObject *parent) : QObject(parent)
     preset_video_mode = FrameAsmDescriptor::VID_UNKNOWN;
     preset_field_order = FrameAsmDescriptor::ORDER_UNK;
     preset_audio_res = SAMPLE_RES_UNKNOWN;
-    preset_sample_rate = PCMSamplePair::SAMPLE_RATE_UNKNOWN;
+    preset_sample_rate = PCMSamplePair::SAMPLE_RATE_AUTO;
 
     log_level = 0;
     trim_fill = 0;

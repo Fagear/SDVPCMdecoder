@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+//------------------------ Coordinate pair handler.
 class CoordinatePair
 {
 public:
@@ -40,7 +41,7 @@ public:
     bool hasDeltaWarning(uint8_t in_delta);
 };
 
-// Video "tracking" information.
+//------------------------ Video "tracking" information.
 class FrameBinDescriptor
 {
 public:
@@ -69,7 +70,27 @@ public:
     uint32_t totalProcessTime();
 };
 
-// Frame assembling information.
+//------------------------ Frame assembling attempt statistics.
+class FieldStitchStats
+{
+public:
+    uint16_t index;         // Index in the padding runs.
+    uint16_t valid;         // How many valid blocks were assembled during the run.
+    uint16_t silent;        // How many silent blocks were found during the run.
+    uint16_t unchecked;     // How many unchecked blocks were found during the run.
+    uint16_t broken;        // How many BROKEN blocks were found during the run.
+
+public:
+    FieldStitchStats();
+    FieldStitchStats(const FieldStitchStats &);
+    FieldStitchStats& operator= (const FieldStitchStats &);
+    bool operator!= (const FieldStitchStats &);
+    bool operator== (const FieldStitchStats &);
+    bool operator< (const FieldStitchStats &);
+    void clear();
+};
+
+//------------------------ Frame assembling information (base class).
 class FrameAsmDescriptor
 {
 public:
@@ -141,7 +162,7 @@ public:
     uint8_t getAvgRef();
 };
 
-// Frame assembling information for PCM-1.
+//------------------------ Frame assembling information for PCM-1.
 class FrameAsmPCM1 : public FrameAsmDescriptor
 {
 public:
@@ -160,7 +181,7 @@ public:
     void clearAsmStats();
 };
 
-// Frame assembling information for PCM-16x0.
+//------------------------ Frame assembling information for PCM-16x0.
 class FrameAsmPCM16x0 : public FrameAsmDescriptor
 {
 public:
@@ -185,7 +206,7 @@ public:
     void clearAsmStats();
 };
 
-// Frame assembling information for STC-007.
+//------------------------ Frame assembling information for STC-007.
 class FrameAsmSTC007 : public FrameAsmDescriptor
 {
 public:
@@ -218,25 +239,4 @@ public:
     void clearAsmStats();
     void updateVidStdSoft(uint8_t in_std);
 };
-
-// Frame assembling attempt statistics.
-class FieldStitchStats
-{
-public:
-    uint16_t index;         // Index in the padding runs.
-    uint16_t valid;         // How many valid blocks were assembled during the run.
-    uint16_t silent;        // How many silent blocks were found during the run.
-    uint16_t unchecked;     // How many unchecked blocks were found during the run.
-    uint16_t broken;        // How many BROKEN blocks were found during the run.
-
-public:
-    FieldStitchStats();
-    FieldStitchStats(const FieldStitchStats &);
-    FieldStitchStats& operator= (const FieldStitchStats &);
-    bool operator!= (const FieldStitchStats &);
-    bool operator== (const FieldStitchStats &);
-    bool operator< (const FieldStitchStats &);
-    void clear();
-};
-
 #endif // FRAMETRIMSET_H

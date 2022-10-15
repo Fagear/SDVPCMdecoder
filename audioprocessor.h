@@ -20,6 +20,7 @@
 #include "samples2audio.h"
 #include "samples2wav.h"
 
+//------------------------ Audio processor class (buffering, interpolating dropouts, device/file output).
 class AudioProcessor : public QObject
 {
     Q_OBJECT
@@ -140,6 +141,7 @@ signals:
     void guiLivePB(bool);                   // Report live playback state.
     void newSource();                       // Report about changed source.
     void reqTimerRestart();
+    void outSamples(PCMSamplePair);         // Copy of outputting samples.
     void stopOutput();                      // Report about thread terminating.
     void finished();
 };

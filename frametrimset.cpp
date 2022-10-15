@@ -254,6 +254,129 @@ uint32_t FrameBinDescriptor::totalProcessTime()
 
 
 
+//------------------------ Frame assembling attempt statistics.
+FieldStitchStats::FieldStitchStats()
+{
+    this->clear();
+}
+
+FieldStitchStats::FieldStitchStats(const FieldStitchStats &in_object)
+{
+    index = in_object.index;
+    valid = in_object.valid;
+    silent = in_object.silent;
+    unchecked = in_object.unchecked;
+    broken = in_object.broken;
+}
+
+FieldStitchStats& FieldStitchStats::operator= (const FieldStitchStats &in_object)
+{
+    if(this==&in_object) return *this;
+
+    index = in_object.index;
+    valid = in_object.valid;
+    silent = in_object.silent;
+    unchecked = in_object.unchecked;
+    broken = in_object.broken;
+
+    return *this;
+}
+
+bool FieldStitchStats::operator!= (const FieldStitchStats &in_object)
+{
+    if((in_object.index!=index)||(in_object.valid!=valid)||(in_object.silent!=silent)||(in_object.unchecked!=unchecked)||(in_object.broken!=broken))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool FieldStitchStats::operator== (const FieldStitchStats &in_object)
+{
+    if((in_object.index==index)&&(in_object.valid==valid)&&(in_object.silent==silent)&&(in_object.unchecked==unchecked)&&(in_object.broken==broken))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+//------------------------ Compare operator to support std::sort().
+bool FieldStitchStats::operator< (const FieldStitchStats &in_object)
+{
+    // 1th, sort by [broken] field from min to max.
+    if(broken<in_object.broken)
+    {
+        return true;
+    }
+    else if(broken==in_object.broken)
+    {
+        // 2st, sort by [valid] field from max to min.
+        if(valid>in_object.valid)
+        {
+            return true;
+        }
+        else if(valid==in_object.valid)
+        {
+            // 3rd, sort by [unchecked] field from min to max.
+            if(unchecked<in_object.unchecked)
+            {
+                return true;
+            }
+            else if(unchecked==in_object.unchecked)
+            {
+                // 4th, sort by [silent] field from min to max.
+                if(silent<in_object.silent)
+                {
+                    return true;
+                }
+                else if(silent==in_object.silent)
+                {
+                    // 5th, sort by [index] field from min to max.
+                    if(index<in_object.index)
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
+//------------------------ Reset all fields.
+void FieldStitchStats::clear()
+{
+    index = valid = 0;
+    silent = unchecked = broken = 0xFF;
+}
+
+
+
 //------------------------ Frame assembling information.
 FrameAsmDescriptor::FrameAsmDescriptor()
 {
@@ -723,127 +846,4 @@ void FrameAsmSTC007::updateVidStdSoft(uint8_t in_std)
             video_standard = in_std;
         }
     }
-}
-
-
-
-//------------------------ Frame assembling attempt statistics.
-FieldStitchStats::FieldStitchStats()
-{
-    this->clear();
-}
-
-FieldStitchStats::FieldStitchStats(const FieldStitchStats &in_object)
-{
-    index = in_object.index;
-    valid = in_object.valid;
-    silent = in_object.silent;
-    unchecked = in_object.unchecked;
-    broken = in_object.broken;
-}
-
-FieldStitchStats& FieldStitchStats::operator= (const FieldStitchStats &in_object)
-{
-    if(this==&in_object) return *this;
-
-    index = in_object.index;
-    valid = in_object.valid;
-    silent = in_object.silent;
-    unchecked = in_object.unchecked;
-    broken = in_object.broken;
-
-    return *this;
-}
-
-bool FieldStitchStats::operator!= (const FieldStitchStats &in_object)
-{
-    if((in_object.index!=index)||(in_object.valid!=valid)||(in_object.silent!=silent)||(in_object.unchecked!=unchecked)||(in_object.broken!=broken))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool FieldStitchStats::operator== (const FieldStitchStats &in_object)
-{
-    if((in_object.index==index)&&(in_object.valid==valid)&&(in_object.silent==silent)&&(in_object.unchecked==unchecked)&&(in_object.broken==broken))
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-//------------------------ Compare operator to support std::sort().
-bool FieldStitchStats::operator< (const FieldStitchStats &in_object)
-{
-    // 1th, sort by [broken] field from min to max.
-    if(broken<in_object.broken)
-    {
-        return true;
-    }
-    else if(broken==in_object.broken)
-    {
-        // 2st, sort by [valid] field from max to min.
-        if(valid>in_object.valid)
-        {
-            return true;
-        }
-        else if(valid==in_object.valid)
-        {
-            // 3rd, sort by [unchecked] field from min to max.
-            if(unchecked<in_object.unchecked)
-            {
-                return true;
-            }
-            else if(unchecked==in_object.unchecked)
-            {
-                // 4th, sort by [silent] field from min to max.
-                if(silent<in_object.silent)
-                {
-                    return true;
-                }
-                else if(silent==in_object.silent)
-                {
-                    // 5th, sort by [index] field from min to max.
-                    if(index<in_object.index)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else
-        {
-            return false;
-        }
-    }
-    else
-    {
-        return false;
-    }
-}
-
-//------------------------ Reset all fields.
-void FieldStitchStats::clear()
-{
-    index = valid = 0;
-    silent = unchecked = broken = 0xFF;
 }

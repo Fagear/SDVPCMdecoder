@@ -12,7 +12,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Декодер видео-PCM (PCM-1, PCM-16x0, STC-007, PCM-F1)</string>
+   <string>SDVPCM: декодер PCM аудио из SD видео</string>
   </property>
   <property name="windowIcon">
    <iconset resource="icons.qrc">
@@ -384,6 +384,82 @@
            </property>
            <property name="checkable">
             <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QProgressBar" name="pgrVULeft">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>7</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>3</pointsize>
+            </font>
+           </property>
+           <property name="maximum">
+            <number>255</number>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="textVisible">
+            <bool>false</bool>
+           </property>
+           <property name="format">
+            <string notr="true">%p</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QProgressBar" name="pgrVURight">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>7</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>3</pointsize>
+            </font>
+           </property>
+           <property name="maximum">
+            <number>255</number>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="textVisible">
+            <bool>false</bool>
+           </property>
+           <property name="format">
+            <string notr="true">%p</string>
            </property>
           </widget>
          </item>
@@ -4364,65 +4440,6 @@ Q-коррекций:</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="0" colspan="2">
-          <widget class="QProgressBar" name="pgrBlockBuf">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>Заполненность буфера PCM блоков данных</string>
-           </property>
-           <property name="statusTip">
-            <string>Заполненность буфера PCM блоков данных</string>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="format">
-            <string notr="true">%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="lblDropout">
-           <property name="toolTip">
-            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-           </property>
-           <property name="statusTip">
-            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-           </property>
-           <property name="text">
-            <string>Неисправленных
-блоков данных:</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="lblSampleDrops">
-           <property name="toolTip">
-            <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
-           </property>
-           <property name="statusTip">
-            <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
-           </property>
-           <property name="text">
-            <string>Неисправленных
-аудио-отсчётов:</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="1">
           <widget class="QLCDNumber" name="lcdSampleDrops">
            <property name="palette">
@@ -4476,6 +4493,65 @@ Q-коррекций:</string>
            </property>
            <property name="segmentStyle">
             <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblDropout">
+           <property name="toolTip">
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="text">
+            <string>Неисправленных
+блоков данных:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblSampleDrops">
+           <property name="toolTip">
+            <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="statusTip">
+            <string>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="text">
+            <string>Неисправленных
+аудио-отсчётов:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" colspan="2">
+          <widget class="QProgressBar" name="pgrBlockBuf">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Заполненность буфера PCM блоков данных</string>
+           </property>
+           <property name="statusTip">
+            <string>Заполненность буфера PCM блоков данных</string>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="format">
+            <string notr="true">%p%</string>
            </property>
           </widget>
          </item>
@@ -4921,7 +4997,7 @@ Q-коррекций:</string>
     <string>Открыть видео с PCM...</string>
    </property>
    <property name="statusTip">
-    <string>Диалог открытия видео-файла поддерживаемого формата, содержащего PCM</string>
+    <string>Открытие видео-файла поддерживаемого формата, содержащего PCM</string>
    </property>
    <property name="shortcut">
     <string notr="true">Ctrl+O</string>
@@ -5250,7 +5326,7 @@ Q-коррекций:</string>
     <string>Тонкие настройки бинаризатора...</string>
    </property>
    <property name="statusTip">
-    <string>Открыть диалог тонкой настройки</string>
+    <string>Открыть диалог тонкой настройки бинаризатора</string>
    </property>
    <property name="shortcut">
     <string notr="true">Shift+B</string>
@@ -5265,7 +5341,7 @@ Q-коррекций:</string>
     <string>Тонкие настройки деинтерливера...</string>
    </property>
    <property name="statusTip">
-    <string>Открыть диалог тонкой настройки</string>
+    <string>Открыть диалог тонкой настройки деинтерливера</string>
    </property>
    <property name="shortcut">
     <string notr="true">Shift+N</string>
@@ -5365,6 +5441,9 @@ Q-коррекций:</string>
    <property name="text">
     <string>Тонкие настройки видео-декодера...</string>
    </property>
+   <property name="statusTip">
+    <string>Открыть диалог тонкой настройки видео-декодера</string>
+   </property>
    <property name="shortcut">
     <string notr="true">Shift+V</string>
    </property>
@@ -5380,6 +5459,9 @@ Q-коррекций:</string>
    <property name="text">
     <string>О программе...</string>
    </property>
+   <property name="statusTip">
+    <string>Открытие окна с информацией о программе</string>
+   </property>
    <property name="shortcut">
     <string notr="true">F1</string>
    </property>
@@ -5387,6 +5469,12 @@ Q-коррекций:</string>
   <action name="actFullReset">
    <property name="text">
     <string>Сбросить все настройки</string>
+   </property>
+   <property name="statusTip">
+    <string>Сбросить все настройки приложения (включая последнюю папку и положения окон)</string>
+   </property>
+   <property name="shortcut">
+    <string notr="true">Ctrl+Shift+R</string>
    </property>
   </action>
   <action name="actWinPosReset">
@@ -5400,6 +5488,9 @@ Q-коррекций:</string>
   <action name="actDecoderReset">
    <property name="text">
     <string>Сбросить настройки декодера</string>
+   </property>
+   <property name="statusTip">
+    <string>Сбросить настройки декодирования в главном окне</string>
    </property>
   </action>
   <action name="actCaptDisconnect">
@@ -5415,6 +5506,9 @@ Q-коррекций:</string>
    <property name="text">
     <string>Захватить PCM с видео захвата...</string>
    </property>
+   <property name="statusTip">
+    <string>Захват видео с устройства для декодирования PCM</string>
+   </property>
    <property name="shortcut">
     <string notr="true">Ctrl+I</string>
    </property>
@@ -5422,6 +5516,12 @@ Q-коррекций:</string>
   <action name="actCloseSource">
    <property name="text">
     <string>Закрыть источник</string>
+   </property>
+   <property name="statusTip">
+    <string>Отключиться от выбранного источника видео</string>
+   </property>
+   <property name="shortcut">
+    <string notr="true">Ctrl+W</string>
    </property>
   </action>
   <action name="actLBCoords">

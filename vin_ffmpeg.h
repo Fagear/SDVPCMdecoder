@@ -9,22 +9,22 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
-#include <QList>
 #include <QMutex>
 #include <QObject>
 #include <QThread>
 #include <QString>
 #include "config.h"
 #include "ffmpegwrapper.h"
-#include "stc007datablock.h"
-#include "stc007datastitcher.h"
+//#include "stc007datablock.h"
+//#include "stc007datastitcher.h"
 #include "vid_preset_t.h"
 #include "videoline.h"
 
 //#define VIP_LINES_UPSIDEDOWN    1   // Scan frame from bottom to top
-#define VIP_BUF_FMT_BW      (AV_PIX_FMT_YUV420P)      // Frame format for normal BW Y-decoded buffer.
-#define VIP_BUF_FMT_COLOR   (AV_PIX_FMT_GBRP)       // Frame format for per-color-channel GBR-decoded buffer.
+#define VIP_BUF_FMT_BW      (AV_PIX_FMT_YUV420P)        // Frame format for normal BW Y-decoded buffer.
+#define VIP_BUF_FMT_COLOR   (AV_PIX_FMT_GBRP)           // Frame format for per-color-channel GBR-decoded buffer.
 
+//------------------------ Video processor (receives a frame and slices it into deinterlaced lines).
 class VideoInFFMPEG : public QObject
 {
     Q_OBJECT
@@ -51,13 +51,6 @@ public:
         LOG_PROCESS = (1<<1),   // General stage-by-stage logging.
         LOG_FRAME = (1<<2),     // General stage-by-stage logging.
         LOG_LINES = (1<<3),     // Output per-line details.
-    };
-
-    // Limits for enabling double width resise.
-    enum
-    {
-        MIN_DOUBLE_WIDTH = 10,
-        MAX_DOUBLE_WIDTH = 959
     };
 
     // Source processing mode for [proc_state].
@@ -127,8 +120,6 @@ public:
     explicit VideoInFFMPEG(QObject *parent = 0);
 
 private:
-    uint16_t getFinalHeight(uint16_t);
-    uint16_t getFinalWidth(uint16_t);
     void resetCounters();
     bool hasWidthDoubling(uint16_t);
     void askNextFrame();
@@ -145,7 +136,7 @@ private:
 public slots:
     void setLogLevel(uint8_t new_log_lvl = 0);
     void setOutputPointers(std::deque<VideoLine> *in_queue = NULL, QMutex *in_mtx = NULL);
-    void setSourceLocation(QString);
+    void setSourceLocation(QString in_path);
     void setStepPlay(bool in_step = false);
     void setDropDetect(bool in_detect = false);
     void setFineSettings(vid_preset_t in_set);  // Set fine video processing settings.

@@ -22,6 +22,7 @@
 #include "stc007line.h"
 #include "videoline.h"
 
+//------------------------ Qt-wrapper for [Binarizer] and data stabilizer.
 class VideoToDigital : public QObject
 {
     Q_OBJECT

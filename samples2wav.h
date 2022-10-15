@@ -30,7 +30,8 @@ public:
 
 private:
     char stream_buffer[TW_FS_BUF_SIZE];
-    std::ofstream file_hdl;
+    // TODO: switch to QFile Unicode-compatible operations
+    std::ofstream file_hdl;             // [std::ofstream] is not Unicode-aware!
     std::string path_for_wav;
     std::string file_name;
     union
@@ -52,6 +53,7 @@ public:
     void setSampleRate(uint16_t in_rate);
     void prepareNewFile();
     void saveAudio(int16_t in_left, int16_t in_right);
+    void saveAudio(PCMSamplePair in_audio);
     void purgeBuffer();
     void releaseFile();
 
