@@ -19,6 +19,7 @@
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
+#include <QWinTaskbarProgress>
 #include <QtWidgets>
 #include "about_wnd.h"
 #include "audioprocessor.h"
@@ -322,8 +323,6 @@ private:
     void resizeEvent(QResizeEvent *event);
     void closeEvent(QCloseEvent *event);
 
-    void buffer_tester();
-
     QString generateTranslationPath(QString in_locale);
     QStringList getTranslationList();
     void updateGUILangList();
@@ -344,9 +343,8 @@ private:
     void enableGUIEvents();                 // Re-enable comboboxes events after changing translation.
     void applyGUISettings();                // Apply GUI settings to the decoder.
     void readGUISettings();                 // Read settings into GUI.
-    void clearPCMQueue();
 
-    CoordinatePair getCoordByFrameNo(uint32_t);
+    CoordinatePair getCoordByFrameNo(uint32_t);     // Find and return coordinates from video tracking history.
 
 private slots:
     //void dbgSlot(int);

@@ -314,6 +314,12 @@ uint16_t PCMSamplePair::getSampleRate()
     return sample_rate;
 }
 
+//------------------------ Get size of the sample in bytes.
+size_t PCMSamplePair::getSampleSize()
+{
+    return sizeof(sample_rate);
+}
+
 //------------------------ Get index of the set;
 uint64_t PCMSamplePair::getIndex()
 {

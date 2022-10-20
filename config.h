@@ -31,18 +31,19 @@ extern "C"
 #define GLOBAL_DEBUG_EN     1       // Enable any debug console output.
 
 #ifdef GLOBAL_DEBUG_EN
-    #define VIP_EN_DBG_OUT      1       // Enable debug console output in [vin_ffmpeg] module.
-    //#define STC_LINE_EN_DBG_OUT 1       // Enable debug console output in [stc007line] module.
-    //#define PCM1_LINE_EN_DBG_OUT 1       // Enable debug console output in [pcm1line] module.
-    //#define PCM16X0_LINE_EN_DBG_OUT 1       // Enable debug console output in [pcm16x0subline] module.
-    //#define DB_EN_DBG_OUT       1       // Enable debug console output in [xxxdatablock] modules.
-    #define LB_EN_DBG_OUT       1       // Enable debug console output in [binarizer] module.
-    #define DI_EN_DBG_OUT       1       // Enable debug console output in [xxxdatastitcher] and [xxxdeinterleaver] modules.
-    #define AP_EN_DBG_OUT       1       // Enable debug console output in [audioprocessor] module.
-    #define TA_EN_DBG_OUT       1       // Enable debug console output in [stc007toaudio] module.
-    #define TW_EN_DBG_OUT       1       // Enable debug console output in [stc007towav] module.
-    //#define VIS_EN_DBG_OUT      1       // Enable debug console output in [renderpcm] module.
-    #define TST_EN_DBG_OUT      1       // Enable debug console output in [pcmtester] module.
+    #define FFWR_EN_DBG_OUT     1       // Enable debug console output in [FFMPEGWrapper] module.
+    #define VIP_EN_DBG_OUT      1       // Enable debug console output in [VideoInFFMPEG] module.
+    //#define STC_LINE_EN_DBG_OUT 1       // Enable debug console output in [STC007Line] module.
+    //#define PCM1_LINE_EN_DBG_OUT 1       // Enable debug console output in [PCM1Line] module.
+    //#define PCM16X0_LINE_EN_DBG_OUT 1       // Enable debug console output in [PCM1SubLine] module.
+    //#define DB_EN_DBG_OUT       1       // Enable debug console output in [xxxDataBlock] modules.
+    #define LB_EN_DBG_OUT       1       // Enable debug console output in [Binarizer] module.
+    #define DI_EN_DBG_OUT       1       // Enable debug console output in [xxxDataStitcher] and [xxxDeinterleaver] modules.
+    #define AP_EN_DBG_OUT       1       // Enable debug console output in [AudioProcessor] module.
+    #define TA_EN_DBG_OUT       1       // Enable debug console output in [SamplesToAudio] module.
+    #define TW_EN_DBG_OUT       1       // Enable debug console output in [SamplesToWAV] module.
+    //#define VIS_EN_DBG_OUT      1       // Enable debug console output in [RenderPCM] module.
+    #define TST_EN_DBG_OUT      1       // Enable debug console output in [PCMTester] module.
 #endif
 
 #define FRAMES_READ_AHEAD_MAX       3       // Maximum number of frames read ahead.

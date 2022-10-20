@@ -101,6 +101,7 @@ public:
     void setEmphasis(bool on = true);
     int16_t getSample(uint8_t channel);
     uint16_t getSampleRate();
+    static size_t getSampleSize();
     uint64_t getIndex();
     bool isSampleValid(uint8_t channel);
     bool isBlockValid(uint8_t channel);

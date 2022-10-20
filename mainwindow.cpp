@@ -492,102 +492,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
-void MainWindow::buffer_tester()
-{
-    QString log_line;
-    std::deque<STC007Line> lines_deque;
-    std::array<STC007Line, (STC007DataStitcher::LINES_PF_PAL*2)> lines_array;
-    circarray<STC007Line, (STC007DataStitcher::LINES_PF_PAL*2)> lines_newcirc;
-
-    circarray<uint8_t, 10> circ_buf;
-
-    for(uint16_t i=0;i<13;i++)
-    {
-        circ_buf.push(i);
-        log_line = "";
-        for(uint16_t j=0;j<circ_buf.size();j++)
-        {
-            log_line += QString::number(circ_buf[j])+",";
-        }
-        qInfo()<<"Size:"<<circ_buf.size()<<"|"<<log_line;
-    }
-
-    for(uint16_t i=0;i<8;i++)
-    {
-        circ_buf.pop();
-        log_line = "";
-        for(uint16_t j=0;j<circ_buf.size();j++)
-        {
-            log_line += QString::number(circ_buf[j])+",";
-        }
-        qInfo()<<"Size:"<<circ_buf.size()<<"|"<<log_line;
-    }
-
-    for(uint16_t i=0;i<17;i++)
-    {
-        circ_buf.push(i);
-        log_line = "";
-        for(uint16_t j=0;j<circ_buf.size();j++)
-        {
-            log_line += QString::number(circ_buf[j])+",";
-        }
-        qInfo()<<"Size:"<<circ_buf.size()<<"|"<<log_line;
-    }
-
-    STC007Line filler_line;
-    filler_line.setSourcePixels(0, 640);
-    filler_line.coords.setCoordinates(0, 640);
-    filler_line.calcPPB(filler_line.coords);
-
-    QElapsedTimer dbg_timer;
-
-    dbg_timer.start();
-    for(uint16_t i=0;i<(STC007DataStitcher::LINES_PF_PAL*2);i++)
-    {
-        filler_line.line_number = i;
-        lines_deque.push_back(filler_line);
-    }
-    qDebug()<<"[DBG] Deque fill"<<dbg_timer.nsecsElapsed();
-
-    dbg_timer.start();
-    for(uint16_t i=0;i<(STC007DataStitcher::LINES_PF_PAL*2);i++)
-    {
-        filler_line.line_number = i;
-        lines_array[i] = filler_line;
-    }
-    qDebug()<<"[DBG] Array fill"<<dbg_timer.nsecsElapsed();
-
-    dbg_timer.start();
-    for(uint16_t i=0;i<(STC007DataStitcher::LINES_PF_PAL*2);i++)
-    {
-        filler_line.line_number = i;
-        lines_newcirc.push(filler_line);
-    }
-    qDebug()<<"[DBG] Circ. fill"<<dbg_timer.nsecsElapsed();
-
-    dbg_timer.start();
-    for(uint16_t i=0;i<(STC007DataStitcher::LINES_PF_PAL*2);i++)
-    {
-        filler_line = lines_deque[i];
-    }
-    qDebug()<<"[DBG] Deque read"<<dbg_timer.nsecsElapsed();
-
-    dbg_timer.start();
-    for(uint16_t i=0;i<(STC007DataStitcher::LINES_PF_PAL*2);i++)
-    {
-        filler_line = lines_array[i];
-    }
-    qDebug()<<"[DBG] Array read"<<dbg_timer.nsecsElapsed();
-
-    dbg_timer.start();
-    for(uint16_t i=0;i<(STC007DataStitcher::LINES_PF_PAL*2);i++)
-    {
-        filler_line = lines_newcirc[i];
-    }
-    qDebug()<<"[DBG] Circ. read"<<dbg_timer.nsecsElapsed();
-
-}
-
 //------------------------ Generate proper full name for translation file.
 QString MainWindow::generateTranslationPath(QString in_locale)
 {
@@ -1383,33 +1287,6 @@ void MainWindow::readGUISettings()
     enableGUIEvents();
 }
 
-//------------------------ Clear decoded PCM buffer.
-// TODO: depracate
-void MainWindow::clearPCMQueue()
-{
-    vl_lock.lock();
-    video_lines.clear();
-    vl_lock.unlock();
-
-    pcm1line_lock.lock();
-    pcm1_lines.clear();
-    pcm1line_lock.unlock();
-
-    pcm16x0subline_lock.lock();
-    pcm16x0_lines.clear();
-    pcm16x0subline_lock.unlock();
-
-    stcline_lock.lock();
-    stc007_lines.clear();
-    stcline_lock.unlock();
-
-    audio_lock.lock();
-    audio_data.clear();
-    audio_lock.unlock();
-
-    //AP_worker->purgePipeline();
-}
-
 //------------------------ Find and return coordinates from video tracking history.
 CoordinatePair MainWindow::getCoordByFrameNo(uint32_t frame_num)
 {
@@ -1498,6 +1375,7 @@ void MainWindow::loadVideo()
         // Signal about new source file.
         emit newTargetPath(file_path);
 
+        // Block playback and source control and wait for response from [VIN_worker].
         ui->btnOpen->setEnabled(false);
         ui->btnPlay->setEnabled(false);
         ui->btnPlay->setChecked(false);
@@ -1505,9 +1383,6 @@ void MainWindow::loadVideo()
         ui->btnPause->setEnabled(false);
         ui->btnPause->setChecked(false);
         ui->btnPause->repaint();
-
-        // Clear PCM lines queue.
-        //clearPCMQueue();
 
         // Set current application directory to source file's path.
         QDir::setCurrent(in_file.absolutePath());

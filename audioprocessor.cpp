@@ -1303,6 +1303,11 @@ void AudioProcessor::outputAudio()
         outputWordPair();
         points_done++;
     }
+    if(file_end!=false)
+    {
+        // Dump everything that's in the buffer from previous file to the output.
+        purgePipeline();
+    }
 #ifdef AP_EN_DBG_OUT
     if((log_level&LOG_PROCESS)!=0)
     {
@@ -1376,7 +1381,7 @@ void AudioProcessor::outputWordPair()
 //------------------------ Dump audio processor buffer into output.
 void AudioProcessor::dumpBuffer()
 {
-    while(prebuffer.size()>0)
+    while(prebuffer.size()>1)
     {
         outputWordPair();
     }
@@ -1394,14 +1399,13 @@ void AudioProcessor::restartCloseTimer()
 //------------------------ Close output by timeout.
 void AudioProcessor::actCloseOutput()
 {
-    wav_output.purgeBuffer();
-    wav_output.releaseFile();
 #ifdef AP_EN_DBG_OUT
     if((log_level&LOG_PROCESS)!=0)
     {
-        qInfo()<<"[AP] Closing output by timeout...";
+        qInfo()<<"[AP] Flushing output by timeout...";
     }
 #endif
+    wav_output.purgeBuffer();
     tim_outclose->stop();
 }
 
@@ -1414,45 +1418,27 @@ void AudioProcessor::setLogLevel(uint8_t new_log)
 //------------------------ Set path for output file.
 void AudioProcessor::setFolder(QString in_path)
 {
-    if(file_path!=in_path)
-    {
-        file_path = in_path;
 #ifdef AP_EN_DBG_OUT
-        if((log_level&LOG_SETTINGS)!=0)
-        {
-            qInfo()<<"[AP] Target folder set to"<<file_path;
-        }
-#endif
-        //dumpBuffer();
-        std::string file_path;
-        file_path = in_path.toStdString();
-        wav_output.purgeBuffer();
-        wav_output.setFolder(file_path);
-        wav_output.prepareNewFile();
-        emit newSource();
+    if((log_level&LOG_SETTINGS)!=0)
+    {
+        qInfo()<<"[AP] Target folder set to"<<in_path;
     }
+#endif
+    //dumpBuffer();
+    wav_output.setFolder(in_path);
 }
 
 //------------------------ Set filename for output file.
 void AudioProcessor::setFileName(QString in_name)
 {
-    if(file_name!=in_name)
-    {
-        file_name = in_name;
 #ifdef AP_EN_DBG_OUT
-        if((log_level&LOG_SETTINGS)!=0)
-        {
-            qInfo()<<"[AP] Target file name set to"<<file_name;
-        }
-#endif
-        //dumpBuffer();
-        std::string non_unicode_name;
-        non_unicode_name = in_name.toLocal8Bit().toStdString();
-        wav_output.purgeBuffer();
-        wav_output.setName(non_unicode_name);
-        wav_output.prepareNewFile();
-        emit newSource();
+    if((log_level&LOG_SETTINGS)!=0)
+    {
+        qInfo()<<"[AP] Target file name set to"<<in_name;
     }
+#endif
+    //dumpBuffer();
+    wav_output.setName(in_name);
 }
 
 //------------------------ Enable/disable interpolation.
@@ -1633,7 +1619,7 @@ void AudioProcessor::processAudio()
 void AudioProcessor::purgePipeline()
 {
 #ifdef AP_EN_DBG_OUT
-    if((log_level&LOG_PROCESS)!=0)
+    if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_FILE_OP)!=0)||((log_level&LOG_LIVE_OP)!=0))
     {
         qInfo()<<"[AP] Purging buffer...";
     }
@@ -1665,6 +1651,5 @@ void AudioProcessor::stop()
 #ifdef AP_EN_DBG_OUT
     qInfo()<<"[AP] Received termination request";
 #endif
-    //purgePipeline();
     finish_work = true;
 }

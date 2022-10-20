@@ -184,7 +184,9 @@ bool FFMPEGWrapper::initFrameConverter(AVFrame *new_frame, uint16_t new_width, u
 {
     int av_res;
 
+#ifdef FFWR_EN_DBG_OUT
     qInfo()<<"[FFWR] Init converter for"<<new_width<<"x"<<new_height;
+#endif
     // Setup destination frame buffer.
     if(new_colors==vid_preset_t::COLOR_BW)
     {
@@ -200,14 +202,18 @@ bool FFMPEGWrapper::initFrameConverter(AVFrame *new_frame, uint16_t new_width, u
         if(av_res<0)
         {
             // Setup failed, fallback to BW buffer.
+#ifdef FFWR_EN_DBG_OUT
             qWarning()<<DBG_ANCHOR<<"[FFWR] Failed to allocate RGB destination buffer, falling back to YUV buffer!";
+#endif
             target_pixfmt = (AVPixelFormat)BUF_FMT_BW;
             av_res = av_image_alloc(video_dst_data, video_dst_linesize, new_width, new_height, target_pixfmt, 4);
         }
     }
     if(av_res<0)
     {
+#ifdef FFWR_EN_DBG_OUT
         qWarning()<<DBG_ANCHOR<<"[FFWR] Failed to allocate destination buffer!";
+#endif
         return false;
     }
     // Image buffer was allocated.
@@ -220,7 +226,9 @@ bool FFMPEGWrapper::initFrameConverter(AVFrame *new_frame, uint16_t new_width, u
 
     if(conv_ctx==NULL)
     {
+#ifdef FFWR_EN_DBG_OUT
         qWarning()<<DBG_ANCHOR<<"[FFWR] Failed to init image converter context!";
+#endif
         return false;
     }
     return true;
@@ -283,7 +291,9 @@ bool FFMPEGWrapper::keepFrameInCheck(AVFrame *new_frame)
 //------------------------ Free resources used for final frame resizing and converting.
 void FFMPEGWrapper::freeFrameConverter()
 {
+#ifdef FFWR_EN_DBG_OUT
     qInfo()<<"[FFWR] Frame converter freed";
+#endif
     last_width = last_height = 0;
     // Free up memory from libsws contexts.
     sws_freeContext(conv_ctx); conv_ctx = NULL;
@@ -305,7 +315,6 @@ void FFMPEGWrapper::slotLogStart()
 //------------------------ Get list of compatible video capture devices.
 void FFMPEGWrapper::slotGetDeviceList()
 {
-    bool suppress_log;
     int av_res;
     AVDictionary *inopt = NULL;
     const AVInputFormat *infmt = NULL;
@@ -314,13 +323,8 @@ void FFMPEGWrapper::slotGetDeviceList()
     VCapDevice temp_dev;
     VCapList capture_list;
 
-    suppress_log = false;
-
-#ifdef VIP_EN_DBG_OUT
-    if(suppress_log==false)
-    {
-        qInfo()<<"[FFWR] Video capture devices listing:";
-    }
+#ifdef FFWR_EN_DBG_OUT
+    qInfo()<<"[FFWR] Video capture devices listing:";
 #endif
     // Register all demuxers.
     avdevice_register_all();
@@ -344,11 +348,8 @@ void FFMPEGWrapper::slotGetDeviceList()
             if(av_res>=0)
             {
                 // Capture is available.
-#ifdef VIP_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[FFWR] FFMPEG found"<<infmt->long_name<<"device";
-                }
+#ifdef FFWR_EN_DBG_OUT
+                qInfo()<<"[FFWR] FFMPEG found"<<infmt->long_name<<"device";
 #endif
                 // Add device to the list.
                 temp_dev.clear();
@@ -373,11 +374,8 @@ void FFMPEGWrapper::slotGetDeviceList()
                 if(av_res>=0)
                 {
                     // Capture is available.
-#ifdef VIP_EN_DBG_OUT
-                    if(suppress_log==false)
-                    {
-                        qInfo()<<"[FFWR] FFMPEG found"<<infmt->long_name<<"device";
-                    }
+#ifdef FFWR_EN_DBG_OUT
+                    qInfo()<<"[FFWR] FFMPEG found"<<infmt->long_name<<"device";
 #endif
                     // Add device to the list.
                     temp_dev.clear();
@@ -398,11 +396,8 @@ void FFMPEGWrapper::slotGetDeviceList()
             if(av_res>=0)
             {
                 // Found some devices.
-#ifdef VIP_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[FFWR] FFMPEG found"<<av_res<<infmt->long_name<<"devices";
-                }
+#ifdef FFWR_EN_DBG_OUT
+                qInfo()<<"[FFWR] FFMPEG found"<<av_res<<infmt->long_name<<"devices";
 #endif
                 // Cycle through all found devices.
                 for(uint16_t idx=0;idx<dev_list->nb_devices;idx++)
@@ -422,11 +417,8 @@ void FFMPEGWrapper::slotGetDeviceList()
                             if(av_res>=0)
                             {
                                 // Capture is available.
-#ifdef VIP_EN_DBG_OUT
-                                if(suppress_log==false)
-                                {
-                                    qInfo()<<"[FFWR] FFMPEG found"<<infmt->long_name<<"device:"<<dev_list->devices[idx]->device_description;
-                                }
+#ifdef FFWR_EN_DBG_OUT
+                                qInfo()<<"[FFWR] FFMPEG found"<<infmt->long_name<<"device:"<<dev_list->devices[idx]->device_description;
 #endif
                                 // Add device to the list.
                                 temp_dev.clear();
@@ -437,25 +429,19 @@ void FFMPEGWrapper::slotGetDeviceList()
                                 // Close capture for now.
                                 avformat_close_input(&format_ctx);
                             }
-#ifdef VIP_EN_DBG_OUT
+#ifdef FFWR_EN_DBG_OUT
                             else
                             {
                                 // Error while trying to open capture device.
-                                if(suppress_log==false)
-                                {
-                                    qInfo()<<"[FFWR] FFMPEG"<<infmt->long_name<<"device"<<dev_list->devices[idx]->device_description<<"failed to capture";
-                                }
+                                qInfo()<<"[FFWR] FFMPEG"<<infmt->long_name<<"device"<<dev_list->devices[idx]->device_description<<"failed to capture";
                             }
 #endif
                         }
-#ifdef VIP_EN_DBG_OUT
+#ifdef FFWR_EN_DBG_OUT
                         else
                         {
                             // Current media type is not video.
-                            if(suppress_log==false)
-                            {
-                                qInfo()<<"[FFWR] FFMPEG"<<infmt->long_name<<"device"<<dev_list->devices[idx]->device_description<<"has no video capture";
-                            }
+                            qInfo()<<"[FFWR] FFMPEG"<<infmt->long_name<<"device"<<dev_list->devices[idx]->device_description<<"has no video capture";
                         }
 #endif
                     }
@@ -464,21 +450,18 @@ void FFMPEGWrapper::slotGetDeviceList()
                 // Free device list because it was allocated.
                 avdevice_free_list_devices(&dev_list);
             }
-#ifdef VIP_EN_DBG_OUT
+#ifdef FFWR_EN_DBG_OUT
             else
             {
                 // Error, no devices found.
-                if(suppress_log==false)
+                char err_str[80];
+                if(av_strerror(av_res, err_str, 80)==0)
                 {
-                    char err_str[80];
-                    if(av_strerror(av_res, err_str, 80)==0)
-                    {
-                        qInfo()<<"[FFWR] FFMPEG unable to find"<<infmt->long_name<<"devices!"<<err_str;
-                    }
-                    else
-                    {
-                        qInfo()<<"[FFWR] FFMPEG unable to find"<<infmt->long_name<<"devices!";
-                    }
+                    qInfo()<<"[FFWR] FFMPEG unable to find"<<infmt->long_name<<"devices!"<<err_str;
+                }
+                else
+                {
+                    qInfo()<<"[FFWR] FFMPEG unable to find"<<infmt->long_name<<"devices!";
                 }
             }
 #endif
@@ -524,13 +507,14 @@ void FFMPEGWrapper::slotSetCropColor(vid_preset_t in_preset)
 {
     if(in_preset.colors<vid_preset_t::COLOR_MAX)
     {
-        //qDebug()<<"[FFWR] Set new color channel setting";
         crop_n_color = in_preset;
     }
+#ifdef FFWR_EN_DBG_OUT
     else
     {
         qWarning()<<"[FFWR] Unsupported color channel provided!";
     }
+#endif
 }
 
 //------------------------ Set if droped frames should be detected.
@@ -588,7 +572,9 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
 
     device_path = path.toStdString();
     target_class = class_type.toStdString();
+#ifdef FFWR_EN_DBG_OUT
     qInfo()<<"[FFWR] Opening source:"<<device_path.c_str();
+#endif
 
     // Open new source.
     if(target_class.empty()==false)
@@ -632,7 +618,9 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
 
     if(av_res<0)
     {
+#ifdef FFWR_EN_DBG_OUT
         qWarning()<<"[FFWR] Unable to open source!"<<av_res;
+#endif
         emit sigVideoError(FFMERR_NO_SRC);
         slotCloseInput();
         return;
@@ -646,7 +634,9 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     av_res = avformat_find_stream_info(format_ctx, NULL);
     if(av_res<0)
     {
+#ifdef FFWR_EN_DBG_OUT
         qWarning()<<"[FFWR] Unable to get info about video stream!"<<av_res;
+#endif
         emit sigVideoError(FFMERR_NO_INFO);
         slotCloseInput();
         return;
@@ -658,17 +648,23 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     {
         if(stream_index==AVERROR_STREAM_NOT_FOUND)
         {
+#ifdef FFWR_EN_DBG_OUT
             qWarning()<<"[FFWR] Unable to find video stream in the source!";
+#endif
             emit sigVideoError(FFMERR_NO_VIDEO);
         }
         else if(stream_index==AVERROR_DECODER_NOT_FOUND)
         {
+#ifdef FFWR_EN_DBG_OUT
             qWarning()<<"[FFWR] Unable to find decoder for the video stream!";
+#endif
             emit sigVideoError(FFMERR_NO_DECODER);
         }
         else
         {
+#ifdef FFWR_EN_DBG_OUT
             qWarning()<<"[FFWR] Unknown error while searching for the video stream!"<<av_res;
+#endif
             emit sigVideoError(FFMERR_UNKNOWN);
         }
         slotCloseInput();
@@ -676,7 +672,9 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     }
     if(v_decoder==NULL)
     {
+#ifdef FFWR_EN_DBG_OUT
         qWarning()<<"[FFWR] Unable to find decoder for the video stream!";
+#endif
         emit sigVideoError(FFMERR_NO_DECODER);
         slotCloseInput();
         return;
@@ -691,7 +689,9 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     video_dec_ctx = avcodec_alloc_context3(v_decoder);
     if(video_dec_ctx==NULL)
     {
+#ifdef FFWR_EN_DBG_OUT
         qWarning()<<"[FFWR] Unable to allocate RAM for video decoder!";
+#endif
         emit sigVideoError(FFMERR_NO_RAM_DEC);
         slotCloseInput();
         return;
@@ -702,7 +702,9 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     av_res = avcodec_parameters_to_context(video_dec_ctx, v_stream->codecpar);
     if(av_res<0)
     {
+#ifdef FFWR_EN_DBG_OUT
         qWarning()<<"[FFWR] Unable to apply decoder parameters!";
+#endif
         emit sigVideoError(FFMERR_DECODER_PARAM);
         slotCloseInput();
         return;
@@ -733,7 +735,9 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     av_res = avcodec_open2(video_dec_ctx, v_decoder, &dec_opts);
     if(av_res<0)
     {
+#ifdef FFWR_EN_DBG_OUT
         qWarning()<<"[FFWR] Unable to start the decoder!";
+#endif
         emit sigVideoError(FFMERR_DECODER_START);
         slotCloseInput();
         return;
@@ -743,7 +747,9 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     dec_frame = av_frame_alloc();
     if(dec_frame==NULL)
     {
+#ifdef FFWR_EN_DBG_OUT
         qWarning()<<"[FFWR] Unable to allocate RAM for the frame buffer!";
+#endif
         emit sigVideoError(FFMERR_NO_RAM_FB);
         slotCloseInput();
         return;
@@ -754,6 +760,7 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     dec_packet.data = NULL;
     dec_packet.size = 0;
 
+#ifdef FFWR_EN_DBG_OUT
     QString log_line("[FFWR] Source opened. ");
     log_line += "Codec: "+QString::fromLocal8Bit(v_decoder->name);
     log_line += ", resolution: "+QString::number(v_stream->codecpar->width)+"x"+QString::number(v_stream->codecpar->height);
@@ -779,6 +786,7 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
         log_line += ", interlaced BFF (decode: TFF)";
     }
     qInfo()<<log_line;
+#endif
     // Source is opened and ready.
     source_open = true;
     frame_count = 1;
@@ -791,7 +799,9 @@ void FFMPEGWrapper::slotGetNextFrame()
     int av_res;
     int64_t dts_diff;
 
+#ifdef FFWR_EN_DBG_OUT
     //qDebug()<<"[FFWR] New frame requested";
+#endif
     // Check if all stages of opening a source are completed and there is a final buffer.
     if(source_open==false)
     {
@@ -970,7 +980,9 @@ void FFMPEGWrapper::slotGetNextFrame()
 //------------------------ Close video source and free all resources.
 void FFMPEGWrapper::slotCloseInput()
 {
+#ifdef FFWR_EN_DBG_OUT
     qInfo()<<"[FFWR] FFMPEG is being reset...";
+#endif
     freeFrameConverter();
     // Free up decoder resources.
     if(dec_frame!=NULL)
@@ -996,7 +1008,9 @@ void FFMPEGWrapper::slotCloseInput()
     if(source_open!=false)
     {
         source_open = false;
+#ifdef FFWR_EN_DBG_OUT
         qInfo()<<"[FFWR] Source is closed";
+#endif
         // Report about closed source.
         emit sigInputClosed();
     }
