@@ -2,17 +2,14 @@
 #define SAMPLES2WAV_H
 
 #include <cstdio>
-#include <fstream>
-#include <iostream>
 #include <stdint.h>
 #include <string>
+#include <QDebug>
 #include <QFile>
-#include <QFileInfo>
 #include <QObject>
 #include <QString>
 #include "config.h"
 #include "pcmsamplepair.h"
-#include "stc007datablock.h"
 
 #ifndef QT_VERSION
     #undef TW_EN_DBG_OUT

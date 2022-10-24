@@ -1295,13 +1295,13 @@ uint8_t STC007DataStitcher::getDataBlockResolution(std::deque<STC007Line> *in_li
 {
     if(in_line_buffer==NULL)
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Null pointer for buffer provided in [STC007DataStitcher::getDataBlockResolution()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Null pointer for buffer provided, exiting...";
         return STC007Deinterleaver::RES_MODE_14BIT_AUTO;
     }
 
     if(in_line_buffer->size()<=(size_t)(line_sh+STC007DataBlock::MIN_DEINT_DATA))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Buffer index out-of-bound in [STC007DataStitcher::getDataBlockResolution()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Buffer index out-of-bound, exiting...";
         return STC007Deinterleaver::RES_MODE_14BIT_AUTO;
     }
 

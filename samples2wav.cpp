@@ -73,20 +73,7 @@ void SamplesToWAV::setName(QString name)
 //------------------------ Set samplerate of audio.
 void SamplesToWAV::setSampleRate(uint16_t in_rate)
 {
-    if(in_rate==PCMSamplePair::SAMPLE_RATE_44100)
-    {
-        if(sample_rate!=PCMSamplePair::SAMPLE_RATE_44100)
-        {
-            sample_rate = PCMSamplePair::SAMPLE_RATE_44100;
-#ifdef TW_EN_DBG_OUT
-            if((log_level&LOG_PROCESS)!=0)
-            {
-                qInfo()<<"[TW] Sample rate set to"<<sample_rate;
-            }
-#endif
-        }
-    }
-    else
+    if(in_rate==PCMSamplePair::SAMPLE_RATE_44056)
     {
         if(sample_rate!=PCMSamplePair::SAMPLE_RATE_44056)
         {
@@ -97,6 +84,23 @@ void SamplesToWAV::setSampleRate(uint16_t in_rate)
                 qInfo()<<"[TW] Sample rate set to"<<sample_rate;
             }
 #endif
+            // Update sample rate in the header.
+            updateHeader();
+        }
+    }
+    else
+    {
+        if(sample_rate!=PCMSamplePair::SAMPLE_RATE_44100)
+        {
+            sample_rate = PCMSamplePair::SAMPLE_RATE_44100;
+#ifdef TW_EN_DBG_OUT
+            if((log_level&LOG_PROCESS)!=0)
+            {
+                qInfo()<<"[TW] Sample rate set to"<<sample_rate;
+            }
+#endif
+            // Update sample rate in the header.
+            updateHeader();
         }
     }
 }
@@ -250,7 +254,7 @@ void SamplesToWAV::updateHeader()
         file_out.write((const char*)&smp_rate, HDR_SRATE_SZ);
 
         // 2 channels with one sample per channel, one sample = 2 bytes.
-        byte_rate = sample_rate*PCMSamplePair::CH_MAX*2;
+        byte_rate = sample_rate*PCMSamplePair::CH_MAX*PCMSamplePair::getSampleSize();
         // Seek to "byterate" field.
         file_out.seek(HDR_BRATE_OFS);
         // Update rate.

@@ -212,6 +212,7 @@ void PCM16X0DataStitcher::fillUntilFullFrame()
 void PCM16X0DataStitcher::findFrameTrim()
 {
     uint16_t line_ind, f1o_good, f1e_good;
+    bool line_has_valid, subline_skip;
     bool f1e_top, f1e_bottom, f1o_top, f1o_bottom;
     bool f1o_skip_bad, f1e_skip_bad;
 
@@ -234,19 +235,29 @@ void PCM16X0DataStitcher::findFrameTrim()
     line_ind = 0;
     while(line_ind<trim_fill)
     {
+        line_has_valid = false;
         if(trim_buf[line_ind].frame_number==frasm_f1.frame_number)
         {
             // Frame number is ok.
             if(trim_buf[line_ind].isServiceLine()==false)
             {
+                // Check for full line limit.
+                if(((line_ind+PCM16X0SubLine::SUBLINES_PER_LINE)<=trim_fill)&&(trim_buf[line_ind].line_part==PCM16X0SubLine::PART_LEFT))
+                {
+                    // Combine validity of all sub-lines.
+                    for(uint8_t sub_idx=0;sub_idx<PCM16X0SubLine::SUBLINES_PER_LINE;sub_idx++)
+                    {
+                        line_has_valid = line_has_valid||trim_buf[line_ind+sub_idx].isCRCValid();
+                    }
+                }
                 // Current line is not a service one.
-                if(trim_buf[line_ind].isCRCValid()!=false)
+                if(line_has_valid!=false)
                 {
                     // Binarization gave good result.
                     if((trim_buf[line_ind].line_number%2)==0)
                     {
                         // Line from even field.
-                        f1e_good++;
+                        f1e_good += PCM16X0SubLine::SUBLINES_PER_LINE;
                         if(f1e_good>MIN_GOOD_SUBLINES_PF)
                         {
                             f1e_skip_bad = true;
@@ -255,7 +266,7 @@ void PCM16X0DataStitcher::findFrameTrim()
                     else
                     {
                         // Line from odd field.
-                        f1o_good++;
+                        f1o_good += PCM16X0SubLine::SUBLINES_PER_LINE;
                         if(f1o_good>MIN_GOOD_SUBLINES_PF)
                         {
                             f1o_skip_bad = true;
@@ -276,7 +287,14 @@ void PCM16X0DataStitcher::findFrameTrim()
             }
         }
         // Go to next line.
-        line_ind++;
+        if(line_has_valid==false)
+        {
+            line_ind++;
+        }
+        else
+        {
+            line_ind += PCM16X0SubLine::SUBLINES_PER_LINE;
+        }
     }
 
 #ifdef DI_EN_DBG_OUT
@@ -303,6 +321,7 @@ void PCM16X0DataStitcher::findFrameTrim()
 
     // Cycle through the whole buffer.
     // (assuming that buffer starts on the first line of the frame)
+    subline_skip = false;
     line_ind = 0;
     while(line_ind<trim_fill)
     {
@@ -342,7 +361,8 @@ void PCM16X0DataStitcher::findFrameTrim()
         }
 #endif
 
-        // Check frame numbers (that are set in [waitForOneFrame()]).
+        line_has_valid = false;
+        // Check frame number (that is set in [waitForOneFrame()]).
         if(trim_buf[line_ind].frame_number==frasm_f1.frame_number)
         {
             // Frame number is ok.
@@ -350,96 +370,153 @@ void PCM16X0DataStitcher::findFrameTrim()
             if((trim_buf[line_ind].line_number%2)==0)
             {
                 // Line from even field.
-                if(((f1e_skip_bad==false)&&(trim_buf[line_ind].hasBWSet()!=false))||
-                    ((f1e_skip_bad!=false)&&(trim_buf[line_ind].isCRCValidIgnoreForced()!=false)))
+                if(f1e_top==false)
                 {
-                    // PCM detected in the line.
-                    if(f1e_top==false)
+                    // Even top trim was not detected yet.
+                    // Check for full line limit.
+                    if(((line_ind+PCM16X0SubLine::SUBLINES_PER_LINE)<=trim_fill)&&(trim_buf[line_ind].line_part==PCM16X0SubLine::PART_LEFT))
                     {
-                        // Even top trim was not detected yet.
-                        // Check if field starts from left part of the line.
-                        if(trim_buf[line_ind].line_part==PCM16X0SubLine::PART_LEFT)
+                        // Combine validity of all sub-lines into single line.
+                        for(uint8_t sub_idx=0;sub_idx<PCM16X0SubLine::SUBLINES_PER_LINE;sub_idx++)
                         {
-                            // Set number of the line that PCM is starting.
-                            frasm_f1.even_top_data = trim_buf[line_ind].line_number;
-                            // Detect only first encounter in the buffer.
-                            f1e_top = true;
-#ifdef DI_EN_DBG_OUT
-                            if(((log_level&LOG_TRIM)!=0)&&((log_level&LOG_PROCESS)!=0))
+                            if(f1e_skip_bad==false)
                             {
-                                qInfo()<<"[L2B-16x0] Frame even field new top trim:"<<frasm_f1.even_top_data;
+                                line_has_valid = line_has_valid||trim_buf[line_ind+sub_idx].hasBWSet();
                             }
-#endif
+                            else
+                            {
+                                line_has_valid = line_has_valid||trim_buf[line_ind+sub_idx].isCRCValidIgnoreForced();
+                            }
                         }
+                    }
+                    // Check if there is anything valid in the total line.
+                    if(line_has_valid!=false)
+                    {
+                        // Set number of the line that PCM is starting.
+                        frasm_f1.even_top_data = trim_buf[line_ind].line_number;
+                        // Detect only first encounter in the buffer.
+                        subline_skip = f1e_top = true;
 #ifdef DI_EN_DBG_OUT
-                        else
+                        if(((log_level&LOG_TRIM)!=0)&&((log_level&LOG_PROCESS)!=0))
                         {
-                            // TODO: fix non-left field starting
-                            qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Found even field start at non-left part of the line! Frame"<<frasm_f1.frame_number;
+                            qInfo()<<"[L2B-16x0] Frame even field new top trim:"<<frasm_f1.even_top_data;
                         }
 #endif
                     }
-                    // Check if field ends on the right part of the line.
+                }
+                else
+                {
+                    // Top trim of the even field is detected.
+                    // Check for full line limit.
+                    if(((line_ind+PCM16X0SubLine::SUBLINES_PER_LINE)<=trim_fill)&&(trim_buf[line_ind].line_part==PCM16X0SubLine::PART_LEFT))
+                    {
+                        // Combine validity of all sub-lines into single line.
+                        for(uint8_t sub_idx=0;sub_idx<PCM16X0SubLine::SUBLINES_PER_LINE;sub_idx++)
+                        {
+                            if(f1e_skip_bad==false)
+                            {
+                                line_has_valid = line_has_valid||trim_buf[line_ind+sub_idx].hasBWSet();
+                            }
+                            else
+                            {
+                                line_has_valid = line_has_valid||trim_buf[line_ind+sub_idx].isCRCValidIgnoreForced();
+                            }
+                        }
+                    }
                     else
                     {
-                        if(trim_buf[line_ind].line_part==PCM16X0SubLine::PART_RIGHT)
-                        {
-                            // Update last line with PCM from the bottom.
-                            frasm_f1.even_bottom_data = trim_buf[line_ind].line_number;
-                            f1e_bottom = true;
-                        }
+                        subline_skip = false;
+                    }
+                    // Check if there is anything valid in the total line.
+                    if(line_has_valid!=false)
+                    {
+                        // Update last line with PCM from the bottom.
+                        frasm_f1.even_bottom_data = trim_buf[line_ind].line_number;
+                        f1e_bottom = true;
                     }
                 }
             }
             else
             {
                 // Line from odd field.
-                if(((f1o_skip_bad==false)&&(trim_buf[line_ind].hasBWSet()!=false))||
-                    ((f1o_skip_bad!=false)&&(trim_buf[line_ind].isCRCValidIgnoreForced()!=false)))
+                if(f1o_top==false)
                 {
-                    // PCM detected in the line.
-                    if(f1o_top==false)
+                    // Odd top trim was not detected yet.
+                    // Check for full line limit.
+                    if(((line_ind+PCM16X0SubLine::SUBLINES_PER_LINE)<=trim_fill)&&(trim_buf[line_ind].line_part==PCM16X0SubLine::PART_LEFT))
                     {
-                        // Odd top trim was not detected yet.
-                        // Check if field starts from left part of the line.
-                        if(trim_buf[line_ind].line_part==PCM16X0SubLine::PART_LEFT)
+                        // Combine validity of all sub-lines into single line.
+                        for(uint8_t sub_idx=0;sub_idx<PCM16X0SubLine::SUBLINES_PER_LINE;sub_idx++)
                         {
-                            // Set number of the line that PCM is starting.
-                            frasm_f1.odd_top_data = trim_buf[line_ind].line_number;
-                            // Detect only first encounter in the buffer.
-                            f1o_top = true;
-#ifdef DI_EN_DBG_OUT
-                            if(((log_level&LOG_TRIM)!=0)&&((log_level&LOG_PROCESS)!=0))
+                            if(f1o_skip_bad==false)
                             {
-                                qInfo()<<"[L2B-16x0] Frame odd field new top trim:"<<frasm_f1.odd_top_data;
+                                line_has_valid = line_has_valid||trim_buf[line_ind+sub_idx].hasBWSet();
                             }
-#endif
+                            else
+                            {
+                                line_has_valid = line_has_valid||trim_buf[line_ind+sub_idx].isCRCValidIgnoreForced();
+                            }
                         }
+                    }
+                    // Check if there is anything valid in the total line.
+                    if(line_has_valid!=false)
+                    {
+                        // Set number of the line that PCM is starting.
+                        frasm_f1.odd_top_data = trim_buf[line_ind].line_number;
+                        // Detect only first encounter in the buffer.
+                        subline_skip = f1o_top = true;
 #ifdef DI_EN_DBG_OUT
-                        else
+                        if(((log_level&LOG_TRIM)!=0)&&((log_level&LOG_PROCESS)!=0))
                         {
-                            // TODO: fix non-left field starting
-                            qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Found odd field start at non-left part of the line! Frame"<<frasm_f1.frame_number;
+                            qInfo()<<"[L2B-16x0] Frame odd field new top trim:"<<frasm_f1.odd_top_data;
                         }
 #endif
                     }
-                    // Check if field ends on the right part of the line.
+                }
+                // Check if field ends on the right part of the line.
+                else
+                {
+                    // Top trim of the odd field is detected.
+                    // Check for full line limit.
+                    if(((line_ind+PCM16X0SubLine::SUBLINES_PER_LINE)<=trim_fill)&&(trim_buf[line_ind].line_part==PCM16X0SubLine::PART_LEFT))
+                    {
+                        // Combine validity of all sub-lines into single line.
+                        for(uint8_t sub_idx=0;sub_idx<PCM16X0SubLine::SUBLINES_PER_LINE;sub_idx++)
+                        {
+                            if(f1o_skip_bad==false)
+                            {
+                                line_has_valid = line_has_valid||trim_buf[line_ind+sub_idx].hasBWSet();
+                            }
+                            else
+                            {
+                                line_has_valid = line_has_valid||trim_buf[line_ind+sub_idx].isCRCValidIgnoreForced();
+                            }
+                        }
+                    }
                     else
                     {
-                        if(trim_buf[line_ind].line_part==PCM16X0SubLine::PART_RIGHT)
-                        {
-                            // Update last line with PCM from the bottom.
-                            frasm_f1.odd_bottom_data = trim_buf[line_ind].line_number;
-                            f1o_bottom = true;
-                        }
+                        subline_skip = false;
                     }
-
+                    // Check if there is anything valid in the total line.
+                    if(line_has_valid!=false)
+                    {
+                        // Update last line with PCM from the bottom.
+                        frasm_f1.odd_bottom_data = trim_buf[line_ind].line_number;
+                        f1o_bottom = true;
+                    }
                 }
             }
         }
 
         // Go to next line.
-        line_ind++;
+        if(subline_skip==false)
+        {
+            line_ind++;
+        }
+        else
+        {
+            line_ind += PCM16X0SubLine::SUBLINES_PER_LINE;
+        }
     }
 
 #ifdef DI_EN_DBG_OUT

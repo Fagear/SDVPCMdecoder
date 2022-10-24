@@ -10,7 +10,7 @@ AudioProcessor::AudioProcessor(QObject *parent) : QObject(parent)
     file_name.clear();
     in_samples = NULL;
     mtx_samples = NULL;
-    tim_outclose = NULL;
+    tim_outflush = NULL;
     prebuffer.clear();
     for(uint8_t idx=0;idx<CHANNEL_CNT;idx++)
     {
@@ -19,7 +19,7 @@ AudioProcessor::AudioProcessor(QObject *parent) : QObject(parent)
     log_level = 0;
     mask_mode = DROP_IGNORE;
     sample_index = 0;
-    sample_rate = PCMSamplePair::SAMPLE_RATE_44100;
+    setSampleRate(PCMSamplePair::SAMPLE_RATE_44100);
     file_end = 0;
     unprocessed = false;
     remove_stray = false;
@@ -32,7 +32,7 @@ AudioProcessor::AudioProcessor(QObject *parent) : QObject(parent)
 
     connect(this, SIGNAL(newSource()), &sc_output, SLOT(prepareNewFile()));
     connect(&sc_output, SIGNAL(livePlayback(bool)), this, SLOT(livePlayUpdate(bool)));
-    connect(this, SIGNAL(reqTimerRestart()), this, SLOT(restartCloseTimer()));
+    connect(this, SIGNAL(reqTimerRestart()), this, SLOT(restartFlushTimer()));
 
 #ifdef _WIN32
     qt_ntfs_permission_lookup++;
@@ -51,6 +51,23 @@ void AudioProcessor::setInputPointers(std::deque<PCMSamplePair> *in_samplepairs,
         in_samples = in_samplepairs;
         mtx_samples = mtx_samplepairs;
     }
+}
+
+//------------------------ Set audio sample rate.
+void AudioProcessor::setSampleRate(uint16_t in_rate)
+{
+    if(sample_rate!=in_rate)
+    {
+#ifdef AP_EN_DBG_OUT
+        if((log_level&LOG_PROCESS)!=0)
+        {
+            qInfo()<<"[AP] Sample rate set to"<<in_rate;
+        }
+#endif
+    }
+    sample_rate = in_rate;
+    wav_output.setSampleRate(sample_rate);
+    sc_output.setSampleRate(sample_rate);
 }
 
 //------------------------ Fill internal buffer until its full.
@@ -101,7 +118,7 @@ bool AudioProcessor::fillUntilBufferFull()
             {
                 // New file just started.
 #ifdef AP_EN_DBG_OUT
-                if((log_level&LOG_PROCESS)!=0)
+                if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_FILE_OP)!=0)||((log_level&LOG_LIVE_OP)!=0))
                 {
                     qInfo()<<"[AP] Detected new source file:"<<QString::fromStdString(work_pair.file_path);
                 }
@@ -119,7 +136,7 @@ bool AudioProcessor::fillUntilBufferFull()
             {
                 // File ended.
 #ifdef AP_EN_DBG_OUT
-                if((log_level&LOG_PROCESS)!=0)
+                if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_FILE_OP)!=0)||((log_level&LOG_LIVE_OP)!=0))
                 {
                     qInfo()<<"[AP] EOF detected";
                 }
@@ -172,74 +189,6 @@ bool AudioProcessor::fillUntilBufferFull()
         return true;
     }
     return false;
-}
-
-//------------------------ Scan internal buffer for errors.
-bool AudioProcessor::scanBuffer()
-{
-    uint16_t scan_limit;
-
-    scan_limit = 0;
-    if(file_end==false)
-    {
-        scan_limit = MIN_TO_PROCESS;
-    }
-    if((unprocessed!=false)&&(prebuffer.size()>scan_limit))
-    {
-        // Split prebuffer into per-channel buffers.
-        splitPerChannel();
-        // Cycle through all channels.
-        scan_limit = 1;
-        if(dbg_output==false)
-        {
-            // Process only left channel for debug output.
-            scan_limit = CHANNEL_CNT;
-        }
-        for(uint8_t chnl_idx=0;chnl_idx<scan_limit;chnl_idx++)
-        {
-            // Check if dropouts should be procssed.
-            if(mask_mode!=DROP_IGNORE)
-            {
-#ifdef AP_EN_DBG_OUT
-                if((log_level&LOG_BUF_DUMP)!=0)
-                {
-                    qInfo()<<"[AP] Processing channel"<<chnl_idx;
-                }
-#endif
-                // Dropouts should dealt with.
-                if(remove_stray!=false)
-                {
-                    // Scan for stray VALID samples and invalid those.
-                    fixStraySamples(&channel_bufs[chnl_idx], &long_bads[chnl_idx]);
-                }
-                // Scan for INVALID regions and mask those.
-                fixBadSamples(&channel_bufs[chnl_idx]);
-            }
-            else
-            {
-                // Do nothing with dropouts.
-                CoordinatePair buf_lims;
-                // Select the whole buffer.
-                buf_lims.data_start = 0;
-                buf_lims.data_stop = (channel_bufs[chnl_idx].size()-1);
-                // Clear invalid flags.
-                clearInvalids(&channel_bufs[chnl_idx], buf_lims);
-            }
-            // TODO: perform de-emphasis if required.
-        }
-        // Re-fill prebuffer from per-channel buffers.
-        fillBufferForOutput();
-        // Output from the buffer until half of it is empty.
-        outputAudio();
-        unprocessed = false;
-
-        return true;
-    }
-    else
-    {
-        // Not enough data for look-ahead.
-        return false;
-    }
 }
 
 //------------------------ Split prebuffer into per-channel buffers.
@@ -1228,6 +1177,25 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
     }
 }
 
+//------------------------ Debug print all contents of the internal prebuffer.
+void AudioProcessor::dumpPrebuffer()
+{
+    uint32_t idx;
+    std::deque<PCMSamplePair>::iterator buf_scaner;
+    QString log_line;
+
+    idx = 0;
+    buf_scaner = prebuffer.begin();
+    while(buf_scaner!=prebuffer.end())
+    {
+        log_line.sprintf("[AP] Pos. [%03u] ", idx);
+        log_line += QString::fromStdString((*buf_scaner).dumpContentString());
+        qInfo()<<log_line;
+        buf_scaner++;
+        idx++;
+    }
+}
+
 //------------------------ Re-fill internal buffer from per-channel buffers.
 void AudioProcessor::fillBufferForOutput()
 {
@@ -1261,6 +1229,30 @@ void AudioProcessor::fillBufferForOutput()
         dumpPrebuffer();
     }
 #endif
+}
+
+//------------------------ Write an element to the outputs.
+void AudioProcessor::outputWordPair()
+{
+    PCMSamplePair out_samples;
+    out_samples = prebuffer.front();
+    // Remove data point from the output queue.
+    prebuffer.pop_front();
+    // Update current sample rate.
+    setSampleRate(out_samples.getSampleRate());
+    // Check if output to file is enabled.
+    if(out_to_wav!=false)
+    {
+        wav_output.saveAudio(out_samples);
+        // Restart close timeout timer.
+        emit reqTimerRestart();
+    }
+    // Check if output to audio device is enabled.
+    if(out_to_live!=false)
+    {
+        sc_output.saveAudio(out_samples);
+    }
+    emit outSamples(out_samples);
 }
 
 //------------------------ Output processed audio.
@@ -1312,6 +1304,10 @@ void AudioProcessor::outputAudio()
     if((log_level&LOG_PROCESS)!=0)
     {
         qInfo()<<"[AP] Output"<<points_done<<"data points (buffer fill:"<<prebuffer.size()<<")";
+
+    }
+    if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_FILE_OP)!=0)||((log_level&LOG_LIVE_OP)!=0))
+    {
         if(file_end!=false)
         {
             qInfo()<<"[AP] Whole buffer was dumped due to end of file";
@@ -1320,62 +1316,73 @@ void AudioProcessor::outputAudio()
 #endif
 }
 
-//------------------------ Debug print all contents of the internal prebuffer.
-void AudioProcessor::dumpPrebuffer()
+//------------------------ Scan internal buffer for errors.
+bool AudioProcessor::scanBuffer()
 {
-    uint32_t idx;
-    std::deque<PCMSamplePair>::iterator buf_scaner;
-    QString log_line;
+    uint16_t scan_limit;
 
-    idx = 0;
-    buf_scaner = prebuffer.begin();
-    while(buf_scaner!=prebuffer.end())
+    scan_limit = 0;
+    if(file_end==false)
     {
-        log_line.sprintf("[AP] Pos. [%03u] ", idx);
-        log_line += QString::fromStdString((*buf_scaner).dumpContentString());
-        qInfo()<<log_line;
-        buf_scaner++;
-        idx++;
+        scan_limit = MIN_TO_PROCESS;
     }
-}
-
-
-
-//------------------------ Set audio sample rate.
-void AudioProcessor::setSampleRate(uint16_t in_rate)
-{
-    if(sample_rate!=in_rate)
+    if((unprocessed!=false)&&(prebuffer.size()>scan_limit))
     {
-#ifdef AP_EN_DBG_OUT
-        if((log_level&LOG_PROCESS)!=0)
+        // Split prebuffer into per-channel buffers.
+        splitPerChannel();
+        // Cycle through all channels.
+        scan_limit = 1;
+        if(dbg_output==false)
         {
-            qInfo()<<"[AP] Sample rate set to"<<in_rate;
+            // Process only left channel for debug output.
+            scan_limit = CHANNEL_CNT;
         }
+        // Cycle through channels.
+        for(uint8_t chnl_idx=0;chnl_idx<scan_limit;chnl_idx++)
+        {
+            // Check if dropouts should be procssed.
+            if(mask_mode!=DROP_IGNORE)
+            {
+#ifdef AP_EN_DBG_OUT
+                if((log_level&LOG_BUF_DUMP)!=0)
+                {
+                    qInfo()<<"[AP] Processing channel"<<chnl_idx;
+                }
 #endif
-    }
-    sample_rate = in_rate;
-    wav_output.setSampleRate(sample_rate);
-    sc_output.setSampleRate(sample_rate);
-}
+                // Dropouts should dealt with.
+                if(remove_stray!=false)
+                {
+                    // Scan for stray VALID samples and invalid those.
+                    fixStraySamples(&channel_bufs[chnl_idx], &long_bads[chnl_idx]);
+                }
+                // Scan for INVALID regions and mask those.
+                fixBadSamples(&channel_bufs[chnl_idx]);
+            }
+            else
+            {
+                // Do nothing with dropouts.
+                CoordinatePair buf_lims;
+                // Select the whole buffer.
+                buf_lims.data_start = 0;
+                buf_lims.data_stop = (channel_bufs[chnl_idx].size()-1);
+                // Clear invalid flags.
+                clearInvalids(&channel_bufs[chnl_idx], buf_lims);
+            }
+            // TODO: perform de-emphasis if required.
+        }
+        // Re-fill prebuffer from per-channel buffers.
+        fillBufferForOutput();
+        // Output from the buffer until half of it is empty.
+        outputAudio();
+        unprocessed = false;
 
-//------------------------ Write an element to the outputs.
-void AudioProcessor::outputWordPair()
-{
-    // Check if output to file is enabled.
-    if(out_to_wav!=false)
-    {
-        wav_output.saveAudio(prebuffer.front());
-        // Restart close timeout timer.
-        emit reqTimerRestart();
+        return true;
     }
-    // Check if output to audio device is enabled.
-    if(out_to_live!=false)
+    else
     {
-        sc_output.saveAudio(prebuffer.front());
+        // Not enough data for look-ahead.
+        return false;
     }
-    emit outSamples(prebuffer.front());
-    // Remove data point from the output queue.
-    prebuffer.pop_front();
 }
 
 //------------------------ Dump audio processor buffer into output.
@@ -1389,11 +1396,11 @@ void AudioProcessor::dumpBuffer()
 }
 
 //------------------------ Reset timer.
-void AudioProcessor::restartCloseTimer()
+void AudioProcessor::restartFlushTimer()
 {
     // Restart close timeout timer.
-    tim_outclose->stop();
-    tim_outclose->start();
+    tim_outflush->stop();
+    tim_outflush->start();
 }
 
 //------------------------ Close output by timeout.
@@ -1406,7 +1413,13 @@ void AudioProcessor::actCloseOutput()
     }
 #endif
     wav_output.purgeBuffer();
-    tim_outclose->stop();
+    tim_outflush->stop();
+}
+
+//------------------------ Reacting on live playback state.
+void AudioProcessor::livePlayUpdate(bool flag)
+{
+    emit guiLivePB(flag);
 }
 
 //------------------------ Set logging level.
@@ -1530,12 +1543,6 @@ void AudioProcessor::setOutputToLive(bool flag)
     }
 }
 
-//------------------------ Reacting on live playback state.
-void AudioProcessor::livePlayUpdate(bool flag)
-{
-    emit guiLivePB(flag);
-}
-
 //------------------------ Main execution loop.
 void AudioProcessor::processAudio()
 {
@@ -1553,8 +1560,8 @@ void AudioProcessor::processAudio()
 
     QTimer timCloseTimer;
     connect(&timCloseTimer, SIGNAL(timeout()), this, SLOT(actCloseOutput()));
-    timCloseTimer.setInterval(500);
-    tim_outclose = &timCloseTimer;
+    timCloseTimer.setInterval(250);
+    tim_outflush = &timCloseTimer;
 
     connect(this, SIGNAL(stopOutput()), &sc_output, SLOT(stopOutput()));
 
@@ -1625,11 +1632,13 @@ void AudioProcessor::purgePipeline()
     }
 #endif
 
+    tim_outflush->stop();
     // TODO: maybe add processing dropouts before dumping.
     dumpBuffer();
     wav_output.releaseFile();
     wav_output.prepareNewFile();
     sc_output.purgeBuffer();
+    emit stopOutput();
     emit newSource();
 
     PCMSamplePair empty_smp;

@@ -16,7 +16,6 @@
 #include "config.h"
 #include "frametrimset.h"
 #include "pcmsamplepair.h"
-#include "stc007datablock.h"
 #include "samples2audio.h"
 #include "samples2wav.h"
 
@@ -74,13 +73,13 @@ public:
     };
 
 private:
-    SamplesToAudio sc_output;                    // Handler for soundcard operations.
-    SamplesToWAV wav_output;                     // Handler for WAV-file operations.
+    SamplesToAudio sc_output;                   // Handler for soundcard operations.
+    SamplesToWAV wav_output;                    // Handler for WAV-file operations.
     QString file_path;
     QString file_name;
     std::deque<PCMSamplePair> *in_samples;      // Input sample pair queue (shared).
     QMutex *mtx_samples;                        // Mutex for input queue.
-    QTimer *tim_outclose;
+    QTimer *tim_outflush;
     std::deque<PCMSamplePair> prebuffer;        // Buffer for input data.
     std::deque<PCMSample> channel_bufs[CHANNEL_CNT];    // Per-channel buffers for sample processing.
     std::deque<CoordinatePair> long_bads[CHANNEL_CNT];
@@ -101,8 +100,8 @@ public:
     void setInputPointers(std::deque<PCMSamplePair> *in_samplepairs = NULL, QMutex *mtx_samplepairs = NULL);
 
 private:
+    void setSampleRate(uint16_t in_rate);   // Set audio sample rate.
     bool fillUntilBufferFull();
-    bool scanBuffer();
     void splitPerChannel();
     uint16_t setInvalids(std::deque<PCMSample> *samples, CoordinatePair &range);
     void fixStraySamples(std::deque<PCMSample> *samples, std::deque<CoordinatePair> *regions);
@@ -111,17 +110,17 @@ private:
     uint16_t performLevelHold(std::deque<PCMSample> *samples, CoordinatePair &range);
     uint16_t performLinearInterpolation(std::deque<PCMSample> *samples, CoordinatePair &range);
     void fixBadSamples(std::deque<PCMSample> *samples);
-    void fillBufferForOutput();
-    void outputAudio();
     void dumpPrebuffer();
-
-    void setSampleRate(uint16_t);           // Set audio sample rate.
+    void fillBufferForOutput();
     void outputWordPair();
+    void outputAudio();
+    bool scanBuffer();
     void dumpBuffer();
 
 private slots:
-    void restartCloseTimer();
+    void restartFlushTimer();
     void actCloseOutput();
+    void livePlayUpdate(bool);              // Emit [guiLivePB] signal to report live playback state.
 
 public slots:
     void setLogLevel(uint8_t);              // Set logging level.
@@ -130,13 +129,11 @@ public slots:
     void setMasking(uint8_t);               // Enable/disable interpolation.
     void setOutputToFile(bool);             // Enable/disable output to a file.
     void setOutputToLive(bool);             // Enable/disable output to soundcard.
-    void livePlayUpdate(bool);              // Emit [guiLivePB] signal to report live playback state.
     void processAudio();                    // Main execution loop.
     void purgePipeline();                   // Output all data from the buffer.
     void stop();                            // Set the flag to break execution loop and exit.
 
 signals:
-    void guiAddMute(uint16_t);              // Report new muted samples.
     void guiAddMask(uint16_t);              // Report new masked samples.
     void guiLivePB(bool);                   // Report live playback state.
     void newSource();                       // Report about changed source.

@@ -378,7 +378,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(newMaskingMode(uint8_t)), AP_worker, SLOT(setMasking(uint8_t)));
     connect(this, SIGNAL(newEnableLivePB(bool)), AP_worker, SLOT(setOutputToLive(bool)));
     connect(this, SIGNAL(newEnableWaveSave(bool)), AP_worker, SLOT(setOutputToFile(bool)));
-    connect(AP_worker, SIGNAL(guiAddMute(uint16_t)), this, SLOT(updateStatsMutes(uint16_t)));
     connect(AP_worker, SIGNAL(guiAddMask(uint16_t)), this, SLOT(updateStatsMaskes(uint16_t)));
     connect(AP_worker, SIGNAL(guiLivePB(bool)), this, SLOT(livePBUpdate(bool)));
     connect(AP_worker, SIGNAL(outSamples(PCMSamplePair)), this, SLOT(updateVU(PCMSamplePair)));
@@ -1330,6 +1329,7 @@ void MainWindow::playVideo()
 {
     ui->btnPlay->setEnabled(false);
     ui->btnPause->setEnabled(false);
+    ui->cbxWaveSave->setEnabled(false);
     if(v_decoder_state==VDEC_STOP)
     {
         qDebug()<<"[M] Play request";
@@ -1383,6 +1383,7 @@ void MainWindow::loadVideo()
         ui->btnPause->setEnabled(false);
         ui->btnPause->setChecked(false);
         ui->btnPause->repaint();
+        ui->cbxWaveSave->setEnabled(false);
 
         // Set current application directory to source file's path.
         QDir::setCurrent(in_file.absolutePath());
@@ -2169,6 +2170,7 @@ void MainWindow::playerNoSource()
     ui->btnPause->setCheckable(false);
     ui->btnPause->setChecked(false);
     ui->btnPause->repaint();
+    ui->cbxWaveSave->setEnabled(true);
     v_decoder_state = VDEC_STOP;
     // TODO: remember last source type and open dialog accordingly.
     loadVideo();
@@ -2187,6 +2189,7 @@ void MainWindow::playerLoaded(QString in_path)
     ui->btnPause->setCheckable(false);
     ui->btnPause->setChecked(false);
     ui->btnPause->repaint();
+    ui->cbxWaveSave->setEnabled(true);
 }
 
 //------------------------
@@ -2202,6 +2205,7 @@ void MainWindow::playerStarted(uint32_t in_frames_total)
     ui->btnPause->setCheckable(false);
     ui->btnPause->setChecked(false);
     ui->btnPause->repaint();
+    ui->cbxWaveSave->setEnabled(false);
     v_decoder_state = VDEC_PLAY;
 }
 
@@ -2217,6 +2221,7 @@ void MainWindow::playerStopped()
     ui->btnPause->setCheckable(false);
     ui->btnPause->setChecked(false);
     ui->btnPause->repaint();
+    ui->cbxWaveSave->setEnabled(true);
     v_decoder_state = VDEC_STOP;
 }
 
@@ -2232,6 +2237,7 @@ void MainWindow::playerPaused()
     ui->btnPause->setCheckable(true);
     ui->btnPause->setChecked(true);
     ui->btnPause->repaint();
+    ui->cbxWaveSave->setEnabled(false);
     v_decoder_state = VDEC_PAUSE;
 }
 
@@ -2247,6 +2253,7 @@ void MainWindow::playerError(QString error_text)
     ui->btnPause->setCheckable(false);
     ui->btnPause->setChecked(false);
     ui->btnPause->repaint();
+    ui->cbxWaveSave->setEnabled(true);
     ui->lblFileName->clear();
     v_decoder_state = VDEC_IDLE;
     this->displayErrorMessage(error_text);
@@ -3077,6 +3084,7 @@ void MainWindow::updateStatsFrameAsm(FrameAsmSTC007 new_trim)
 }
 
 //------------------------ Update stats with new value for muted samples.
+// TODO: deprecate
 void MainWindow::updateStatsMutes(uint16_t in_cnt)
 {
     // Update counter.
