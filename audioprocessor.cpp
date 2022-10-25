@@ -18,11 +18,14 @@ AudioProcessor::AudioProcessor(QObject *parent) : QObject(parent)
     }
     log_level = 0;
     mask_mode = DROP_IGNORE;
+    min_valid_before = MIN_VALID_BEFORE;
+    max_ramp_down = MAX_RAMP_DOWN;
+    max_ramp_up = MAX_RAMP_UP;
     sample_index = 0;
     setSampleRate(PCMSamplePair::SAMPLE_RATE_44100);
     file_end = 0;
     unprocessed = false;
-    remove_stray = false;
+    remove_stray = true;
     out_to_wav = false;
     out_to_live = false;
     dbg_output = false;
@@ -73,7 +76,7 @@ void AudioProcessor::setSampleRate(uint16_t in_rate)
 //------------------------ Fill internal buffer until its full.
 bool AudioProcessor::fillUntilBufferFull()
 {
-    size_t queue_size, added;
+    size_t queue_size, added, buf_limit;
     PCMSamplePair work_pair;
 
     added = 0;
@@ -88,21 +91,28 @@ bool AudioProcessor::fillUntilBufferFull()
     mtx_samples->lock();
     // Get the size of input queue.
     queue_size = in_samples->size();
+    // Calculate minimum allowed buffer size;
+    buf_limit = min_valid_before+max_ramp_down+max_ramp_up+1;
+    if(buf_limit<BUF_SIZE)
+    {
+        // Extend buffer size if allowed.
+        buf_limit = BUF_SIZE;
+    }
 #ifdef AP_EN_DBG_OUT
     if(((log_level&LOG_FILL)!=0)||((log_level&LOG_BUF_DUMP)!=0))
     {
         QString log_line;
-        if((queue_size>0)&&(prebuffer.size()<BUF_SIZE))
+        if((queue_size>0)&&(prebuffer.size()<buf_limit))
         {
             log_line.sprintf("[AP] Filling internal buffer ([%u/%u] occupied) from input ([%u] pending)",
-                             prebuffer.size(), BUF_SIZE, queue_size);
+                             prebuffer.size(), buf_limit, queue_size);
             qInfo()<<log_line;
         }
     }
 #endif
     // Check if there is anything in the input
     // and there is space in the buffer.
-    while((queue_size>0)&&(prebuffer.size()<BUF_SIZE))
+    while((queue_size>0)&&(prebuffer.size()<buf_limit))
     {
         // Pick first data point from the input.
         work_pair = in_samples->front();
@@ -180,11 +190,11 @@ bool AudioProcessor::fillUntilBufferFull()
         {
             qInfo()<<"[AP] Added"<<added<<"data points into the buffer";
         }
-        if((log_level&LOG_BUF_DUMP)!=0)
+        /*if((log_level&LOG_BUF_DUMP)!=0)
         {
-            //qInfo()<<"[AP] Prebuffer after filling (added"<<added<<"data points):";
-            //dumpPrebuffer();
-        }
+            qInfo()<<"[AP] Prebuffer after filling (added"<<added<<"data points):";
+            dumpPrebuffer();
+        }*/
 #endif
         return true;
     }
@@ -280,7 +290,7 @@ void AudioProcessor::fixStraySamples(std::deque<PCMSample> *samples, std::deque<
         log_line.sprintf("[AP] Starting stray sample detection, queue size: [%03u], filled indexes: [%08u:%08u]",
                          queue_size,
                          (uint32_t)(*samples)[0].getIndex(),
-                         (uint32_t)sample_index);
+                         (uint32_t)(*samples)[samples->size()-1].getIndex());
         qInfo()<<log_line;
     }
 #endif
@@ -430,7 +440,7 @@ void AudioProcessor::fixStraySamples(std::deque<PCMSample> *samples, std::deque<
         if(((*buf_scaner).getDelta()>0)&&((*buf_scaner).getDelta()<28))
         {
 #ifdef AP_EN_DBG_OUT
-            //if(suppress_log==false)
+            if(suppress_log==false)
             {
                 log_line.sprintf("[AP] Found region of stray valid samples: [%03d:%03d] ([%08d:%08d])",
                                  (*buf_scaner).data_start, (*buf_scaner).data_stop,
@@ -494,7 +504,7 @@ uint16_t AudioProcessor::performMute(std::deque<PCMSample> *samples, CoordinateP
         // Check if provided coordinates fit inside the buffer.
         if((range.data_start<0)||(range.data_stop>=(int16_t)samples->size()))
         {
-            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates of out range!";
+            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates of out range!"<<range.data_start<<range.data_stop<<samples->size();
             return mask_cnt;
         }
         // Cycle through the region.
@@ -555,7 +565,7 @@ uint16_t AudioProcessor::performLevelHold(std::deque<PCMSample> *samples, Coordi
         // Check if provided coordinates fit inside the buffer.
         if((range.data_start<0)||(range.data_stop>=(int16_t)samples->size()))
         {
-            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates of out range!";
+            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates of out range!"<<range.data_start<<range.data_stop<<samples->size();
             return mask_cnt;
         }
         // Save starting value to hold.
@@ -623,7 +633,7 @@ uint16_t AudioProcessor::performLinearInterpolation(std::deque<PCMSample> *sampl
         // Check if provided coordinates fit inside the buffer.
         if((range.data_start<0)||(range.data_stop>=(int16_t)samples->size()))
         {
-            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates of out range!";
+            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates of out range!"<<range.data_start<<range.data_stop<<samples->size();
             return mask_cnt;
         }
         // Get valid levels at the boundaries.
@@ -719,7 +729,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
     bool good_after_bad, good_before_bad, bad_lock;
     int16_t leftover;
     uint16_t masks_cnt;
-    size_t queue_size, queue_idx, bad_stop, good_cont, good_end;
+    size_t queue_size, queue_idx, bad_stop, good_at_the_end, good_end;
     std::deque<CoordinatePair> bad_regions;
 
 #ifdef AP_EN_DBG_OUT
@@ -728,7 +738,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
 
     good_after_bad = good_before_bad = bad_lock = false;
     masks_cnt = 0;
-    bad_stop = good_cont = good_end = 0;
+    bad_stop = good_at_the_end = good_end = 0;
 
     suppress_log = ((log_level&LOG_DROP_ACT)==0);
 
@@ -739,7 +749,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
         log_line.sprintf("[AP] Starting invalid sample detection, queue size: [%03u], filled indexes: [%08u:%08u]",
                          queue_size,
                          (uint32_t)(*samples)[0].getIndex(),
-                         (uint32_t)sample_index);
+                         (uint32_t)(*samples)[samples->size()-1].getIndex());
         qInfo()<<log_line;
     }
 #endif
@@ -750,7 +760,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
     {
         queue_idx = 1536;
     }*/
-    // Find regions of invalid samples.
+    // Find regions of invalid samples (backwards search).
     while(1)
     {
         // Debug
@@ -784,16 +794,17 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
             // Current sample is valid.
             if(bad_lock==false)
             {
-                // Invalid samples were not detected yet.
+                // Invalid samples were not detected yet,
+                // every sample from the end of the buffer is still valid.
                 // Update last location with valid samples.
-                good_cont = queue_idx;
+                good_at_the_end = queue_idx;
 #ifdef AP_EN_DBG_OUT
                 if(suppress_log==false)
                 {
                     if(good_after_bad==false)
                     {
                         log_line.sprintf("[AP] Found VALID data at the end of the buffer at [%03u] (index [%08u])",
-                                         good_cont, (uint32_t)(*samples)[good_cont].getIndex());
+                                         good_at_the_end, (uint32_t)(*samples)[good_at_the_end].getIndex());
                         qInfo()<<log_line;
                     }
                 }
@@ -803,79 +814,166 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
             }
             else
             {
-                // Some invalid samples were found before, maybe an invalid region is found.
-                if(good_before_bad==false)
+                // Some invalid samples were found towards the end of the buffer,
+                // maybe an invalid region is found.
+                // Save position of valid samples before invalid ones.
+                good_end = queue_idx;
+#ifdef AP_EN_DBG_OUT
+                if(suppress_log==false)
                 {
-                    // First time valid samples found in the buffer.
-                    // Save and lock position of valid samples before invalid ones.
-                    good_end = queue_idx;
-                    good_before_bad = true;
-#ifdef AP_EN_DBG_OUT
-                    if(suppress_log==false)
-                    {
-                        log_line.sprintf("[AP] Found VALID data before invalid at [%03u] (index [%08u])",
-                                         good_end, (uint32_t)(*samples)[good_end].getIndex());
-                        qInfo()<<log_line;
-                    }
+                    log_line.sprintf("[AP] Found VALID data before invalid at [%03u] (index [%08u])",
+                                     good_end, (uint32_t)(*samples)[good_end].getIndex());
+                    qInfo()<<log_line;
+                }
 #endif
-                    // Save coordinates of invalid region.
-                    bool add_coords;
-                    CoordinatePair new_region;
-                    add_coords = true;
-                    // Check if there was valid data at the end of the buffer.
-                    if(good_after_bad==false)
+                // Save coordinates of invalid region.
+                bool add_coords;
+                CoordinatePair new_region;
+                add_coords = true;
+                // Check if there was valid data at the end of the buffer.
+                if(good_after_bad==false)
+                {
+                    // No valid samples found after this one and found some invalid samples.
+                    // Check how far from the end of the buffer valid data ends.
+                    if(good_end>=(samples->size()-(max_ramp_down+max_ramp_up+1)))
                     {
-                        // No valid samples found after this one and some invalid samples.
-                        // Check how far from the end of the buffer valid data ends.
-                        if(good_end>=(samples->size()-(2*MAX_RAMP)-1))
+                        // Not enough invalid samples to choose between one region
+                        // or two ramps and silent region.
+#ifdef AP_EN_DBG_OUT
+                        if(suppress_log==false)
                         {
-                            // Don't bother with such segments in the look-ahead area.
-#ifdef AP_EN_DBG_OUT
-                            if(suppress_log==false)
-                            {
-                                qInfo()<<"[AP] Not enough invalid samples for two ramps at the end, ignoring invalid samples after for now";
-                            }
-#endif
-                            // Wait until valid sample shifts into first half of the buffer.
-                            add_coords = false;
+                            qInfo()<<"[AP] Not enough invalid samples for two ramps at the end, ignoring invalid samples after for now";
                         }
-                        else
-                        {
-                            // There are at least full two ramps of invalid samples at the end of the buffer.
-                            // So there is at least twice as many invalid samples in the buffer as required for one ramp-down.
-                            new_region.data_start = good_end;
-                            new_region.data_stop = bad_stop;
-
+#endif
+                        // Wait until valid sample shifts into first half of the buffer.
+                        add_coords = false;
+                    }
+                    else
+                    {
+                        // There is at least space for full two ramps (+1 sample of silence) at the end of the buffer.
+                        // Start ramp-down at last valid sample.
+                        new_region.data_start = good_end;
+                        // Calculating ending coordinate for the ramp-down.
+                        new_region.data_stop = new_region.data_start+max_ramp_down+1;
+                        // Force last sample of the ramp to valid zero.
+                        (*samples)[new_region.data_stop].setFixed();
+                        (*samples)[new_region.data_stop].setProcessed();
+                        (*samples)[new_region.data_stop].setValue(SMP_NULL);
+                        // Ramp-down region will be added to the list at the end.
 #ifdef AP_EN_DBG_OUT
-                            if(suppress_log==false)
+                        if(suppress_log==false)
+                        {
+                            log_line.sprintf("[AP] Forcing to mute invalid sample at [%03u] ([%08u])",
+                                             new_region.data_stop, (uint32_t)(*samples)[new_region.data_stop].getIndex());
+                            qInfo()<<log_line;
+                            if((*samples)[new_region.data_start].getValue()==SMP_NULL)
                             {
-                                log_line.sprintf("[AP] Found INVALID region at [%03u:%03u] ([%08u:%08u]) with no valid data at the end",
+                                log_line.sprintf("[AP] Muted region should be added at [%03u:%03u] ([%08u:%08u])",
                                                  new_region.data_start, new_region.data_stop,
                                                  (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
-                                qInfo()<<log_line;
+                            }
+                            else
+                            {
+                                log_line.sprintf("[AP] Ramp-down region should be added at [%03u:%03u] ([%08u:%08u])",
+                                                 new_region.data_start, new_region.data_stop,
+                                                 (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
+                            }
+                            qInfo()<<log_line;
+                        }
+#endif
+                    }
+                }
+                else
+                {
+                    // There is another valid sample after invalid region after current sample.
+                    // Detected invalid region is surrounded by valid samples in the buffer.
+                    {
+                        // Save coordinates of the invalid region.
+                        new_region.data_start = good_end;
+                        new_region.data_stop = good_at_the_end;
+                        // Check length of the invalid region.
+                        leftover = (new_region.data_stop-new_region.data_start-1);
+#ifdef AP_EN_DBG_OUT
+                        if(suppress_log==false)
+                        {
+                            log_line.sprintf("[AP] Found INVALID region at [%03u:%03u] ([%08u:%08u]), containing [%03u] invalid samples between valid samples",
+                                             new_region.data_start, new_region.data_stop,
+                                             (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex(),
+                                             leftover);
+                            qInfo()<<log_line;
+                        }
+#endif
+                        // Check if starting sample was processed earlier.
+                        if(((*samples)[new_region.data_start].isProcessed()==false)||
+                           ((*samples)[new_region.data_start].audio_word!=SMP_NULL))
+                        {
+                            // Starting sample was not altered - it was valid from the source.
+#ifdef AP_EN_DBG_OUT
+                            if(suppress_log==false)
+                            {
+                                qInfo()<<"[AP] Start of the invalid region was not altered";
                             }
 #endif
-                            // Check length of the ramp.
-                            leftover = (new_region.data_stop-new_region.data_start-1);
-                            if(leftover>MAX_RAMP)
+                            // Check if there is space for silent region.
+                            if(leftover>(max_ramp_down+max_ramp_up))
                             {
-                                // Length of the invalid region exceeds maximum ramp length.
-                                // Split region into two: ramp-down and muted.
+                                // The region is longer than ramp-down+ramp-up.
 #ifdef AP_EN_DBG_OUT
                                 if(suppress_log==false)
                                 {
-                                    log_line.sprintf("[AP] Region [%08u:%08u] is too long: [%03u], truncating ramp-down to [%03u]",
+                                    log_line.sprintf("[AP] Region [%08u:%08u] is too long: [%03u]>[%03u+%03u], splitting in three...",
                                                      (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex(),
-                                                     leftover, MAX_RAMP);
+                                                     leftover, max_ramp_down, max_ramp_up);
                                     qInfo()<<log_line;
                                 }
 #endif
-                                // Calculating ending coordinate for the ramp-down.
-                                new_region.data_stop = new_region.data_start+MAX_RAMP+1;
-                                // Force last sample of the ramp to zero.
-                                (*samples)[new_region.data_stop].setFixed();
-                                (*samples)[new_region.data_stop].setProcessed();
-                                (*samples)[new_region.data_stop].setValue(SMP_NULL);
+                                // Add ramp-up region.
+                                new_region.data_stop = good_at_the_end;
+                                new_region.data_start = new_region.data_stop-max_ramp_up-1;
+                                bad_regions.push_front(new_region);
+                                // Force first sample of the ramp-up (last sample of muted region) to zero.
+                                (*samples)[new_region.data_start].setFixed();
+                                (*samples)[new_region.data_start].setProcessed();
+                                (*samples)[new_region.data_start].setValue(SMP_NULL);
+#ifdef AP_EN_DBG_OUT
+                                if(suppress_log==false)
+                                {
+                                    log_line.sprintf("[AP] Forcing to mute invalid sample at [%03u] ([%08u])",
+                                                     new_region.data_start, (uint32_t)(*samples)[new_region.data_start].getIndex());
+                                    qInfo()<<log_line;
+                                    log_line.sprintf("[AP] Adding Ramp-up region [%03u:%03u] ([%08u:%08u])",
+                                                     new_region.data_start, new_region.data_stop,
+                                                     (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
+                                    qInfo()<<log_line;
+                                }
+#endif
+                                // Add muted region.
+                                new_region.data_stop = new_region.data_start;
+                                new_region.data_start = good_end+max_ramp_down+1;
+                                // Check if muted region is just one sample and no region required.
+                                if(new_region.data_stop>new_region.data_start)
+                                {
+                                    bad_regions.push_front(new_region);
+                                    // Force last sample of the ramp-down (first sample of muted region) to zero.
+                                    (*samples)[new_region.data_start].setFixed();
+                                    (*samples)[new_region.data_start].setProcessed();
+                                    (*samples)[new_region.data_start].setValue(SMP_NULL);
+#ifdef AP_EN_DBG_OUT
+                                    if(suppress_log==false)
+                                    {
+                                        log_line.sprintf("[AP] Forcing to mute invalid sample at [%03u] ([%08u])",
+                                                         new_region.data_start, (uint32_t)(*samples)[new_region.data_start].getIndex());
+                                        qInfo()<<log_line;
+                                        log_line.sprintf("[AP] Adding muted region [%03u:%03u] ([%08u:%08u])",
+                                                         new_region.data_start, new_region.data_stop,
+                                                         (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
+                                        qInfo()<<log_line;
+                                    }
+#endif
+                                }
+                                // Prepare ramp-down region.
+                                new_region.data_stop = new_region.data_start;
+                                new_region.data_start = good_end;
 #ifdef AP_EN_DBG_OUT
                                 if(suppress_log==false)
                                 {
@@ -886,192 +984,86 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                                 }
 #endif
                             }
-                            else
+                        }
+                        else
+                        {
+                            // Starting sample was processed - it was zeroed by masking.
+#ifdef AP_EN_DBG_OUT
+                            if(suppress_log==false)
                             {
-                                // Invalid region length is less than maximum allowed.
-                                // Force last sample to zero.
-                                (*samples)[new_region.data_stop].setFixed();
-                                (*samples)[new_region.data_stop].setProcessed();
-                                (*samples)[new_region.data_stop].setValue(SMP_NULL);
+                                qInfo()<<"[AP] Start of the invalid region was zeroed-out (altered)";
+                            }
+#endif
+                            // No ramp-down should be generated, only ramp-up and optional silence.
+                            // Check if there is space for silent region.
+                            if(leftover>max_ramp_up)
+                            {
+                                // The region is longer than ramp-up.
 #ifdef AP_EN_DBG_OUT
                                 if(suppress_log==false)
                                 {
-                                    log_line.sprintf("[AP] Zeroed region end at [%03u] ([%08u])",
-                                                     new_region.data_stop, (uint32_t)(*samples)[new_region.data_stop].getIndex());
+                                    log_line.sprintf("[AP] Region [%08u:%08u] is too long: [%03u]>[%03u], splitting in two...",
+                                                     (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex(),
+                                                     leftover, max_ramp_up);
+                                    qInfo()<<log_line;
+                                }
+#endif
+                                // Add ramp-up region.
+                                new_region.data_stop = good_at_the_end;
+                                new_region.data_start = new_region.data_stop-max_ramp_up-1;
+                                bad_regions.push_front(new_region);
+                                // Force first sample of the ramp-up (last sample of muted region) to zero.
+                                (*samples)[new_region.data_start].setFixed();
+                                (*samples)[new_region.data_start].setProcessed();
+                                (*samples)[new_region.data_start].setValue(SMP_NULL);
+#ifdef AP_EN_DBG_OUT
+                                if(suppress_log==false)
+                                {
+                                    log_line.sprintf("[AP] Forcing to mute invalid sample at [%03u] ([%08u])",
+                                                     new_region.data_start, (uint32_t)(*samples)[new_region.data_start].getIndex());
+                                    qInfo()<<log_line;
+                                    log_line.sprintf("[AP] Adding Ramp-up region [%03u:%03u] ([%08u:%08u])",
+                                                     new_region.data_start, new_region.data_stop,
+                                                     (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
+                                    qInfo()<<log_line;
+                                }
+#endif
+                                // Prepare muted region.
+                                new_region.data_stop = new_region.data_start;
+                                new_region.data_start = good_end;
+#ifdef AP_EN_DBG_OUT
+                                if(suppress_log==false)
+                                {
+                                    log_line.sprintf("[AP] Muted region should be added at [%03u:%03u] ([%08u:%08u])",
+                                                     new_region.data_start, new_region.data_stop,
+                                                     (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
                                     qInfo()<<log_line;
                                 }
 #endif
                             }
                         }
                     }
-                    else
-                    {
-                        // There is another valid sample after invalid region after current sample.
-                        // Found invalid region is surrounded be valid samples in the buffer.
-                        {
-                            new_region.data_start = good_end;
-                            new_region.data_stop = good_cont;
-    #ifdef AP_EN_DBG_OUT
-                            if(suppress_log==false)
-                            {
-                                log_line.sprintf("[AP] Found INVALID region at [%03u:%03u] ([%08u:%08u]) between valid samples",
-                                                 new_region.data_start, new_region.data_stop,
-                                                 (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
-                                qInfo()<<log_line;
-                            }
-    #endif
-                            // Check length of the region.
-                            leftover = (new_region.data_stop-new_region.data_start-1);
-                            // Check if starting sample was processed earlier.
-                            if(((*samples)[new_region.data_start].isProcessed()==false)||
-                               ((*samples)[new_region.data_start].audio_word==SMP_NULL))
-                            {
-                                // Starting sample was not altered - it was valid from the source.
-                                if(leftover>(2*MAX_RAMP))
-                                {
-                                    // The region is longer than ramp-down+ramp-up.
-    #ifdef AP_EN_DBG_OUT
-                                    if(suppress_log==false)
-                                    {
-                                        log_line.sprintf("[AP] Region [%08u:%08u] is too long: [%03u]>[%03u], splitting in three...",
-                                                         (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex(),
-                                                         leftover, (2*MAX_RAMP));
-                                        qInfo()<<log_line;
-                                    }
-    #endif
-                                    // Create ramp-down region.
-                                    new_region.data_stop = new_region.data_start+MAX_RAMP+1;
-                                    // Force last sample of the ramp-down to zero.
-                                    (*samples)[new_region.data_stop].setFixed();
-                                    (*samples)[new_region.data_stop].setProcessed();
-                                    (*samples)[new_region.data_stop].setValue(SMP_NULL);
-                                    // Add region for the ramp-down.
-                                    bad_regions.push_front(new_region);
-    #ifdef AP_EN_DBG_OUT
-                                    if(suppress_log==false)
-                                    {
-                                        log_line.sprintf("[AP] Adding INVALID region [%03u:%03u] ([%08u:%08u]) for ramp-down",
-                                                         new_region.data_start, new_region.data_stop,
-                                                         (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
-                                        qInfo()<<log_line;
-                                    }
-    #endif
-                                    // Start muted region at the end of the ramp-down.
-                                    new_region.data_start = new_region.data_stop;
-                                    // Stop muted region at the beginning of the ramp-up.
-                                    new_region.data_stop = good_cont-MAX_RAMP-1;
-                                    // Check if muted region is null.
-                                    if(new_region.data_start!=new_region.data_stop)
-                                    {
-                                        // Force first sample of the ramp-up to zero.
-                                        (*samples)[new_region.data_stop].setFixed();
-                                        (*samples)[new_region.data_stop].setProcessed();
-                                        (*samples)[new_region.data_stop].setValue(SMP_NULL);
-                                        // Add muted region.
-                                        bad_regions.push_front(new_region);
-    #ifdef AP_EN_DBG_OUT
-                                        if(suppress_log==false)
-                                        {
-                                            log_line.sprintf("[AP] Adding INVALID region [%03u:%03u] ([%08u:%08u]) for mute before ramp-up",
-                                                             new_region.data_start, new_region.data_stop,
-                                                             (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
-                                            qInfo()<<log_line;
-                                        }
-    #endif
-                                    }
-                                    // Start ramp-up next.
-                                    new_region.data_start = new_region.data_stop;
-                                    new_region.data_stop = good_cont;
-                                    // Ramp-up region will be added below.
-    #ifdef AP_EN_DBG_OUT
-                                    if(suppress_log==false)
-                                    {
-                                        log_line.sprintf("[AP] Ramp-up region should be added at [%03u:%03u] ([%08u:%08u])",
-                                                         new_region.data_start, new_region.data_stop,
-                                                         (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
-                                        qInfo()<<log_line;
-                                    }
-    #endif
-                                }
-                            }
-                            else
-                            {
-                                // Starting sample was processed - it was zeroed by masking.
-                                if(leftover>MAX_RAMP)
-                                {
-                                    // The region is longer than ramp-up.
-    #ifdef AP_EN_DBG_OUT
-                                    if(suppress_log==false)
-                                    {
-                                        log_line.sprintf("[AP] Region [%08u:%08u] is too long: [%03u]>[%03u], splitting in two...",
-                                                         (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex(),
-                                                         leftover, MAX_RAMP);
-                                        qInfo()<<log_line;
-                                    }
-    #endif
-                                    // Stop muted region at the beginning of the ramp-up.
-                                    new_region.data_stop -= MAX_RAMP+1;
-                                    // Check if muted region is null.
-                                    if(new_region.data_start!=new_region.data_stop)
-                                    {
-                                        // Force first sample of the ramp-up to zero.
-                                        (*samples)[new_region.data_stop].setFixed();
-                                        (*samples)[new_region.data_stop].setProcessed();
-                                        (*samples)[new_region.data_stop].setValue(SMP_NULL);
-                                        // Add muted region.
-                                        bad_regions.push_front(new_region);
-    #ifdef AP_EN_DBG_OUT
-                                        if(suppress_log==false)
-                                        {
-                                            log_line.sprintf("[AP] Adding INVALID region [%03u:%03u] ([%08u:%08u]) for mute before ramp-up",
-                                                             new_region.data_start, new_region.data_stop,
-                                                             (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
-                                            qInfo()<<log_line;
-                                        }
-    #endif
-                                    }
-                                    else
-                                    {
-                                        qWarning()<<DBG_ANCHOR<<"[AP] Logic error!";
-                                    }
-                                    // Start ramp-up next.
-                                    new_region.data_start = new_region.data_stop;
-                                    new_region.data_stop = good_cont;
-                                    // Ramp-up region will be added below.
-    #ifdef AP_EN_DBG_OUT
-                                    if(suppress_log==false)
-                                    {
-                                        log_line.sprintf("[AP] Ramp-up region should be added at [%03u:%03u] ([%08u:%08u])",
-                                                         new_region.data_start, new_region.data_stop,
-                                                         (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
-                                        qInfo()<<log_line;
-                                    }
-    #endif
-                                }
-                            }
-                        }
-                    }
-                    // Check if new region should be added.
-                    if(add_coords!=false)
-                    {
-                        // Add new invalid region.
-                        bad_regions.push_front(new_region);
-#ifdef AP_EN_DBG_OUT
-                        if(suppress_log==false)
-                        {
-                            log_line.sprintf("[AP] Adding INVALID region [%03u:%03u] ([%08u:%08u])",
-                                             new_region.data_start, new_region.data_stop,
-                                             (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
-                            qInfo()<<log_line;
-                        }
-#endif
-                    }
-                    // Reset and prepare to find another invalid region.
-                    good_after_bad = true;
-                    good_before_bad = bad_lock = false;
-                    // Update last location with valid samples.
-                    good_cont = queue_idx;
                 }
+                // Check if new region should be added.
+                if(add_coords!=false)
+                {
+                    // Add new invalid region.
+                    bad_regions.push_front(new_region);
+#ifdef AP_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        log_line.sprintf("[AP] Adding INVALID region [%03u:%03u] ([%08u:%08u])",
+                                         new_region.data_start, new_region.data_stop,
+                                         (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
+                        qInfo()<<log_line;
+                    }
+#endif
+                }
+                // Reset and prepare to find another invalid region.
+                good_after_bad = true;
+                bad_lock = false;
+                // Update last location with valid samples.
+                good_at_the_end = queue_idx;
             }
         }
         if(queue_idx==0) break;
@@ -1117,6 +1109,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
         }
         buf_scaner++;
     }
+    // Clear invalid region list.
     bad_regions.clear();
 
     // Check rezidual data at EOF condition.
@@ -1232,41 +1225,39 @@ void AudioProcessor::fillBufferForOutput()
 }
 
 //------------------------ Write an element to the outputs.
-void AudioProcessor::outputWordPair()
+void AudioProcessor::outputWordPair(PCMSamplePair *out_samples)
 {
-    PCMSamplePair out_samples;
-    out_samples = prebuffer.front();
-    // Remove data point from the output queue.
-    prebuffer.pop_front();
     // Update current sample rate.
-    setSampleRate(out_samples.getSampleRate());
+    setSampleRate(out_samples->getSampleRate());
     // Check if output to file is enabled.
     if(out_to_wav!=false)
     {
-        wav_output.saveAudio(out_samples);
+        wav_output.saveAudio(*out_samples);
         // Restart close timeout timer.
         emit reqTimerRestart();
     }
     // Check if output to audio device is enabled.
     if(out_to_live!=false)
     {
-        sc_output.saveAudio(out_samples);
+        sc_output.saveAudio(*out_samples);
     }
-    emit outSamples(out_samples);
+    emit outSamples(*out_samples);
 }
 
 //------------------------ Output processed audio.
 void AudioProcessor::outputAudio()
 {
+    bool stop_output;
     uint16_t points_done, lim_play, lim_cutoff;
+    PCMSamplePair data_point;
 
     lim_play = lim_cutoff = 0;
     if(file_end==false)
     {
         // If not EOF yet - leave some data in the buffer for look-ahead.
-        lim_play = MIN_TO_PLAYBACK;
+        //lim_play = MIN_TO_PLAYBACK;
         //lim_cutoff = MIN_TO_PROCESS;
-        lim_cutoff = 2;
+        lim_play = lim_cutoff = (min_valid_before+max_ramp_down+max_ramp_up+1);
     }
     // Check if there is a chunk of data ready bigger than minimum storage for look-ahead.
     if(prebuffer.size()<lim_play)
@@ -1275,24 +1266,34 @@ void AudioProcessor::outputAudio()
         return;
     }
     points_done = 0;
+    stop_output = false;
     // Dump processed audio until minimum look-ahead number of data points left in the buffer.
-    while(prebuffer.size()>lim_cutoff)
+    while(prebuffer.size()>min_valid_before)
     {
         // Make sure that first sample in the queue will remain valid.
-        if((prebuffer[0].isReadyForOutput()==false)||(prebuffer[1].isReadyForOutput()==false))
+        for(uint8_t idx=0;idx<=min_valid_before;idx++)
+        {
+            stop_output = stop_output||(prebuffer.at(idx).isReadyForOutput()==false);
+        }
+        if(stop_output!=false)
         {
 #ifdef AP_EN_DBG_OUT
             if((log_level&LOG_PROCESS)!=0)
             {
                 QString log_line;
-                log_line.sprintf("[AP] Stopped output at index [%08u]", (uint32_t)prebuffer.front().getIndex());
+                log_line.sprintf("[AP] Stopped output at index [%08u], preserving [%02u] valid samples at the start",
+                                 (uint32_t)prebuffer.front().getIndex(),
+                                 min_valid_before);
                 qInfo()<<log_line;
             }
 #endif
             break;
         }
+        data_point = prebuffer.front();
+        // Remove data point from the output queue.
+        prebuffer.pop_front();
         // Output a single data point from the top of the queue.
-        outputWordPair();
+        outputWordPair(&data_point);
         points_done++;
     }
     if(file_end!=false)
@@ -1319,12 +1320,12 @@ void AudioProcessor::outputAudio()
 //------------------------ Scan internal buffer for errors.
 bool AudioProcessor::scanBuffer()
 {
-    uint16_t scan_limit;
+    size_t scan_limit;
 
     scan_limit = 0;
     if(file_end==false)
     {
-        scan_limit = MIN_TO_PROCESS;
+        scan_limit = prebuffer.size()-min_valid_before-max_ramp_down-max_ramp_up;
     }
     if((unprocessed!=false)&&(prebuffer.size()>scan_limit))
     {
@@ -1388,9 +1389,13 @@ bool AudioProcessor::scanBuffer()
 //------------------------ Dump audio processor buffer into output.
 void AudioProcessor::dumpBuffer()
 {
+    PCMSamplePair data_point;
     while(prebuffer.size()>1)
     {
-        outputWordPair();
+        data_point = prebuffer.front();
+        // Remove data point from the output queue.
+        prebuffer.pop_front();
+        outputWordPair(&data_point);
     }
     wav_output.purgeBuffer();
 }

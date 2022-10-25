@@ -44,12 +44,12 @@ public:
     // Buffer limits.
     enum
     {
-        BUF_SIZE = 512,                         // Buffer size for buffered playback (must divide by 4!).
+        BUF_SIZE = 512,                         // Buffer size for buffered playback.
         MIN_LONG_INVALID = 16,                  // Minimum length of invalid region to be count as long.
         MAX_STRAY_LEN = 24,                     // Maximum length of valid region to be count as stray.
-        MAX_RAMP = 128,                         // Maximum length of fade-in and fade-out ramps.
-        MIN_TO_PROCESS = (BUF_SIZE/2),          // Minimum size of data set to perform scanning.
-        MIN_TO_PLAYBACK = (BUF_SIZE*3/4),
+        MIN_VALID_BEFORE = 3,                   // Minimum number of valid data points to keep at the start of the buffer.
+        MAX_RAMP_DOWN = 128,                    // Length of ramp-down to mute region (in data points).
+        MAX_RAMP_UP = 32,                       // Length of ramp-up from mute region (in data points).
         CHANNEL_CNT = PCMSamplePair::CH_MAX,    // Number of channels for processing.
     };
 
@@ -85,6 +85,9 @@ private:
     std::deque<CoordinatePair> long_bads[CHANNEL_CNT];
     uint8_t log_level;                          // Level of debug output.
     uint8_t mask_mode;                          // Mode of masking dropouts.
+    uint16_t min_valid_before;
+    uint16_t max_ramp_down;
+    uint16_t max_ramp_up;
     uint64_t sample_index;                      // Master index for samples for the current file.
     uint16_t sample_rate;                       // Last sample rate.
     bool file_end;                              // Detected end of a file.
@@ -112,7 +115,7 @@ private:
     void fixBadSamples(std::deque<PCMSample> *samples);
     void dumpPrebuffer();
     void fillBufferForOutput();
-    void outputWordPair();
+    void outputWordPair(PCMSamplePair *out_samples);
     void outputAudio();
     bool scanBuffer();
     void dumpBuffer();
