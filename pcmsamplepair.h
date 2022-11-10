@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <QDebug>
 #include "config.h"
 
 //------------------------ Single 16-bit audio sample container.
@@ -22,11 +23,12 @@ class PCMSample
     };
 
 public:
-    int16_t audio_word;
-    uint64_t index;
-    bool data_block_ok;
-    bool word_ok;
-    bool word_processed;
+    int16_t audio_word;             // Audio data (16-bit) zero-centered.
+    uint64_t index;                 // Global sample index from the start of the source.
+    bool data_block_ok;             // Was source data block valid?
+    bool word_valid;                // Does this sample contain valid audio data?
+    bool word_fixed;                // Was this sample fixed with error correction while deinterleaving?
+    bool word_masked;               // Was this sample altered in audio processor? (mute, interpolation)
 
 public:
     PCMSample();
@@ -36,15 +38,17 @@ public:
     void setValue(int16_t in_val);
     void setIndex(uint64_t in_idx);
     void setInvalid();
+    void setValid();
     void setFixed();
-    void setProcessed();
+    void setMasked();
     void setValidityByBlock();
     int16_t getValue();
     uint16_t getAmplitude();
     uint64_t getIndex();
     bool isSilent();
     bool isValid();
-    bool isProcessed();
+    bool isFixed();
+    bool isMasked();
     std::string dumpWordsString();
 };
 
@@ -73,16 +77,15 @@ public:
     // Service tags for [service_type].
     enum
     {
-        SRV_NO,             // Regular PCM line with audio data.
-        SRV_NEW_FILE,       // New file opened (with path in [file_path]).
-        SRV_END_FILE,       // File ended.
+        SRV_NO,                 // Regular PCM line with audio data.
+        SRV_NEW_FILE,           // New file opened (with path in [file_path]).
+        SRV_END_FILE,           // File ended.
     };
 
 public:
-    PCMSample samples[CH_MAX];
-    uint16_t sample_rate;
-    uint64_t index;
-    bool emphasis;
+    PCMSample samples[CH_MAX];  // Sample set for this data point.
+    uint16_t sample_rate;       // Sample rate for this data point.
+    bool emphasis;              // Do samples need de-emphasis?
     uint8_t service_type;       // Type of the service tag.
     std::string file_path;      // Path of decoded file (set with [SRV_NEW_FILE]).
 
@@ -93,8 +96,11 @@ public:
     void clear();
     void setServNewFile(std::string path);
     void setServEndFile();
-    bool setSample(uint8_t channel, int16_t sample, bool block_ok, bool word_ok);
-    void setSamplePair(int16_t ch1_sample, int16_t ch2_sample, bool ch1_block, bool ch2_block, bool ch1_word, bool ch2_word);
+    bool setSample(uint8_t channel, int16_t sample, bool block_ok = true, bool word_ok = true, bool word_fixed = false);
+    void setSamplePair(int16_t ch1_sample, int16_t ch2_sample,
+                       bool ch1_block, bool ch2_block,
+                       bool ch1_word = true, bool ch2_word = true,
+                       bool ch1_fixed = false, bool ch2_fixed = false);
     void setValidityByBlock();
     void setSampleRate(uint16_t in_rate);
     void setIndex(uint64_t in_idx);

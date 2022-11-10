@@ -59,15 +59,24 @@ public:
     };
 
 private:
-    QFile file_out;
-    QString file_path;
-    QString file_name;
+    QFile file_out;                     // Handler for the output file.
+    QString file_path;                  // File directory.
+    QString file_name;                  // File name.
+    QString output_path;                // Full file name/path.
     uint8_t log_level;                  // Setting for debugging log level.
-    uint16_t sample_rate;
+    uint16_t sample_rate;               // Preset sample rate to write to the header.
+    bool error_lock;                    // Prevent opening file if in error.
     static const uint8_t default_header[HDR_SZ];
 
 public:
     SamplesToWAV();
+
+private:
+    bool openOutput();
+    bool addHeader();
+    bool updateHeader();
+
+public slots:
     void setLogLevel(uint8_t in_level);
     void setFolder(QString path);
     void setName(QString name);
@@ -77,10 +86,8 @@ public:
     void purgeBuffer();
     void releaseFile();
 
-private:
-    bool openOutput();
-    void addHeader();
-    void updateHeader();
+signals:
+    void fileError(QString);
 };
 
 #endif // SAMPLES2WAV_H

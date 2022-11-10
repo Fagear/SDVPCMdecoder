@@ -539,12 +539,17 @@ std::string PCM1Line::dumpContentString()
         if(isDataByCoordSweep()!=false)
         {
             sprintf(c_buf, "D[%03d:%04d] ", coords.data_start, coords.data_stop);
+            text_out += c_buf;
+        }
+        else if(coords.areValid()!=false)
+        {
+            sprintf(c_buf, "D[%03d|%04d] ", coords.data_start, coords.data_stop);
+            text_out += c_buf;
         }
         else
         {
-            sprintf(c_buf, "D[%03d|%04d] ", coords.data_start, coords.data_stop);
+            text_out += "D[N/A| N/A] ";
         }
-        text_out += c_buf;
         text_out += dumpWordsString();
 
         text_out += " BP[";

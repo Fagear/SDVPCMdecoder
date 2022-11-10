@@ -13,10 +13,6 @@ MainWindow::MainWindow(QWidget *parent) :
     L2B_PCM16X0_worker = NULL;
     L2B_STC007_worker = NULL;
     AP_worker = NULL;
-    captureSelectDialog = NULL;
-    vipFineSetDialog = NULL;
-    binFineSetDialog = NULL;
-    deintFineSetDialog = NULL;
     visuSource = NULL;
     visuBin = NULL;
     visuAssembled = NULL;
@@ -30,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     v_decoder_state = VDEC_IDLE;
 
     set_pcm_type = LIST_TYPE_PCM1;
-    lines_per_video = 0;
+    pcm1_ofs_diff = 0;
 
     stat_dbg_index = 0;
     for(uint8_t i=0;i<DBG_AVG_LEN;i++)
@@ -45,12 +41,6 @@ MainWindow::MainWindow(QWidget *parent) :
         stat_tracking_arr.pop();
     }
     stat_video_tracking.clear();
-    stat_vlines_time_per_frame = 0;
-    stat_min_vip_time = 0xFFFFFFFF;
-    stat_max_vip_time = 0;
-    stat_lines_time_per_frame = 0;
-    stat_min_bin_time = 0xFFFFFFFF;
-    stat_max_bin_time = 0;
     stat_lines_per_frame = 0;
     stat_blocks_time_per_frame = 0;
     stat_min_di_time = 0xFFFFFFFF;
@@ -68,7 +58,6 @@ MainWindow::MainWindow(QWidget *parent) :
     stat_broken_block_cnt = 0;
     stat_drop_block_cnt = 0;
     stat_drop_sample_cnt = 0;
-    stat_mute_cnt = 0;
     stat_mask_cnt = 0;
     stat_processed_frame_cnt = 0;
     stat_line_cnt = 0;
@@ -102,14 +91,9 @@ MainWindow::MainWindow(QWidget *parent) :
     timUIUpdate.setInterval(20);
     connect(&timUIUpdate, SIGNAL(timeout()), this, SLOT(updateGUIByTimer()));
 
-    // 500 ms (2 Hz) thread check update.
-    timTRDUpdate.setSingleShot(false);
-    timTRDUpdate.setInterval(500);
-    connect(&timTRDUpdate, SIGNAL(timeout()), this, SLOT(checkThreads()));
-
     qInfo()<<"[M] GUI thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId())<<", starting processing threads...";
 
-    // Инициализация хранилища настроек.
+    // Initialize settings storage.
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
     qInfo()<<"[M] Settings path:"<<settings_hdl.fileName();
 
@@ -171,23 +155,31 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(VIN_worker, SIGNAL(frameDropDetected()), this, SLOT(updateStatsDroppedFrame()));
     connect(VIN_worker, SIGNAL(frameDecoded(uint32_t)), this, SLOT(updateStatsVIPFrame(uint32_t)));
     // Start new thread with video input processor.
-    input_FPU->start(QThread::LowestPriority);
+    input_FPU->start(QThread::HighPriority);
 
     connect(ui->mnLanguage, SIGNAL(triggered(QAction*)), this, SLOT(setLang(QAction*)));
 
     connect(ui->btnOpen, SIGNAL(clicked(bool)), this, SLOT(loadVideo()));
     connect(ui->actCloseSource, SIGNAL(triggered(bool)), this, SLOT(unloadSource()));
-    connect(ui->btnPlay, SIGNAL(clicked(bool)), this, SLOT(playVideo()));
-    connect(ui->btnPause, SIGNAL(clicked(bool)), this, SLOT(pauseVideo()));
+    connect(ui->btnPlay, SIGNAL(clicked(bool)), this, SLOT(usrPlayStop()));
+    connect(ui->btnPause, SIGNAL(clicked(bool)), this, SLOT(usrPause()));
 
     connect(ui->cbxLivePB, SIGNAL(clicked(bool)), this, SLOT(updateGUISettings()));
     connect(ui->cbxWaveSave, SIGNAL(clicked(bool)), this, SLOT(updateGUISettings()));
-    connect(ui->cbxFrameDropout, SIGNAL(toggled(bool)), this, SLOT(updateGUISettings()));
-    connect(ui->cbxLineDuplicate, SIGNAL(toggled(bool)), this, SLOT(updateGUISettings()));
-    connect(ui->cbxFrameStep, SIGNAL(toggled(bool)), this, SLOT(updateGUISettings()));
+    connect(ui->cbxFrameDropout, SIGNAL(clicked(bool)), this, SLOT(updateGUISettings()));
+    connect(ui->cbxLineDuplicate, SIGNAL(clicked(bool)), this, SLOT(updateGUISettings()));
+    connect(ui->cbxFrameStep, SIGNAL(clicked(bool)), this, SLOT(updateGUISettings()));
     connect(ui->lbxBinQuality, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
     connect(ui->lbxPCMType, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
     connect(ui->lbxPCM1FieldOrder, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
+    connect(ui->cbxPCM1Offset, SIGNAL(clicked(bool)), this, SLOT(updateGUISettings()));
+    connect(ui->sldPCM1OddOfs, SIGNAL(valueChanged(int)), this, SLOT(updateGUISettings()));
+    connect(ui->sldPCM1EvenOfs, SIGNAL(valueChanged(int)), this, SLOT(updateGUISettings()));
+    connect(ui->btnPCM1OfsSync, SIGNAL(clicked(bool)), this, SLOT(updateGUISettings()));
+    connect(ui->sldPCM1OddOfs, SIGNAL(sliderMoved(int)), this, SLOT(sliderDisplayUpdate()));
+    connect(ui->sldPCM1EvenOfs, SIGNAL(sliderMoved(int)), this, SLOT(sliderDisplayUpdate()));
+    connect(ui->sldPCM1OddOfs, SIGNAL(valueChanged(int)), this, SLOT(sliderDisplayUpdate()));
+    connect(ui->sldPCM1EvenOfs, SIGNAL(valueChanged(int)), this, SLOT(sliderDisplayUpdate()));
     connect(ui->lbxPCM16x0Format, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
     connect(ui->lbxPCM16x0FieldOrder, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
     connect(ui->lbxPCM16x0ECC, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
@@ -205,7 +197,6 @@ MainWindow::MainWindow(QWidget *parent) :
     enableGUIEvents();
 
     connect(ui->actLoadPCM, SIGNAL(triggered(bool)), this, SLOT(loadVideo()));
-    connect(ui->actLoadPicture, SIGNAL(triggered(bool)), this, SLOT(loadPicture()));
     connect(ui->actDecoderReset, SIGNAL(triggered(bool)), this, SLOT(resetOptDecoder()));
     connect(ui->actWinPosReset, SIGNAL(triggered(bool)), this, SLOT(resetVisPositions()));
     connect(ui->actFullReset, SIGNAL(triggered(bool)), this, SLOT(resetFull()));
@@ -305,10 +296,13 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(aboutToExit()), L2B_PCM1_worker, SLOT(stop()));
     connect(this, SIGNAL(newL2BLogLevel(uint16_t)), L2B_PCM1_worker, SLOT(setLogLevel(uint16_t)));
     connect(this, SIGNAL(newPCM1FieldOrder(uint8_t)), L2B_PCM1_worker, SLOT(setFieldOrder(uint8_t)));
+    connect(this, SIGNAL(newPCM1AutoOffset(bool)), L2B_PCM1_worker, SLOT(setAutoLineOffset(bool)));
+    connect(this, SIGNAL(newPCM1OddOffset(int8_t)), L2B_PCM1_worker, SLOT(setOddLineOffset(int8_t)));
+    connect(this, SIGNAL(newPCM1EvenOffset(int8_t)), L2B_PCM1_worker, SLOT(setEvenLineOffset(int8_t)));
     connect(L2B_PCM1_worker, SIGNAL(newLineProcessed(PCM1SubLine)), this, SLOT(receiveAsmLine(PCM1SubLine)));
     connect(L2B_PCM1_worker, SIGNAL(newBlockProcessed(PCM1DataBlock)), this, SLOT(receivePCMDataBlock(PCM1DataBlock)));
     connect(L2B_PCM1_worker, SIGNAL(guiUpdFrameAsm(FrameAsmPCM1)), this, SLOT(updateStatsFrameAsm(FrameAsmPCM1)));
-    connect(L2B_PCM1_worker, SIGNAL(loopTime(quint64)), this, SLOT(updateDebugBar(quint64)));
+    //connect(L2B_PCM1_worker, SIGNAL(loopTime(quint64)), this, SLOT(updateDebugBar(quint64)));
 
     // Create and link PCM-16x0 deinterleaver worker.
     conv_L2B_PCM16X0 = NULL;
@@ -331,7 +325,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(L2B_PCM16X0_worker, SIGNAL(newLineProcessed(PCM16X0SubLine)), this, SLOT(receiveAsmLine(PCM16X0SubLine)));
     connect(L2B_PCM16X0_worker, SIGNAL(newBlockProcessed(PCM16X0DataBlock)), this, SLOT(receivePCMDataBlock(PCM16X0DataBlock)));
     connect(L2B_PCM16X0_worker, SIGNAL(guiUpdFrameAsm(FrameAsmPCM16x0)), this, SLOT(updateStatsFrameAsm(FrameAsmPCM16x0)));
-    connect(L2B_PCM16X0_worker, SIGNAL(loopTime(quint64)), this, SLOT(updateDebugBar(quint64)));
+    //connect(L2B_PCM16X0_worker, SIGNAL(loopTime(quint64)), this, SLOT(updateDebugBar(quint64)));
 
     // Create and link STC-007 deinterleaver worker.
     conv_L2B_STC007 = NULL;
@@ -358,7 +352,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(L2B_STC007_worker, SIGNAL(newBlockProcessed(STC007DataBlock)), this, SLOT(receivePCMDataBlock(STC007DataBlock)));
     connect(L2B_STC007_worker, SIGNAL(newBlockProcessed(STC007DataBlock)), this, SLOT(updateStatsBlockTime(STC007DataBlock)));
     connect(L2B_STC007_worker, SIGNAL(guiUpdFrameAsm(FrameAsmSTC007)), this, SLOT(updateStatsFrameAsm(FrameAsmSTC007)));
-    connect(L2B_STC007_worker, SIGNAL(loopTime(quint64)), this, SLOT(updateDebugBar(quint64)));
+    //connect(L2B_STC007_worker, SIGNAL(loopTime(quint64)), this, SLOT(updateDebugBar(quint64)));
 
     // Create and link audio processor worker.
     audio_PU = NULL;
@@ -378,9 +372,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(newMaskingMode(uint8_t)), AP_worker, SLOT(setMasking(uint8_t)));
     connect(this, SIGNAL(newEnableLivePB(bool)), AP_worker, SLOT(setOutputToLive(bool)));
     connect(this, SIGNAL(newEnableWaveSave(bool)), AP_worker, SLOT(setOutputToFile(bool)));
+    connect(AP_worker, SIGNAL(mediaError(QString)), this, SLOT(displayErrorMessage(QString)));
     connect(AP_worker, SIGNAL(guiAddMask(uint16_t)), this, SLOT(updateStatsMaskes(uint16_t)));
     connect(AP_worker, SIGNAL(guiLivePB(bool)), this, SLOT(livePBUpdate(bool)));
-    connect(AP_worker, SIGNAL(outSamples(PCMSamplePair)), this, SLOT(updateVU(PCMSamplePair)));
+    connect(AP_worker, SIGNAL(outVULevels(uint8_t,uint8_t)), this, SLOT(receiveVUMeters(uint8_t,uint8_t)));
 
     connect(this, SIGNAL(newFineReset()), this, SLOT(setDefaultFineSettings()));
     connect(this, SIGNAL(newFineReset()), VIN_worker, SLOT(setDefaultFineSettings()));
@@ -391,16 +386,15 @@ MainWindow::MainWindow(QWidget *parent) :
     // Start new thread with binarizer.
     conv_V2D->start(QThread::InheritPriority);
     // Start new thread with deinterleaver/frame assembler.
-    //conv_L2B->start(QThread::LowPriority);
     conv_L2B_PCM1->start(QThread::InheritPriority);
     conv_L2B_PCM16X0->start(QThread::InheritPriority);
     conv_L2B_STC007->start(QThread::InheritPriority);
     // Start new thread with audio processor.
-    //audio_PU->start(QThread::LowestPriority);
+    //audio_PU->start(QThread::HighPriority);
     audio_PU->start(QThread::InheritPriority);
 
     qInfo()<<"[M] Application path:"<<qApp->applicationDirPath();
-    // Code can hang here is antivirus software locks access to storage or storage has problems.
+    // Code can hang here if antivirus software locks access to storage or storage has problems.
     qInfo()<<"[M] Waiting for translations to load...";
     // Regenerate language submenu.
     updateGUILangList();
@@ -410,8 +404,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Start UI counters updater.
     timUIUpdate.start();
-    // Start thread running checker.
-    timTRDUpdate.start();
 
     //buffer_tester();
 }
@@ -446,7 +438,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
         qInfo()<<"[M] Shutting down...";
         // Stop GUI update and thread check.
         timUIUpdate.stop();
-        timTRDUpdate.stop();
 
         // Notify all threads about exiting.
         emit aboutToExit();
@@ -643,17 +634,19 @@ void MainWindow::setGUILanguage(QString in_locale, bool suppress)
     readGUISettings();
 }
 
-//------------------------ Set options for [vin_processor] module.
+//------------------------ Set options for [VideoInFFMPEG] module.
 void MainWindow::setVIPOptions()
 {
+    // Stepped playback.
     emit newStepPlay(ui->cbxFrameStep->isChecked());
+    // Set frame drop detection.
     emit newFrameDropDetection(ui->cbxFrameDropout->isChecked());
 }
 
-//------------------------ Set options for [videotodigital] and [Binarizer] modules.
+//------------------------ Set options for [VideoToDigital] and [Binarizer] modules.
 void MainWindow::setLBOptions()
 {
-    // Set PCM type for V2D.
+    // Set PCM type.
     if(set_pcm_type!=ui->lbxPCMType->currentIndex())
     {
         if(ui->lbxPCMType->currentIndex()==LIST_TYPE_PCM1)
@@ -670,11 +663,11 @@ void MainWindow::setLBOptions()
         }
         else
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error in [MainWindow::setLBOptions()], PCM type list count mismatch!";
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error, PCM type list count mismatch!";
         }
         set_pcm_type = ui->lbxPCMType->currentIndex();
     }
-    // Set binarization mode for V2D.
+    // Set binarization mode.
     if(ui->lbxBinQuality->currentIndex()==LIST_BQ_FAST)
     {
         emit newBinMode(Binarizer::MODE_FAST);
@@ -693,17 +686,17 @@ void MainWindow::setLBOptions()
     }
     else
     {
-        qWarning()<<DBG_ANCHOR<<"[M] Logic error in [MainWindow::setLBOptions()], binarization mode list count mismatch!";
+        qWarning()<<DBG_ANCHOR<<"[M] Logic error, binarization mode list count mismatch!";
     }
-    // Set line duplication detection for V2D.
+    // Set line duplication detection.
     emit newLineDupMode(ui->cbxLineDuplicate->isChecked());
 }
 
-//------------------------ Set options for [stc007datastitcher] and [stc007deinterleaver] modules.
+//------------------------ Set options for [xDataStitcher] and [xDeinterleaver] modules.
 void MainWindow::setDIOptions()
 {
     // PCM-1 settings.
-    // Preset PCM-1 field order for L2B.
+    // Preset PCM-1 field order.
     if(ui->lbxPCM1FieldOrder->currentIndex()==LIST_PCM1_FO_BFF)
     {
         emit newPCM1FieldOrder(FrameAsmDescriptor::ORDER_BFF);
@@ -713,12 +706,42 @@ void MainWindow::setDIOptions()
         emit newPCM1FieldOrder(FrameAsmDescriptor::ORDER_TFF);
         if(ui->lbxPCM1FieldOrder->currentIndex()!=LIST_PCM1_FO_TFF)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM1FieldOrder] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxPCM1FieldOrder->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM1FieldOrder] out of bounds:"<<ui->lbxPCM1FieldOrder->currentIndex();
         }
     }
+    // Preset line offset.
+    if(ui->cbxPCM1Offset->isChecked()!=false)
+    {
+        ui->sldPCM1OddOfs->setEnabled(false);
+        ui->sldPCM1EvenOfs->setEnabled(false);
+        ui->lblPCM1OddOfs->setEnabled(false);
+        ui->lblPCM1EvenOfs->setEnabled(false);
+        ui->edtPCM1OddOfs->setEnabled(false);
+        ui->edtPCM1EvenOfs->setEnabled(false);
+    }
+    else
+    {
+        ui->sldPCM1OddOfs->setEnabled(true);
+        if(ui->btnPCM1OfsSync->isChecked()!=false)
+        {
+            ui->sldPCM1EvenOfs->setEnabled(false);
+            ui->sldPCM1EvenOfs->setValue(ui->sldPCM1OddOfs->value()-1);
+        }
+        else
+        {
+            ui->sldPCM1EvenOfs->setEnabled(true);
+        }
+        ui->lblPCM1OddOfs->setEnabled(true);
+        ui->lblPCM1EvenOfs->setEnabled(true);
+        ui->edtPCM1OddOfs->setEnabled(true);
+        ui->edtPCM1EvenOfs->setEnabled(true);
+    }
+    emit newPCM1AutoOffset(ui->cbxPCM1Offset->isChecked());
+    emit newPCM1OddOffset((int8_t)ui->sldPCM1OddOfs->value());
+    emit newPCM1EvenOffset((int8_t)ui->sldPCM1EvenOfs->value());
 
     // PCM-16x0 settings.
-    // Preset PCM-16x0 mode/format for L2B.
+    // Preset PCM-16x0 mode/format.
     if(ui->lbxPCM16x0Format->currentIndex()==LIST_PCM16X0_FMT_EI)
     {
         emit newPCM16x0Format(PCM16X0Deinterleaver::FORMAT_EI);
@@ -735,10 +758,10 @@ void MainWindow::setDIOptions()
         /*emit new16x0Format(PCM16X0Deinterleaver::FORMAT_AUTO);
         if(ui->lbxPCM16x0Format->currentIndex()!=LIST_16X0_AUTO)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM16x0Format] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxPCM16x0Format->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM16x0Format] out of bounds:"<<ui->lbxPCM16x0Format->currentIndex();
         }*/
     }
-    // Preset PCM-16x0 field order for L2B.
+    // Preset PCM-16x0 field order.
     if(ui->lbxPCM16x0FieldOrder->currentIndex()==LIST_PCM16X0_FO_BFF)
     {
         emit newPCM16x0FieldOrder(FrameAsmDescriptor::ORDER_BFF);
@@ -748,10 +771,10 @@ void MainWindow::setDIOptions()
         emit newPCM16x0FieldOrder(FrameAsmDescriptor::ORDER_TFF);
         if(ui->lbxPCM16x0FieldOrder->currentIndex()!=LIST_PCM16X0_FO_TFF)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM16x0FieldOrder] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxPCM16x0FieldOrder->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM16x0FieldOrder] out of bounds:"<<ui->lbxPCM16x0FieldOrder->currentIndex();
         }
     }
-    // Preset PCM-16x0 P correction settings for L2B.
+    // Preset PCM-16x0 error correction settings.
     if(ui->lbxPCM16x0ECC->currentIndex()==LIST_PCM16X0_ECC_NONE)
     {
         emit newPCM16x0PCorrection(false);
@@ -761,10 +784,10 @@ void MainWindow::setDIOptions()
         emit newPCM16x0PCorrection(true);
         if(ui->lbxPCM16x0ECC->currentIndex()!=LIST_PCM16X0_ECC_PARITY)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM16x0ECC] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxPCM16x0ECC->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM16x0ECC] out of bounds:"<<ui->lbxPCM16x0ECC->currentIndex();
         }
     }
-    // Preset PCM-16x0 audio sample rate for L2B.
+    // Preset PCM-16x0 audio sample rate.
     if(ui->lbxPCM16x0SampleRate->currentIndex()==LIST_PCM16X0_SRATE_44100)
     {
         emit newPCM16x0SampleRatePreset(PCMSamplePair::SAMPLE_RATE_44100);
@@ -778,12 +801,12 @@ void MainWindow::setDIOptions()
         emit newPCM16x0SampleRatePreset(PCMSamplePair::SAMPLE_RATE_AUTO);
         if(ui->lbxPCM16x0SampleRate->currentIndex()!=LIST_PCM16X0_SRATE_AUTO)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM16x0SampleRate] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxPCM16x0SampleRate->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxPCM16x0SampleRate] out of bounds:"<<ui->lbxPCM16x0SampleRate->currentIndex();
         }
     }
 
     // STC-007 settings.
-    // Preset STC-007 video standard for L2B.
+    // Preset STC-007 video standard.
     if(ui->lbxSTC007VidStandard->currentIndex()==LIST_STC007_VID_NTSC)
     {
         emit newSTC007VidStandard(FrameAsmDescriptor::VID_NTSC);
@@ -797,10 +820,10 @@ void MainWindow::setDIOptions()
         emit newSTC007VidStandard(FrameAsmDescriptor::VID_UNKNOWN);
         if(ui->lbxSTC007VidStandard->currentIndex()!=LIST_STC007_VID_AUTO)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007VidStandard] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxSTC007VidStandard->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007VidStandard] out of bounds:"<<ui->lbxSTC007VidStandard->currentIndex();
         }
     }
-    // Preset STC-007 field order for L2B.
+    // Preset STC-007 field order.
     if(ui->lbxSTC007FieldOrder->currentIndex()==LIST_STC007_FO_TFF)
     {
         emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_TFF);
@@ -814,10 +837,10 @@ void MainWindow::setDIOptions()
         emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_UNK);
         if(ui->lbxSTC007FieldOrder->currentIndex()!=LIST_STC007_FO_AUTO)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007FieldOrder] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxSTC007FieldOrder->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007FieldOrder] out of bounds:"<<ui->lbxSTC007FieldOrder->currentIndex();
         }
     }
-    // Set STC-007 P and Q correction settings for L2B.
+    // Set STC-007 error correction settings.
     if(ui->lbxSTC007ECC->currentIndex()==LIST_STC007_ECC_NONE)
     {
         emit newSTC007PCorrection(false);
@@ -834,10 +857,10 @@ void MainWindow::setDIOptions()
         emit newSTC007QCorrection(true);
         if(ui->lbxSTC007ECC->currentIndex()!=LIST_STC007_ECC_FULL)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007ECC] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxSTC007ECC->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007ECC] out of bounds:"<<ui->lbxSTC007ECC->currentIndex();
         }
     }
-    // Set STC-007 CWD correction settings for L2B.
+    // Set STC-007 CWD correction settings.
     if(ui->lbxSTC007CWD->currentIndex()==LIST_STC007_CWD_DIS)
     {
         emit newSTC007CWDCorrection(false);
@@ -847,10 +870,10 @@ void MainWindow::setDIOptions()
         emit newSTC007CWDCorrection(true);
         if(ui->lbxSTC007CWD->currentIndex()!=LIST_STC007_CWD_EN)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007CWD] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxSTC007CWD->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007CWD] out of bounds:"<<ui->lbxSTC007CWD->currentIndex();
         }
     }
-    // Preset STC-007 audio resolution for L2B.
+    // Preset STC-007 audio resolution.
     if(ui->lbxSTC007Resolution->currentIndex()==LIST_STC007_RES_14BIT)
     {
         emit newSTC007ResolutionPreset(STC007DataStitcher::SAMPLE_RES_14BIT);
@@ -864,10 +887,10 @@ void MainWindow::setDIOptions()
         emit newSTC007ResolutionPreset(STC007DataStitcher::SAMPLE_RES_UNKNOWN);
         if(ui->lbxSTC007Resolution->currentIndex()!=LIST_STC007_RES_AUTO)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007Resolution] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxSTC007Resolution->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007Resolution] out of bounds:"<<ui->lbxSTC007Resolution->currentIndex();
         }
     }
-    // Preset STC-007 audio sample rate for L2B.
+    // Preset STC-007 audio sample rate.
     if(ui->lbxSTC007SampleRate->currentIndex()==LIST_STC007_SRATE_44056)
     {
         emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_44056);
@@ -881,12 +904,12 @@ void MainWindow::setDIOptions()
         emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_AUTO);
         if(ui->lbxSTC007SampleRate->currentIndex()!=LIST_STC007_SRATE_AUTO)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007SampleRate] out of bounds in [MainWindow::setDIOptions()]:"<<ui->lbxSTC007SampleRate->currentIndex();
+            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007SampleRate] out of bounds:"<<ui->lbxSTC007SampleRate->currentIndex();
         }
     }
 }
 
-//------------------------ Set options for [audioprocessor] and [stc007towav] modules.
+//------------------------ Set options for [AudioProcessor], [SamplesToAudio] and [SamplesToWAV] modules.
 void MainWindow::setAPOptions()
 {
     int index;
@@ -922,11 +945,11 @@ void MainWindow::setAPOptions()
     }
     else
     {
-        qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxDropAction] out of bounds in [MainWindow::setAPOptions()]:"<<ui->lbxDropAction->currentIndex();
+        qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxDropAction] out of bounds:"<<ui->lbxDropAction->currentIndex();
     }
-    // Set live playback settings for AP.
+    // Set live playback settings.
     emit newEnableLivePB(ui->cbxLivePB->isChecked());
-    // Set save to file settings for AP.
+    // Set save to file settings.
     emit newEnableWaveSave(ui->cbxWaveSave->isChecked());
 }
 
@@ -938,7 +961,7 @@ void MainWindow::setMainLogMode()
     if(ui->actGenProcess->isChecked()!=false) log_level |= LOG_PROCESS;
 }
 
-//------------------------ Set debug logging mode for [vin_processor] module.
+//------------------------ Set debug logging mode for [VideoInFFMPEG] module.
 void MainWindow::setVIPLogMode()
 {
     uint8_t ext_log_vip = 0;
@@ -949,7 +972,7 @@ void MainWindow::setVIPLogMode()
     emit newVIPLogLevel(ext_log_vip);
 }
 
-//------------------------ Set debug logging mode for [videotodigital] and [Binarizer] modules.
+//------------------------ Set debug logging mode for [VideoToDigital] and [Binarizer] modules.
 void MainWindow::setLBLogMode()
 {
     uint8_t ext_log_lb = 0;
@@ -963,7 +986,7 @@ void MainWindow::setLBLogMode()
     emit newV2DLogLevel(ext_log_lb);
 }
 
-//------------------------ Set debug logging mode for [stc007datastitcher] and [stc007deinterleaver] modules.
+//------------------------ Set debug logging mode for [xDataStitcher] and [xDeinterleaver] modules.
 void MainWindow::setDILogMode()
 {
     uint16_t ext_log_di = 0;
@@ -980,7 +1003,7 @@ void MainWindow::setDILogMode()
     emit newL2BLogLevel(ext_log_di);
 }
 
-//------------------------ Set debug logging mode for [audioprocessor] and [stc007towav] modules.
+//------------------------ Set debug logging mode for [AudioProcessor], [SamplesToAudio] and [SamplesToWAV] modules.
 void MainWindow::setAPLogMode()
 {
     uint8_t ext_log_ap = 0;
@@ -994,21 +1017,22 @@ void MainWindow::setAPLogMode()
 }
 
 
-//------------------------ Disable comboboxes events to prevent switching settings to default while changing GUI translation.
+//------------------------ Disable GUI events to prevent switching settings to default while changing GUI translation.
 void MainWindow::disableGUIEvents()
 {
     inhibit_setting_save = true;
 }
 
-//------------------------ Re-enable comboboxes events after changing translation.
+//------------------------ Re-enable GUI events after changing translation.
 void MainWindow::enableGUIEvents()
 {
     inhibit_setting_save = false;
 }
 
-//------------------------ Apply GUI settings to the decoder.
+//------------------------ Apply GUI settings to different modules.
 void MainWindow::applyGUISettings()
 {
+    // First, switch some things in GUI.
     // Toggle live playback indicator.
     if(ui->cbxLivePB->isChecked()==false)
     {
@@ -1018,7 +1042,6 @@ void MainWindow::applyGUISettings()
     {
         ui->lblLivePB->setEnabled(true);
     }
-
     // Toggle frame drop indicator.
     if(ui->cbxFrameDropout->isChecked()==false)
     {
@@ -1030,7 +1053,6 @@ void MainWindow::applyGUISettings()
         ui->lblFrameDrop->setEnabled(true);
         ui->lcdFrameDrop->setEnabled(true);
     }
-
     // Toggle duplicated line indicator.
     if(ui->cbxLineDuplicate->isChecked()==false)
     {
@@ -1042,14 +1064,12 @@ void MainWindow::applyGUISettings()
         ui->lblDupErr->setEnabled(true);
         ui->lcdDupErr->setEnabled(true);
     }
-
     // Choose what to display according to selected PCM type.
     if(ui->lbxPCMType->currentIndex()==LIST_TYPE_PCM1)
     {
         // Select pages for the format.
         ui->stcDecoderSettings->setCurrentIndex(LIST_TYPE_PCM1);
         ui->stcFrameAsm->setCurrentIndex(LIST_TYPE_PCM1);
-
         // Enable controls on showed pages, disable on others.
         ui->pgPCM1Settings->setEnabled(true);
         ui->pgPCM1Frame->setEnabled(true);
@@ -1057,7 +1077,6 @@ void MainWindow::applyGUISettings()
         ui->pgPCM16x0Frame->setEnabled(false);
         ui->pgSTC007Settings->setEnabled(false);
         ui->pgSTC007Frame->setEnabled(false);
-
         // Show/hide stats indicators.
         ui->lblBadStitch->setEnabled(false);
         ui->lcdBadStitch->setEnabled(false);
@@ -1065,6 +1084,8 @@ void MainWindow::applyGUISettings()
         ui->lcdPCorr->setEnabled(false);
         ui->lblQCorr->setEnabled(false);
         ui->lcdQCorr->setEnabled(false);
+        ui->lblCWDCorr->setEnabled(false);
+        ui->lcdCWDCorr->setEnabled(false);
         ui->lblBroken->setEnabled(false);
         ui->lcdBroken->setEnabled(false);
     }
@@ -1073,7 +1094,6 @@ void MainWindow::applyGUISettings()
         // Select pages for the format.
         ui->stcDecoderSettings->setCurrentIndex(LIST_TYPE_PCM16X0);
         ui->stcFrameAsm->setCurrentIndex(LIST_TYPE_PCM16X0);
-
         // Enable controls on showed pages, disable on others.
         ui->pgPCM1Settings->setEnabled(false);
         ui->pgPCM1Frame->setEnabled(false);
@@ -1081,16 +1101,17 @@ void MainWindow::applyGUISettings()
         ui->pgPCM16x0Frame->setEnabled(true);
         ui->pgSTC007Settings->setEnabled(false);
         ui->pgSTC007Frame->setEnabled(false);
-
         // Show/hide stats indicators.
         ui->lblBadStitch->setEnabled(false);
         ui->lcdBadStitch->setEnabled(false);
-        if(ui->lbxSTC007ECC->currentIndex()==LIST_STC007_ECC_NONE)
+        if(ui->lbxPCM16x0ECC->currentIndex()==LIST_PCM16X0_ECC_NONE)
         {
             ui->lblPCorr->setEnabled(false);
             ui->lcdPCorr->setEnabled(false);
             ui->lblQCorr->setEnabled(false);
             ui->lcdQCorr->setEnabled(false);
+            ui->lblCWDCorr->setEnabled(false);
+            ui->lcdCWDCorr->setEnabled(false);
         }
         else
         {
@@ -1098,6 +1119,8 @@ void MainWindow::applyGUISettings()
             ui->lcdPCorr->setEnabled(true);
             ui->lblQCorr->setEnabled(false);
             ui->lcdQCorr->setEnabled(false);
+            ui->lblCWDCorr->setEnabled(false);
+            ui->lcdCWDCorr->setEnabled(false);
         }
         ui->lblBroken->setEnabled(true);
         ui->lcdBroken->setEnabled(true);
@@ -1107,7 +1130,6 @@ void MainWindow::applyGUISettings()
         // Select pages for the format.
         ui->stcDecoderSettings->setCurrentIndex(LIST_TYPE_STC007);
         ui->stcFrameAsm->setCurrentIndex(LIST_TYPE_STC007);
-
         // Enable controls on showed pages, disable on others.
         ui->pgPCM1Settings->setEnabled(false);
         ui->pgPCM1Frame->setEnabled(false);
@@ -1115,7 +1137,6 @@ void MainWindow::applyGUISettings()
         ui->pgPCM16x0Frame->setEnabled(false);
         ui->pgSTC007Settings->setEnabled(true);
         ui->pgSTC007Frame->setEnabled(true);
-
         // Show/hide stats indicators.
         ui->lblBadStitch->setEnabled(true);
         ui->lcdBadStitch->setEnabled(true);
@@ -1140,33 +1161,41 @@ void MainWindow::applyGUISettings()
             ui->lblQCorr->setEnabled(false);
             ui->lcdQCorr->setEnabled(false);
         }
+        if(ui->lbxSTC007CWD->currentIndex()==LIST_STC007_CWD_DIS)
+        {
+            ui->lblCWDCorr->setEnabled(false);
+            ui->lcdCWDCorr->setEnabled(false);
+        }
+        else if(ui->lbxSTC007ECC->currentIndex()!=LIST_STC007_ECC_NONE)
+        {
+            ui->lblCWDCorr->setEnabled(true);
+            ui->lcdCWDCorr->setEnabled(true);
+        }
+        else
+        {
+            ui->lblCWDCorr->setEnabled(false);
+            ui->lcdCWDCorr->setEnabled(false);
+        }
         ui->lblBroken->setEnabled(true);
         ui->lcdBroken->setEnabled(true);
     }
-
-    ui->lbxDropAction->setEnabled(true);
+    // Choose what counter display for sample errors.
     if((ui->lbxDropAction->currentIndex()==LIST_DOA_MUTE_WORD)||(ui->lbxDropAction->currentIndex()==LIST_DOA_MUTE_BLOCK))
     {
         ui->lblMask->setEnabled(false);
         ui->lcdMask->setEnabled(false);
-        ui->lblMute->setEnabled(true);
-        ui->lcdMute->setEnabled(true);
     }
     else if(ui->lbxDropAction->currentIndex()==LIST_DOA_SKIP)
     {
         ui->lblMask->setEnabled(false);
         ui->lcdMask->setEnabled(false);
-        ui->lblMute->setEnabled(false);
-        ui->lcdMute->setEnabled(false);
     }
     else
     {
         ui->lblMask->setEnabled(true);
         ui->lcdMask->setEnabled(true);
-        ui->lblMute->setEnabled(true);
-        ui->lcdMute->setEnabled(true);
     }
-
+    // Finally, perform per-module settings applying.
     setVIPOptions();
     setLBOptions();
     setDIOptions();
@@ -1208,6 +1237,9 @@ void MainWindow::readGUISettings()
     ui->lbxBinQuality->setCurrentIndex(settings_hdl.value("bin_quality", LIST_BQ_FAST).toInt());
     ui->lbxPCMType->setCurrentIndex(settings_hdl.value("pcm_type", LIST_TYPE_STC007).toInt());
     ui->lbxPCM1FieldOrder->setCurrentIndex(settings_hdl.value("pcm1_field_order", LIST_PCM1_FO_TFF).toInt());
+    ui->cbxPCM1Offset->setChecked(settings_hdl.value("pcm1_auto_offset", true).toBool());
+    ui->sldPCM1OddOfs->setValue(settings_hdl.value("pcm1_odd_offset", 0).toInt());
+    ui->sldPCM1EvenOfs->setValue(settings_hdl.value("pcm1_even_offset", -1).toInt());
     ui->lbxPCM16x0Format->setCurrentIndex(settings_hdl.value("pcm16x0_fmt", LIST_PCM16X0_FMT_SI).toInt());
     ui->lbxPCM16x0FieldOrder->setCurrentIndex(settings_hdl.value("pcm16x0_field_order", LIST_PCM16X0_FO_TFF).toInt());
     ui->lbxPCM16x0ECC->setCurrentIndex(settings_hdl.value("pcm16x0_ecc", LIST_PCM16X0_ECC_PARITY).toInt());
@@ -1280,7 +1312,7 @@ void MainWindow::readGUISettings()
     setDILogMode();
     setAPLogMode();
 
-    // Apply settings.
+    // Apply settings to all modules.
     applyGUISettings();
 
     enableGUIEvents();
@@ -1301,7 +1333,25 @@ CoordinatePair MainWindow::getCoordByFrameNo(uint32_t frame_num)
     return coord_res;
 }
 
-//------------------------ Save new window position and size in setting storage.
+//------------------------ Exit application.
+void MainWindow::exitAction()
+{
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[M] Exiting...";
+    }
+    emit doPlayStop();
+    emit doPlayUnload();
+    this->close();
+}
+
+//------------------------ User request to set GUI language.
+void MainWindow::setLang(QAction *in_act)
+{
+    setGUILanguage(in_act->data().toString());
+}
+
+//------------------------ Save new main window position and size in setting storage.
 void MainWindow::updateWindowPosition()
 {
     qInfo()<<"[M] Position saved"<<this->geometry()<<this->pos();
@@ -1312,43 +1362,16 @@ void MainWindow::updateWindowPosition()
     settings_hdl.endGroup();
 }
 
-//------------------------ Display window with an error.
+//------------------------ Display window with an error, stop playback.
 void MainWindow::displayErrorMessage(QString in_string)
 {
+    // Stop playback if any.
+    emit doPlayStop();
+    // Display error message.
     QMessageBox::critical(this, tr("Ошибка"), in_string);
 }
 
-//------------------------ Set GUI language.
-void MainWindow::setLang(QAction *in_act)
-{
-    setGUILanguage(in_act->data().toString());
-}
-
-//------------------------ Start video playback/decode.
-void MainWindow::playVideo()
-{
-    ui->btnPlay->setEnabled(false);
-    ui->btnPause->setEnabled(false);
-    ui->cbxWaveSave->setEnabled(false);
-    if(v_decoder_state==VDEC_STOP)
-    {
-        qDebug()<<"[M] Play request";
-        emit doPlayStart();
-    }
-    else
-    {
-        qDebug()<<"[M] Stop request";
-        emit doPlayStop();
-    }
-}
-
-//------------------------ Pause video playback/decode.
-void MainWindow::pauseVideo()
-{
-    ui->btnPause->setEnabled(false);
-    emit doPlayPause();
-}
-
+//------------------------ User request to open a new source.
 void MainWindow::loadVideo()
 {
     if((log_level&LOG_PROCESS)!=0)
@@ -1395,34 +1418,43 @@ void MainWindow::loadVideo()
     }
 }
 
+//------------------------ User request to close the source and free resources.
 void MainWindow::unloadSource()
 {
     emit doPlayUnload();
 }
 
-void MainWindow::loadPicture()
+//------------------------ User request to start/stop video playback/decode.
+void MainWindow::usrPlayStop()
 {
-    if((log_level&LOG_PROCESS)!=0)
+    ui->btnPlay->setEnabled(false);
+    ui->btnPause->setEnabled(false);
+    ui->cbxWaveSave->setEnabled(false);
+    if(v_decoder_state==VDEC_STOP)
     {
-        qInfo()<<"[M] Creating 'Open picture' dialog...";
+        qDebug()<<"[M] Play request";
+        emit doPlayStart();
+    }
+    else
+    {
+        qDebug()<<"[M] Stop request";
+        emit doPlayStop();
     }
 }
 
-void MainWindow::exitAction()
+//------------------------ User request to pause video playback/decode.
+void MainWindow::usrPause()
 {
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        qInfo()<<"[M] Exiting...";
-    }
-    emit doPlayStop();
-    emit doPlayUnload();
-    this->close();
+    ui->btnPause->setEnabled(false);
+    emit doPlayPause();
 }
 
 //------------------------ Save settings for GUI options.
 void MainWindow::updateGUISettings()
 {
+    // Check if settings updating is disabled due to GUI switching.
     if(inhibit_setting_save!=false) return;
+    // Open settings storage.
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
     settings_hdl.beginGroup("decoder");
     // Check if PCM type was changed (not saved in settings yet)
@@ -1437,7 +1469,7 @@ void MainWindow::updateGUISettings()
         frame_asm_stc007.clear();
     }
     settings_hdl.endGroup();
-
+    // Save GUI settings.
     settings_hdl.beginGroup("player");
     settings_hdl.setValue("live_pb", ui->cbxLivePB->isChecked());
     settings_hdl.setValue("wave_save", ui->cbxWaveSave->isChecked());
@@ -1445,11 +1477,13 @@ void MainWindow::updateGUISettings()
     settings_hdl.setValue("drop_detect", ui->cbxFrameDropout->isChecked());
     settings_hdl.setValue("framestep", ui->cbxFrameStep->isChecked());
     settings_hdl.endGroup();
-
     settings_hdl.beginGroup("decoder");
     settings_hdl.setValue("bin_quality", ui->lbxBinQuality->currentIndex());
     settings_hdl.setValue("pcm_type", ui->lbxPCMType->currentIndex());
     settings_hdl.setValue("pcm1_field_order", ui->lbxPCM1FieldOrder->currentIndex());
+    settings_hdl.setValue("pcm1_auto_offset", ui->cbxPCM1Offset->isChecked());
+    settings_hdl.setValue("pcm1_odd_offset", ui->sldPCM1OddOfs->value());
+    settings_hdl.setValue("pcm1_even_offset", ui->sldPCM1EvenOfs->value());
     settings_hdl.setValue("pcm16x0_fmt", ui->lbxPCM16x0Format->currentIndex());
     settings_hdl.setValue("pcm16x0_field_order", ui->lbxPCM16x0FieldOrder->currentIndex());
     settings_hdl.setValue("pcm16x0_ecc", ui->lbxPCM16x0ECC->currentIndex());
@@ -1463,8 +1497,7 @@ void MainWindow::updateGUISettings()
     settings_hdl.setValue("drop_action", ui->lbxDropAction->currentIndex());
     settings_hdl.endGroup();
 
-    settings_hdl.sync();
-
+    // Apply all settings from the GUI to all modules.
     applyGUISettings();
 }
 
@@ -1498,7 +1531,6 @@ void MainWindow::clearStat()
     stat_broken_block_cnt = 0;
     stat_drop_block_cnt = 0;
     stat_drop_sample_cnt = 0;
-    stat_mute_cnt = 0;
     stat_mask_cnt = 0;
     stat_processed_frame_cnt = 0;
     stat_line_cnt = 0;
@@ -1511,10 +1543,17 @@ void MainWindow::clearStat()
     ui->lcdBadStitch->display(0);
     ui->lcdPCorr->display(0);
     ui->lcdQCorr->display(0);
+    ui->lcdCWDCorr->display(0);
     ui->lcdDropout->display(0);
-    ui->lcdMute->display(0);
     ui->lcdMask->display(0);
     ui->lcdProcessedFrames->display(0);
+}
+
+//------------------------
+void MainWindow::sliderDisplayUpdate()
+{
+    ui->edtPCM1OddOfs->setText(QString::number(ui->sldPCM1OddOfs->sliderPosition()));
+    ui->edtPCM1EvenOfs->setText(QString::number(ui->sldPCM1EvenOfs->sliderPosition()));
 }
 
 //------------------------ Confirm and reset decoder settings.
@@ -1534,12 +1573,12 @@ void MainWindow::resetOptDecoder()
         settings_hdl.beginGroup("decoder");
         settings_hdl.remove("");
         settings_hdl.endGroup();
-        // Reload settings into GUI.
+        // Reload default settings into GUI.
         readGUISettings();
     }
 }
 
-//------------------------ Confirm and reset visualizer windows.
+//------------------------ Confirm and reset visualizer windows positions.
 void MainWindow::resetVisPositions()
 {
     QMessageBox usrConfirm(this);
@@ -1585,7 +1624,7 @@ void MainWindow::resetFull()
         QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
         // Remove ALL settings.
         settings_hdl.clear();
-        // Reload settings into GUI.
+        // Reload default settings into GUI.
         readGUISettings();
         // Reset all fine settings.
         emit newFineReset();
@@ -1595,94 +1634,95 @@ void MainWindow::resetFull()
 //------------------------ Display "About" window.
 void MainWindow::showAbout()
 {
-    about_wnd about_dlg;
+    about_wnd about_dlg(this);
     about_dlg.exec();
 }
 
 //------------------------ Display video capture selection dialog.
 void MainWindow::showCaptureSelector()
 {
-    captureSelectDialog = new capt_sel(this);
-
-    captureSelectDialog->exec();
-    captureSelectDialog->deleteLater();
+    //captureSelectDialog = new capt_sel(this);
+    capt_sel captureSelectDialog(this);
+    captureSelectDialog.exec();
+    //captureSelectDialog->deleteLater();
 }
 
 //------------------------ Display video processor fine settings dialog.
 void MainWindow::showVidInFineSettings()
 {
-    vipFineSetDialog = new (std::nothrow) fine_vidin_set(this);
+    //vipFineSetDialog = new (std::nothrow) fine_vidin_set(this);
+    fine_vidin_set vipFineSetDialog(this);
     //connect(VIN_worker, SIGNAL(guiUpdFineLineSkip(bool)), vipFineSetDialog, SLOT(newSkipLines(bool)));
-    connect(VIN_worker, SIGNAL(guiUpdFineSettings(vid_preset_t)), vipFineSetDialog, SLOT(newSettings(vid_preset_t)));
-    connect(this, SIGNAL(guiUpdFineDrawDeint(bool)), vipFineSetDialog, SLOT(newDrawDeint(bool)));
-    connect(vipFineSetDialog, SIGNAL(setFineDefaults()), VIN_worker, SLOT(setDefaultFineSettings()));
-    connect(vipFineSetDialog, SIGNAL(requestFineCurrent()), VIN_worker, SLOT(requestCurrentFineSettings()));
-    connect(vipFineSetDialog, SIGNAL(setFineCurrent(vid_preset_t)), VIN_worker, SLOT(setFineSettings(vid_preset_t)));
-    connect(vipFineSetDialog, SIGNAL(setFineDefaults()), this, SLOT(setDefaultFineSettings()));
-    connect(vipFineSetDialog, SIGNAL(requestFineCurrent()), this, SLOT(requestCurrentFineSettings()));
-    connect(vipFineSetDialog, SIGNAL(setDrawDeint(bool)), this, SLOT(setFineDrawDeint(bool)));
-    vipFineSetDialog->exec();
-    vipFineSetDialog->deleteLater();
+    connect(VIN_worker, SIGNAL(guiUpdFineSettings(vid_preset_t)), &vipFineSetDialog, SLOT(newSettings(vid_preset_t)));
+    connect(this, SIGNAL(guiUpdFineDrawDeint(bool)), &vipFineSetDialog, SLOT(newDrawDeint(bool)));
+    connect(&vipFineSetDialog, SIGNAL(setFineDefaults()), VIN_worker, SLOT(setDefaultFineSettings()));
+    connect(&vipFineSetDialog, SIGNAL(requestFineCurrent()), VIN_worker, SLOT(requestCurrentFineSettings()));
+    connect(&vipFineSetDialog, SIGNAL(setFineCurrent(vid_preset_t)), VIN_worker, SLOT(setFineSettings(vid_preset_t)));
+    connect(&vipFineSetDialog, SIGNAL(setFineDefaults()), this, SLOT(setDefaultFineSettings()));
+    connect(&vipFineSetDialog, SIGNAL(requestFineCurrent()), this, SLOT(requestCurrentFineSettings()));
+    connect(&vipFineSetDialog, SIGNAL(setDrawDeint(bool)), this, SLOT(setFineDrawDeint(bool)));
+    vipFineSetDialog.exec();
+    //vipFineSetDialog->deleteLater();
 }
 
 //------------------------ Display binarizator fine settings dialog.
 void MainWindow::showBinFineSettings()
 {
-    binFineSetDialog = new fine_bin_set(this);
-    connect(V2D_worker, SIGNAL(guiUpdFineSettings(bin_preset_t)), binFineSetDialog, SLOT(newSettings(bin_preset_t)));
-    connect(binFineSetDialog, SIGNAL(setFineDefaults()), V2D_worker, SLOT(setDefaultFineSettings()));
-    connect(binFineSetDialog, SIGNAL(requestFineCurrent()), V2D_worker, SLOT(requestCurrentFineSettings()));
-    connect(binFineSetDialog, SIGNAL(setFineCurrent(bin_preset_t)), V2D_worker, SLOT(setFineSettings(bin_preset_t)));
-    binFineSetDialog->exec();
-    binFineSetDialog->deleteLater();
+    //binFineSetDialog = new fine_bin_set(this);
+    fine_bin_set binFineSetDialog(this);
+    connect(V2D_worker, SIGNAL(guiUpdFineSettings(bin_preset_t)), &binFineSetDialog, SLOT(newSettings(bin_preset_t)));
+    connect(&binFineSetDialog, SIGNAL(setFineDefaults()), V2D_worker, SLOT(setDefaultFineSettings()));
+    connect(&binFineSetDialog, SIGNAL(requestFineCurrent()), V2D_worker, SLOT(requestCurrentFineSettings()));
+    connect(&binFineSetDialog, SIGNAL(setFineCurrent(bin_preset_t)), V2D_worker, SLOT(setFineSettings(bin_preset_t)));
+    binFineSetDialog.exec();
+    //binFineSetDialog->deleteLater();
 }
 
 //------------------------ Display deinterleaver fine settings dialog.
 void MainWindow::showDeintFineSettings()
 {
-    deintFineSetDialog = new fine_deint_set(this);
-
+    //deintFineSetDialog = new fine_deint_set(this);
+    fine_deint_set deintFineSetDialog(this);
     if(set_pcm_type==LIST_TYPE_PCM1)
     {
-        connect(L2B_PCM1_worker, SIGNAL(guiUpdFineUseECC(bool)), deintFineSetDialog, SLOT(newUseECC(bool)));
+        connect(L2B_PCM1_worker, SIGNAL(guiUpdFineUseECC(bool)), &deintFineSetDialog, SLOT(newUseECC(bool)));
 
-        connect(deintFineSetDialog, SIGNAL(setFineDefaults()), L2B_PCM1_worker, SLOT(setDefaultFineSettings()));
-        connect(deintFineSetDialog, SIGNAL(requestFineCurrent()), L2B_PCM1_worker, SLOT(requestCurrentFineSettings()));
-        connect(deintFineSetDialog, SIGNAL(setUseECC(bool)), L2B_PCM1_worker, SLOT(setFineUseECC(bool)));
+        connect(&deintFineSetDialog, SIGNAL(setFineDefaults()), L2B_PCM1_worker, SLOT(setDefaultFineSettings()));
+        connect(&deintFineSetDialog, SIGNAL(requestFineCurrent()), L2B_PCM1_worker, SLOT(requestCurrentFineSettings()));
+        connect(&deintFineSetDialog, SIGNAL(setUseECC(bool)), L2B_PCM1_worker, SLOT(setFineUseECC(bool)));
     }
     else if(set_pcm_type==LIST_TYPE_PCM16X0)
     {
-        connect(L2B_PCM16X0_worker, SIGNAL(guiUpdFineUseECC(bool)), deintFineSetDialog, SLOT(newUseECC(bool)));
-        connect(L2B_PCM16X0_worker, SIGNAL(guiUpdFineMaskSeams(bool)), deintFineSetDialog, SLOT(newMaskSeams(bool)));
-        connect(L2B_PCM16X0_worker, SIGNAL(guiUpdFineBrokeMask(uint8_t)), deintFineSetDialog, SLOT(newBrokeMask(uint8_t)));
+        connect(L2B_PCM16X0_worker, SIGNAL(guiUpdFineUseECC(bool)), &deintFineSetDialog, SLOT(newUseECC(bool)));
+        connect(L2B_PCM16X0_worker, SIGNAL(guiUpdFineMaskSeams(bool)), &deintFineSetDialog, SLOT(newMaskSeams(bool)));
+        connect(L2B_PCM16X0_worker, SIGNAL(guiUpdFineBrokeMask(uint8_t)), &deintFineSetDialog, SLOT(newBrokeMask(uint8_t)));
 
-        connect(deintFineSetDialog, SIGNAL(setFineDefaults()), L2B_PCM16X0_worker, SLOT(setDefaultFineSettings()));
-        connect(deintFineSetDialog, SIGNAL(requestFineCurrent()), L2B_PCM16X0_worker, SLOT(requestCurrentFineSettings()));
-        connect(deintFineSetDialog, SIGNAL(setUseECC(bool)), L2B_PCM16X0_worker, SLOT(setFineUseECC(bool)));
-        connect(deintFineSetDialog, SIGNAL(setMaskSeams(bool)), L2B_PCM16X0_worker, SLOT(setFineMaskSeams(bool)));
-        connect(deintFineSetDialog, SIGNAL(setBrokeMask(uint8_t)), L2B_PCM16X0_worker, SLOT(setFineBrokeMask(uint8_t)));
+        connect(&deintFineSetDialog, SIGNAL(setFineDefaults()), L2B_PCM16X0_worker, SLOT(setDefaultFineSettings()));
+        connect(&deintFineSetDialog, SIGNAL(requestFineCurrent()), L2B_PCM16X0_worker, SLOT(requestCurrentFineSettings()));
+        connect(&deintFineSetDialog, SIGNAL(setUseECC(bool)), L2B_PCM16X0_worker, SLOT(setFineUseECC(bool)));
+        connect(&deintFineSetDialog, SIGNAL(setMaskSeams(bool)), L2B_PCM16X0_worker, SLOT(setFineMaskSeams(bool)));
+        connect(&deintFineSetDialog, SIGNAL(setBrokeMask(uint8_t)), L2B_PCM16X0_worker, SLOT(setFineBrokeMask(uint8_t)));
     }
     else if(set_pcm_type==LIST_TYPE_STC007)
     {
-        connect(L2B_STC007_worker, SIGNAL(guiUpdFineMaxUnch14(uint8_t)), deintFineSetDialog, SLOT(newMaxUnchecked14(uint8_t)));
-        connect(L2B_STC007_worker, SIGNAL(guiUpdFineMaxUnch16(uint8_t)), deintFineSetDialog, SLOT(newMaxUnchecked16(uint8_t)));
-        connect(L2B_STC007_worker, SIGNAL(guiUpdFineUseECC(bool)), deintFineSetDialog, SLOT(newUseECC(bool)));
-        connect(L2B_STC007_worker, SIGNAL(guiUpdFineTopLineFix(bool)), deintFineSetDialog, SLOT(newInsertLine(bool)));
-        connect(L2B_STC007_worker, SIGNAL(guiUpdFineMaskSeams(bool)), deintFineSetDialog, SLOT(newMaskSeams(bool)));
-        connect(L2B_STC007_worker, SIGNAL(guiUpdFineBrokeMask(uint8_t)), deintFineSetDialog, SLOT(newBrokeMask(uint8_t)));
+        connect(L2B_STC007_worker, SIGNAL(guiUpdFineMaxUnch14(uint8_t)), &deintFineSetDialog, SLOT(newMaxUnchecked14(uint8_t)));
+        connect(L2B_STC007_worker, SIGNAL(guiUpdFineMaxUnch16(uint8_t)), &deintFineSetDialog, SLOT(newMaxUnchecked16(uint8_t)));
+        connect(L2B_STC007_worker, SIGNAL(guiUpdFineUseECC(bool)), &deintFineSetDialog, SLOT(newUseECC(bool)));
+        connect(L2B_STC007_worker, SIGNAL(guiUpdFineTopLineFix(bool)), &deintFineSetDialog, SLOT(newInsertLine(bool)));
+        connect(L2B_STC007_worker, SIGNAL(guiUpdFineMaskSeams(bool)), &deintFineSetDialog, SLOT(newMaskSeams(bool)));
+        connect(L2B_STC007_worker, SIGNAL(guiUpdFineBrokeMask(uint8_t)), &deintFineSetDialog, SLOT(newBrokeMask(uint8_t)));
 
-        connect(deintFineSetDialog, SIGNAL(setFineDefaults()), L2B_STC007_worker, SLOT(setDefaultFineSettings()));
-        connect(deintFineSetDialog, SIGNAL(requestFineCurrent()), L2B_STC007_worker, SLOT(requestCurrentFineSettings()));
-        connect(deintFineSetDialog, SIGNAL(setMaxUnchecked14(uint8_t)), L2B_STC007_worker, SLOT(setFineMaxUnch14(uint8_t)));
-        connect(deintFineSetDialog, SIGNAL(setMaxUnchecked16(uint8_t)), L2B_STC007_worker, SLOT(setFineMaxUnch16(uint8_t)));
-        connect(deintFineSetDialog, SIGNAL(setUseECC(bool)), L2B_STC007_worker, SLOT(setFineUseECC(bool)));
-        connect(deintFineSetDialog, SIGNAL(setInsertLine(bool)), L2B_STC007_worker, SLOT(setFineTopLineFix(bool)));
-        connect(deintFineSetDialog, SIGNAL(setMaskSeams(bool)), L2B_STC007_worker, SLOT(setFineMaskSeams(bool)));
-        connect(deintFineSetDialog, SIGNAL(setBrokeMask(uint8_t)), L2B_STC007_worker, SLOT(setFineBrokeMask(uint8_t)));
+        connect(&deintFineSetDialog, SIGNAL(setFineDefaults()), L2B_STC007_worker, SLOT(setDefaultFineSettings()));
+        connect(&deintFineSetDialog, SIGNAL(requestFineCurrent()), L2B_STC007_worker, SLOT(requestCurrentFineSettings()));
+        connect(&deintFineSetDialog, SIGNAL(setMaxUnchecked14(uint8_t)), L2B_STC007_worker, SLOT(setFineMaxUnch14(uint8_t)));
+        connect(&deintFineSetDialog, SIGNAL(setMaxUnchecked16(uint8_t)), L2B_STC007_worker, SLOT(setFineMaxUnch16(uint8_t)));
+        connect(&deintFineSetDialog, SIGNAL(setUseECC(bool)), L2B_STC007_worker, SLOT(setFineUseECC(bool)));
+        connect(&deintFineSetDialog, SIGNAL(setInsertLine(bool)), L2B_STC007_worker, SLOT(setFineTopLineFix(bool)));
+        connect(&deintFineSetDialog, SIGNAL(setMaskSeams(bool)), L2B_STC007_worker, SLOT(setFineMaskSeams(bool)));
+        connect(&deintFineSetDialog, SIGNAL(setBrokeMask(uint8_t)), L2B_STC007_worker, SLOT(setFineBrokeMask(uint8_t)));
     }
-
-    deintFineSetDialog->exec();
-    deintFineSetDialog->deleteLater();
+    deintFineSetDialog.exec();
+    //deintFineSetDialog->deleteLater();
 }
 
 //------------------------ Receive request for fine settings reset from video processor fine settings dialog.
@@ -1748,9 +1788,10 @@ void MainWindow::showVisSource(bool is_checked)
             connect(VIN_worker, SIGNAL(newLine(VideoLine)), renderSource, SLOT(renderNewLine(VideoLine)));
         }
         connect(VIN_worker, SIGNAL(frameDecoded(uint32_t)), renderSource, SLOT(finishNewFrame(uint32_t)));
-        connect(renderSource, SIGNAL(newFrame(QPixmap,uint32_t)), visuSource, SLOT(drawFrame(QPixmap,uint32_t)));
+        connect(renderSource, SIGNAL(newFrame(QImage,uint32_t)), visuSource, SLOT(drawFrame(QImage,uint32_t)));
+        connect(visuSource, SIGNAL(readyToDraw()), renderSource, SLOT(displayIsReady()));
 
-        vis_thread->start();
+        vis_thread->start(QThread::LowPriority);
     }
     else if(visuSource!=NULL)
     {
@@ -1809,9 +1850,10 @@ void MainWindow::showVisBin(bool is_checked)
             renderBin->setLineCount(FrameAsmDescriptor::VID_UNKNOWN);
             connect(this, SIGNAL(retransmitBinLine(STC007Line)), renderBin, SLOT(renderNewLine(STC007Line)));
         }
-        connect(renderBin, SIGNAL(newFrame(QPixmap,uint32_t)), visuBin, SLOT(drawFrame(QPixmap,uint32_t)));
+        connect(renderBin, SIGNAL(newFrame(QImage,uint32_t)), visuBin, SLOT(drawFrame(QImage,uint32_t)));
+        connect(visuBin, SIGNAL(readyToDraw()), renderBin, SLOT(displayIsReady()));
 
-        vis_thread->start();
+        vis_thread->start(QThread::LowPriority);
     }
     else if(visuBin!=NULL)
     {
@@ -1869,9 +1911,10 @@ void MainWindow::showVisAssembled(bool is_checked)
             renderAssembled->startSTC007NTSCFrame();
             connect(this, SIGNAL(retransmitAsmLine(STC007Line)), renderAssembled, SLOT(renderNewLine(STC007Line)));
         }
-        connect(renderAssembled, SIGNAL(newFrame(QPixmap,uint32_t)), visuAssembled, SLOT(drawFrame(QPixmap,uint32_t)));
+        connect(renderAssembled, SIGNAL(newFrame(QImage,uint32_t)), visuAssembled, SLOT(drawFrame(QImage,uint32_t)));
+        connect(visuAssembled, SIGNAL(readyToDraw()), renderAssembled, SLOT(displayIsReady()));
 
-        vis_thread->start();
+        vis_thread->start(QThread::LowPriority);
     }
     else if(visuAssembled!=NULL)
     {
@@ -1929,9 +1972,10 @@ void MainWindow::showVisBlocks(bool is_checked)
             renderBlocks->startSTC007DBFrame();
             connect(this, SIGNAL(retransmitPCMDataBlock(STC007DataBlock)), renderBlocks, SLOT(renderNewBlock(STC007DataBlock)));
         }
-        connect(renderBlocks, SIGNAL(newFrame(QPixmap,uint32_t)), visuBlocks, SLOT(drawFrame(QPixmap,uint32_t)));
+        connect(renderBlocks, SIGNAL(newFrame(QImage,uint32_t)), visuBlocks, SLOT(drawFrame(QImage,uint32_t)));
+        connect(visuBlocks, SIGNAL(readyToDraw()), renderBlocks, SLOT(displayIsReady()));
 
-        vis_thread->start();
+        vis_thread->start(QThread::LowPriority);
     }
     else if(visuBlocks!=NULL)
     {
@@ -1978,7 +2022,7 @@ void MainWindow::reopenVisSource()
     }
 }
 
-//------------------------ Re-open all vizualization windows
+//------------------------ Re-open all vizualization windows.
 void MainWindow::reopenVisualizers()
 {
     reopenVisSource();
@@ -2015,7 +2059,7 @@ void MainWindow::updateSetMainLog()
     setDILogMode();
 }
 
-//------------------------ Save settings for [vin_processor] module.
+//------------------------ Save settings for [VideoInFFMPEG] module.
 void MainWindow::updateSetVIPLog()
 {
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
@@ -2028,7 +2072,7 @@ void MainWindow::updateSetVIPLog()
     setVIPLogMode();
 }
 
-//------------------------ Save settings for [videotodigital] and [Binarizer] modules.
+//------------------------ Save settings for [VideoToDigital] and [Binarizer] modules.
 void MainWindow::updateSetLBLog()
 {
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
@@ -2044,7 +2088,7 @@ void MainWindow::updateSetLBLog()
     setLBLogMode();
 }
 
-//------------------------ Save settings for [stc007datastitcher] and [stc007deinterleaver] modules.
+//------------------------ Save settings for [xDataStitcher] and [xDeinterleaver] modules.
 void MainWindow::updateSetDILog()
 {
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
@@ -2063,7 +2107,7 @@ void MainWindow::updateSetDILog()
     setDILogMode();
 }
 
-//------------------------ Save settings for [audioprocessor] and [stc007towav] modules.
+//------------------------ Save settings for [AudioProcessor], [SamplesToAudio] and [SamplesToWAV] modules.
 void MainWindow::updateSetAPLog()
 {
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
@@ -2088,7 +2132,7 @@ void MainWindow::clearMainPLog()
     updateSetMainLog();
 }
 
-//------------------------ Turn off logging for [vin_processor] module.
+//------------------------ Turn off logging for [VideoInFFMPEG] module.
 void MainWindow::clearVIPLog()
 {
     // Clear marks.
@@ -2100,7 +2144,7 @@ void MainWindow::clearVIPLog()
     updateSetVIPLog();
 }
 
-//------------------------ Turn off logging for [videotodigital] and [Binarizer] modules.
+//------------------------ Turn off logging for [VideoToDigital] and [Binarizer] modules.
 void MainWindow::clearLBLog()
 {
     // Clear marks.
@@ -2115,7 +2159,7 @@ void MainWindow::clearLBLog()
     updateSetLBLog();
 }
 
-//------------------------ Turn off logging for [stc007datastitcher] and [stc007deinterleaver] modules.
+//------------------------ Turn off logging for [xDataStitcher] and [xDeinterleaver] modules.
 void MainWindow::clearDILog()
 {
     // Clear marks.
@@ -2133,7 +2177,7 @@ void MainWindow::clearDILog()
     updateSetDILog();
 }
 
-//------------------------ Turn off debug logging for [audioprocessor] and [stc007towav] modules.
+//------------------------ Turn off debug logging for [AudioProcessor], [SamplesToAudio] and [SamplesToWAV] modules.
 void MainWindow::clearAPLog()
 {
     // Clear marks.
@@ -2157,7 +2201,7 @@ void MainWindow::clearAllLogging()
     clearAPLog();
 }
 
-//------------------------
+//------------------------ React on video decoder asking for a source.
 void MainWindow::playerNoSource()
 {
     // Open dialog for selecting a file.
@@ -2176,7 +2220,7 @@ void MainWindow::playerNoSource()
     loadVideo();
 }
 
-//------------------------
+//------------------------ React on video decoder loading a new source.
 void MainWindow::playerLoaded(QString in_path)
 {
     ui->lblFileName->setText(in_path);
@@ -2192,7 +2236,7 @@ void MainWindow::playerLoaded(QString in_path)
     ui->cbxWaveSave->setEnabled(true);
 }
 
-//------------------------
+//------------------------ React on video decoder starting playback.
 void MainWindow::playerStarted(uint32_t in_frames_total)
 {
     stat_total_frame_cnt = in_frames_total;
@@ -2209,7 +2253,7 @@ void MainWindow::playerStarted(uint32_t in_frames_total)
     v_decoder_state = VDEC_PLAY;
 }
 
-//------------------------
+//------------------------ React on video decoder stopping playback.
 void MainWindow::playerStopped()
 {
     ui->btnOpen->setEnabled(true);
@@ -2225,7 +2269,7 @@ void MainWindow::playerStopped()
     v_decoder_state = VDEC_STOP;
 }
 
-//------------------------
+//------------------------ React on video decoder pausing playback.
 void MainWindow::playerPaused()
 {
     ui->btnOpen->setEnabled(true);
@@ -2241,7 +2285,7 @@ void MainWindow::playerPaused()
     v_decoder_state = VDEC_PAUSE;
 }
 
-//------------------------ Catch video input error and reset playback.
+//------------------------ React on video decoder error.
 void MainWindow::playerError(QString error_text)
 {
     ui->btnOpen->setEnabled(true);
@@ -2259,7 +2303,7 @@ void MainWindow::playerError(QString error_text)
     this->displayErrorMessage(error_text);
 }
 
-//------------------------ Update LIVE playback indicator.
+//------------------------ React on live playback state.
 void MainWindow::livePBUpdate(bool flag)
 {
     if(flag==false)
@@ -2269,21 +2313,6 @@ void MainWindow::livePBUpdate(bool flag)
     else
     {
         ui->lblLivePB->setPalette(plt_greenlabel);
-    }
-}
-
-//------------------------ Check essential threads.
-void MainWindow::checkThreads()
-{
-    if((conv_V2D->isRunning()==false)||(conv_V2D->isFinished()!=false))
-    {
-        qWarning()<<DBG_ANCHOR<<"[M] Binarizer thread crashed! Restarting...";
-        conv_V2D->start();
-    }
-    if((conv_L2B_STC007->isRunning()==false)||(conv_L2B_STC007->isFinished()!=false))
-    {
-        qWarning()<<DBG_ANCHOR<<"[M] Deinterleaving thread crashed! Restarting...";
-        conv_L2B_STC007->start();
     }
 }
 
@@ -2338,34 +2367,16 @@ void MainWindow::updateGUIByTimer()
     ui->lcdBadStitch->display((int)stat_bad_stitch_cnt);
     ui->lcdPCorr->display((int)stat_p_fix_cnt);
     ui->lcdQCorr->display((int)stat_q_fix_cnt);
-    ui->lcdDebug->display((int)stat_cwd_fix_cnt);
+    ui->lcdCWDCorr->display((int)stat_cwd_fix_cnt);
     ui->lcdBroken->display((int)stat_broken_block_cnt);
     ui->lcdDropout->display((int)stat_drop_block_cnt);
     ui->lcdSampleDrops->display((int)stat_drop_sample_cnt);
-    ui->lcdMute->display((int)stat_mute_cnt);
     ui->lcdMask->display((int)stat_mask_cnt);
     ui->lcdProcessedFrames->display((int)stat_processed_frame_cnt);
 
     // Update VU-meters.
     ui->pgrVULeft->setValue(vu_left);
     ui->pgrVURight->setValue(vu_right);
-    // Decay VU-meters.
-    if(vu_left>6)
-    {
-        vu_left -= 6;
-    }
-    else if(vu_left>0)
-    {
-        vu_left--;
-    }
-    if(vu_right>6)
-    {
-        vu_right -= 6;
-    }
-    else if(vu_right>0)
-    {
-        vu_right--;
-    }
 
     // Update queue fills.
     size_t buf_size;
@@ -2584,10 +2595,22 @@ void MainWindow::updatePCM16x0FrameData()
 void MainWindow::updateSTC007FrameData()
 {
     uint16_t field_imbalance;
-    QString odd_number_str, even_number_str;
+    QString frame_num, odd_number_str, even_number_str;
     CoordinatePair data_coord;
     // Update frame number.
-    ui->edtSTC007FrameNo->setText(QString::number(frame_asm_stc007.frame_number, 10));
+    frame_num = QString::number(frame_asm_stc007.frame_number, 10);
+    if(frame_asm_stc007.isAddressSet()!=false)
+    {
+        // Assemble index and time code string.
+        frame_num.sprintf("%u (Index: %02d, %02d:%02d:%02d.%02d)",
+                          frame_asm_stc007.frame_number,
+                          frame_asm_stc007.ctrl_index,
+                          frame_asm_stc007.ctrl_hour,
+                          frame_asm_stc007.ctrl_minute,
+                          frame_asm_stc007.ctrl_second,
+                          frame_asm_stc007.ctrl_field/2);
+    }
+    ui->edtSTC007FrameNo->setText(frame_num);
     // Update field order.
     if(frame_asm_stc007.isOrderSet()==false)
     {
@@ -2816,58 +2839,65 @@ void MainWindow::updateSTC007FrameData()
     frame_asm_stc007.drawn = true;
 }
 
-//------------------------
+//------------------------ Receive and retransmit binarized PCM-1 line.
 void MainWindow::receiveBinLine(PCM1Line in_line)
 {
     emit retransmitBinLine(in_line);
 }
 
-//------------------------
+//------------------------ Receive and retransmit binarized PCM-16x0 sub-line.
 void MainWindow::receiveBinLine(PCM16X0SubLine in_line)
 {
     emit retransmitBinLine(in_line);
 }
 
-//------------------------
+//------------------------ Receive and retransmit binarized STC-007 line.
 void MainWindow::receiveBinLine(STC007Line in_line)
 {
     emit retransmitBinLine(in_line);
 }
 
-//------------------------
+//------------------------ Receive and retransmit PCM-1 sub-line from re-assembled frame.
 void MainWindow::receiveAsmLine(PCM1SubLine in_line)
 {
     emit retransmitAsmLine(in_line);
 }
 
-//------------------------
+//------------------------ Receive and retransmit PCM-16x0 sub-line from re-assembled frame.
 void MainWindow::receiveAsmLine(PCM16X0SubLine in_line)
 {
     emit retransmitAsmLine(in_line);
 }
 
-//------------------------
+//------------------------ Receive and retransmit STC-007 line from re-assembled frame.
 void MainWindow::receiveAsmLine(STC007Line in_line)
 {
     emit retransmitAsmLine(in_line);
 }
 
-//------------------------
+//------------------------ Receive and retransmit PCM-1 data block after deinterleave.
 void MainWindow::receivePCMDataBlock(PCM1DataBlock in_block)
 {
     emit retransmitPCMDataBlock(in_block);
 }
 
-//------------------------
+//------------------------ Receive and retransmit PCM-16x0 data block after deinterleave.
 void MainWindow::receivePCMDataBlock(PCM16X0DataBlock in_block)
 {
     emit retransmitPCMDataBlock(in_block);
 }
 
-//------------------------
+//------------------------ Receive and retransmit STC-007 data block after deinterleave.
 void MainWindow::receivePCMDataBlock(STC007DataBlock in_block)
 {
     emit retransmitPCMDataBlock(in_block);
+}
+
+//------------------------ Receive VU levels for displaying.
+void MainWindow::receiveVUMeters(uint8_t in_l, uint8_t in_r)
+{
+    vu_left = in_l;
+    vu_right = in_r;
 }
 
 //------------------------ Update stats for debug bar.
@@ -2897,62 +2927,20 @@ void MainWindow::updateDebugBar(quint64 in_stat)
     ui->pgrDebug->setValue(stat_summ);
 }
 
-//------------------------ Update stats after LB has finished a line and provided spent time count.
-void MainWindow::updateStatsVideoLineTime(uint32_t line_time)
-{
-    stat_vlines_time_per_frame += line_time;
-    if(stat_min_vip_time>line_time)
-    {
-        stat_min_vip_time = line_time;
-    }
-    if(stat_max_vip_time<line_time)
-    {
-        stat_max_vip_time = line_time;
-    }
-}
-
 //------------------------ Update stats after VIP has read a frame.
 void MainWindow::updateStatsVIPFrame(uint32_t frame_no)
 {
-    //stat_read_frame_cnt++;
     stat_read_frame_cnt = frame_no;
     if((frame_no==0)||(frame_no==1))
     {
         clearStat();
     }
+    // Check if source didn't report correct total frame count.
     if(stat_read_frame_cnt>stat_total_frame_cnt)
     {
+        // Correct total frame counter.
         stat_total_frame_cnt = stat_read_frame_cnt;
     }
-
-    QString log_line;
-    if(lines_per_video!=0)
-    {
-        log_line = "Frame "+QString::number(frame_no)+" split to "+QString::number(lines_per_video)+" lines by "
-            +QString::number(stat_vlines_time_per_frame)+" us ("+QString::number(stat_vlines_time_per_frame/lines_per_video)+" us per line)";
-    }
-    else
-    {
-        log_line = "Frame "+QString::number(frame_no);
-    }
-    //log_line = "Lines from frame "+QString::number(frame_no)+" added by "+QString::number(in_time)+" us";
-    // Output some debug info.
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        qInfo()<<"[M]"<<log_line;
-    }
-    log_line.clear();
-    log_line = "Frame splitting min/max per line: "+QString::number(stat_min_vip_time)+"/"+QString::number(stat_max_vip_time)+" us";
-    // Output some debug info.
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        qInfo()<<"[M]"<<log_line;
-    }
-
-    // Reset stats.
-    stat_vlines_time_per_frame = 0;
-    stat_min_vip_time = 0xFFFFFFFF;
-    stat_max_vip_time = 0;
 }
 
 //------------------------ Update stats after VIP has spliced a frame.
@@ -2983,23 +2971,6 @@ void MainWindow::updateStatsDroppedFrame()
 {
     // Update counter.
     stat_drop_frame_cnt++;
-}
-
-//------------------------ Update stats after LB has finished a line and provided spent time count.
-// TODO: maybe deprecate?
-void MainWindow::updateStatsLineTime(unsigned int line_time)
-{
-    // Count time spent on a frame.
-    stat_lines_time_per_frame += line_time;
-    stat_lines_per_frame++;
-    if(stat_min_bin_time>line_time)
-    {
-        stat_min_bin_time = line_time;
-    }
-    if(stat_max_bin_time<line_time)
-    {
-        stat_max_bin_time = line_time;
-    }
 }
 
 //------------------------ Update stats and video processor with new frame assembling settings.
@@ -3083,14 +3054,6 @@ void MainWindow::updateStatsFrameAsm(FrameAsmSTC007 new_trim)
     emit newFrameAssembled(frame_asm_stc007.frame_number);
 }
 
-//------------------------ Update stats with new value for muted samples.
-// TODO: deprecate
-void MainWindow::updateStatsMutes(uint16_t in_cnt)
-{
-    // Update counter.
-    stat_mute_cnt += in_cnt;
-}
-
 //------------------------ Update stats with new value for masked samples.
 void MainWindow::updateStatsMaskes(uint16_t in_cnt)
 {
@@ -3145,27 +3108,6 @@ void MainWindow::updateStatsDIFrame(uint32_t frame_no)
     stat_max_di_time = 0;
 }
 
-//------------------------ Update VU indicators.
-void MainWindow::updateVU(PCMSamplePair in_samples)
-{
-    uint16_t amp_left, amp_right;
-    // Get rectified sample for left channel.
-    amp_left = in_samples.samples[PCMSamplePair::CH_LEFT].getAmplitude();
-    // Convert to logarithmic scale 8-bit level.
-    amp_left = sample2vu[amp_left];
-    // Do the same for right channel.
-    amp_right = in_samples.samples[PCMSamplePair::CH_RIGHT].getAmplitude();
-    amp_right = sample2vu[amp_right];
-    // Make current VU meters levels not less than current level from samples.
-    if(vu_left<(uint8_t)amp_left)
-    {
-        vu_left = (uint8_t)amp_left;
-    }
-    if(vu_right<(uint8_t)amp_right)
-    {
-        vu_right = (uint8_t)amp_right;
-    }
-}
 
 //------------------------ Perform internal test of CRCC within PCM line.
 void MainWindow::testStartCRCC()

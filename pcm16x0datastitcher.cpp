@@ -36,7 +36,7 @@ void PCM16X0DataStitcher::setInputPointers(std::deque<PCM16X0SubLine> *in_pcmlin
 {
     if((in_pcmline==NULL)||(mtx_pcmline==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty input pointer provided in [PCM16X0DataStitcher::setInputPointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty input pointer provided, unable to apply!";
     }
     else
     {
@@ -50,7 +50,7 @@ void PCM16X0DataStitcher::setOutputPointers(std::deque<PCMSamplePair> *out_pcmsa
 {
     if((out_pcmsamples==NULL)||(mtx_pcmsamples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty output pointer provided in [PCM16X0DataStitcher::setOutputPointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty output pointer provided, unable to apply!";
     }
     else
     {
@@ -193,7 +193,7 @@ void PCM16X0DataStitcher::fillUntilFullFrame()
             }
             else
             {
-                qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error! Line buffer index out of bound in [PCM16X0DataStitcher::fillUntilFullFrame()]! Line skipped!";
+                qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error! Line buffer index out of bound! Line skipped!";
                 qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Max lines:"<<BUF_SIZE_TRIM;
             }
         }
@@ -811,7 +811,7 @@ void PCM16X0DataStitcher::prescanForFalsePosCRCs(std::vector<PCM16X0SubLine> *fi
             }
             else
             {
-                qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Field data integrity error in [PCM16X0DataStitcher::prescanForFalsePosCRCs()]!";
+                qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Field data integrity error!";
                 qWarning()<<DBG_ANCHOR<<QString::fromStdString((*field_buf)[part_0.queue_order].dumpContentString());
                 qWarning()<<DBG_ANCHOR<<QString::fromStdString((*field_buf)[part_1.queue_order].dumpContentString());
                 qWarning()<<DBG_ANCHOR<<QString::fromStdString((*field_buf)[part_2.queue_order].dumpContentString());
@@ -891,7 +891,7 @@ int16_t PCM16X0DataStitcher::findZeroControlBitOffset(std::vector<PCM16X0SubLine
                 {
                     if((*field)[subline_ofs].line_part!=PCM16X0SubLine::PART_MIDDLE)
                     {
-                        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error in [findZeroControlBitOffset()], line not on middle subline in field buffer!";
+                        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error, line not on middle subline in field buffer!";
                         zero_cnt = 0;
                         break;
                     }
@@ -948,7 +948,7 @@ int16_t PCM16X0DataStitcher::findZeroControlBitOffset(std::vector<PCM16X0SubLine
                 {
                     if((*field)[subline_ofs].line_part!=PCM16X0SubLine::PART_MIDDLE)
                     {
-                        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error in [findZeroControlBitOffset()], line not on middle subline in field buffer!";
+                        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error, line not on middle subline in field buffer!";
                         zero_cnt = 0;
                         break;
                     }
@@ -1101,7 +1101,7 @@ uint8_t PCM16X0DataStitcher::estimateBlockNumber(std::vector<PCM16X0SubLine> *fi
     }
     else
     {
-        qWarning()<<"[L2B-16x0] Offset out-of-bounds in [PCM16X0DataStitcher::estimateBlockNumber()]:"<<zero_ofs<<"of"<<f_size;
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Offset out-of-bounds:"<<zero_ofs<<"of"<<f_size;
     }
 
     return out_iblk;
@@ -1555,12 +1555,12 @@ uint8_t PCM16X0DataStitcher::findSIPadding(std::vector<PCM16X0SubLine> *field_bu
 
     if(field_buf==NULL)
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Null pointer for buffer provided in [PCM16X0DataStitcher::findSIPadding()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Null pointer for buffer provided, exiting...";
         return DS_RET_NO_DATA;
     }
     if(field_buf->size()<(*f_size))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Buffer index out-of-bound in [PCM16X0DataStitcher::findSIPadding()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Buffer index out-of-bound, exiting...";
         return DS_RET_NO_DATA;
     }
     if((*f_size)<MIN_FILL_SUBLINES_PF_SI)
@@ -1568,7 +1568,7 @@ uint8_t PCM16X0DataStitcher::findSIPadding(std::vector<PCM16X0SubLine> *field_bu
 #ifdef DI_EN_DBG_OUT
         if(suppress_log==false)
         {
-            qInfo()<<"[L2B-16x0] Not enough data in the field buffer in [PCM16X0DataStitcher::findSIPadding()], exiting...";
+            qInfo()<<"[L2B-16x0] Not enough data in the field buffer, exiting...";
         }
 #endif
         return DS_RET_NO_DATA;
@@ -3537,7 +3537,7 @@ uint8_t PCM16X0DataStitcher::findEIDataAlignment(std::vector<PCM16X0SubLine> *fi
             else
             {
                 // Error is too big.
-                qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error in [PCM16X0DataStitcher::findEIDataAlignment()]! Negative offet"<<last_ofs<<"at frame"<<frasm_f1.frame_number;
+                qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error! Negative offset"<<last_ofs<<"at frame"<<frasm_f1.frame_number;
                 return DS_RET_NO_PAD;
             }
         }
@@ -4023,7 +4023,7 @@ uint8_t PCM16X0DataStitcher::findEIFrameStitching()
         if(stage_count>STG_PAD_MAX)
         {
 #ifdef DI_EN_DBG_OUT
-            qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Inf. loop detected in [PCM16X0DataStitcher::findEIFrameStitching()], breaking...";
+            qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Inf. loop detected, breaking...";
 #endif
             return DS_RET_NO_PAD;
         }
@@ -4496,7 +4496,7 @@ uint16_t PCM16X0DataStitcher::addLinesFromField(std::vector<PCM16X0SubLine> *fie
     }
     else
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Array access out of bounds in [PCM16X0DataStitcher::addLinesFromField()]! Total:"<<field_buf->size()<<", start index:"<<ind_start<<", stop index:"<<(ind_start+count);
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Array access out of bounds! Total:"<<field_buf->size()<<", start index:"<<ind_start<<", stop index:"<<(ind_start+count);
     }
     return lines_cnt;
 }
@@ -4888,7 +4888,7 @@ void PCM16X0DataStitcher::outputFileStart()
     size_t queue_size;
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided in [PCM16X0DataStitcher::outputFileStart()], service tag discarded!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided, service tag discarded!";
     }
     else
     {
@@ -4931,11 +4931,12 @@ void PCM16X0DataStitcher::outputDataBlock(PCM16X0DataBlock *in_block)
 
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided in [PCM16X0DataStitcher::outputDataBlock()], result discarded!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided, result discarded!";
     }
     else
     {
         bool block_state, word_left_state, word_right_state;
+        bool word_left_fixed, word_right_fixed;
         PCMSamplePair sample_pair;
         while(1)
         {
@@ -4953,6 +4954,15 @@ void PCM16X0DataStitcher::outputDataBlock(PCM16X0DataBlock *in_block)
                 {
                     // Set validity of the whole block and the samples.
                     block_state = in_block->isBlockValid();
+                    if(block_state==false)
+                    {
+                        word_left_fixed = word_right_fixed = false;
+                    }
+                    else
+                    {
+                        word_left_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_L);
+                        word_right_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_R);
+                    }
                     word_left_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_L);
                     word_right_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_R);
                 }
@@ -4961,17 +4971,29 @@ void PCM16X0DataStitcher::outputDataBlock(PCM16X0DataBlock *in_block)
                     // Data block deemed to be "broken", no data can be taken as valid.
                     block_state = false;
                     word_left_state = word_right_state = false;
+                    word_left_fixed = word_right_fixed = false;
                 }
                 // Set data to [PCMSamplePair] object.
                 sample_pair.setSamplePair(in_block->getSample(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_L),
                                           in_block->getSample(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_R),
-                                          block_state, block_state, word_left_state, word_right_state);
+                                          block_state, block_state,
+                                          word_left_state, word_right_state,
+                                          word_left_fixed, word_right_fixed);
                 // Put sample pair in the output queue.
                 out_samples->push_back(sample_pair);
                 // Output L1+R1 samples.
                 if(in_block->isDataBroken(PCM16X0DataBlock::SUBBLK_2)==false)
                 {
                     block_state = in_block->isBlockValid();
+                    if(block_state==false)
+                    {
+                        word_left_fixed = word_right_fixed = false;
+                    }
+                    else
+                    {
+                        word_left_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_L);
+                        word_right_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_R);
+                    }
                     word_left_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_L);
                     word_right_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_R);
                 }
@@ -4979,15 +5001,27 @@ void PCM16X0DataStitcher::outputDataBlock(PCM16X0DataBlock *in_block)
                 {
                     block_state = false;
                     word_left_state = word_right_state = false;
+                    word_left_fixed = word_right_fixed = false;
                 }
                 sample_pair.setSamplePair(in_block->getSample(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_L),
                                           in_block->getSample(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_R),
-                                          block_state, block_state, word_left_state, word_right_state);
+                                          block_state, block_state,
+                                          word_left_state, word_right_state,
+                                          word_left_fixed, word_right_fixed);
                 out_samples->push_back(sample_pair);
                 // Output L2+R2 samples.
                 if(in_block->isDataBroken(PCM16X0DataBlock::SUBBLK_3)==false)
                 {
                     block_state = in_block->isBlockValid();
+                    if(block_state==false)
+                    {
+                        word_left_fixed = word_right_fixed = false;
+                    }
+                    else
+                    {
+                        word_left_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_L);
+                        word_right_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_R);
+                    }
                     word_left_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_L);
                     word_right_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_R);
                 }
@@ -4995,10 +5029,13 @@ void PCM16X0DataStitcher::outputDataBlock(PCM16X0DataBlock *in_block)
                 {
                     block_state = false;
                     word_left_state = word_right_state = false;
+                    word_left_fixed = word_right_fixed = false;
                 }
                 sample_pair.setSamplePair(in_block->getSample(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_L),
                                           in_block->getSample(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_R),
-                                          block_state, block_state, word_left_state, word_right_state);
+                                          block_state, block_state,
+                                          word_left_state, word_right_state,
+                                          word_left_fixed, word_right_fixed);
                 out_samples->push_back(sample_pair);
                 mtx_samples->unlock();
                 if(size_lock!=false)
@@ -5040,7 +5077,7 @@ void PCM16X0DataStitcher::outputFileStop()
     size_t queue_size;
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided in [PCM16X0DataStitcher::outputFileStop()], service tag discarded!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided, service tag discarded!";
     }
     else
     {
@@ -5307,7 +5344,7 @@ void PCM16X0DataStitcher::performDeinterleave(uint8_t int_format)
             }
             else
             {
-                qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error in [PCM16X0DataStitcher::performDeinterleave()]! Lines per interleave block mismatch at"<<i;
+                qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Logic error! Lines per interleave block mismatch at"<<i;
             }
         }
         // Go to next interleave block.
@@ -5534,7 +5571,7 @@ void PCM16X0DataStitcher::doFrameReassemble()
     // Check working pointers.
     if((in_lines==NULL)||(mtx_lines==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided in [PCM16X0DataStitcher::doFrameReassemble()], unable to continue!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided, unable to continue!";
         emit finished();
         return;
     }

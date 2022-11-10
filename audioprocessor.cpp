@@ -6,15 +6,14 @@
 
 AudioProcessor::AudioProcessor(QObject *parent) : QObject(parent)
 {
-    file_path.clear();
-    file_name.clear();
     in_samples = NULL;
     mtx_samples = NULL;
-    tim_outflush = NULL;
+    tim_outflush = tim_vu_fade = NULL;
     prebuffer.clear();
     for(uint8_t idx=0;idx<CHANNEL_CNT;idx++)
     {
         channel_bufs[idx].clear();
+        long_bads[idx].clear();
     }
     log_level = 0;
     mask_mode = DROP_IGNORE;
@@ -23,9 +22,10 @@ AudioProcessor::AudioProcessor(QObject *parent) : QObject(parent)
     max_ramp_up = MAX_RAMP_UP;
     sample_index = 0;
     setSampleRate(PCMSamplePair::SAMPLE_RATE_44100);
-    file_end = 0;
+    vu_left = vu_right = 0;
+    file_end = false;
     unprocessed = false;
-    remove_stray = true;
+    remove_stray = false;
     out_to_wav = false;
     out_to_live = false;
     dbg_output = false;
@@ -35,6 +35,7 @@ AudioProcessor::AudioProcessor(QObject *parent) : QObject(parent)
 
     connect(this, SIGNAL(newSource()), &sc_output, SLOT(prepareNewFile()));
     connect(&sc_output, SIGNAL(livePlayback(bool)), this, SLOT(livePlayUpdate(bool)));
+    connect(&wav_output, SIGNAL(fileError(QString)), this, SLOT(redirectError(QString)));
     connect(this, SIGNAL(reqTimerRestart()), this, SLOT(restartFlushTimer()));
 
 #ifdef _WIN32
@@ -47,7 +48,7 @@ void AudioProcessor::setInputPointers(std::deque<PCMSamplePair> *in_samplepairs,
 {
     if((in_samplepairs==NULL)||(mtx_samplepairs==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[AP] Empty input pointer provided in [AudioProcessor::setInputPointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[AP] Empty input pointer provided, unable to apply!";
     }
     else
     {
@@ -153,6 +154,7 @@ bool AudioProcessor::fillUntilBufferFull()
 #endif
                 // Set "file ended" flag.
                 file_end = true;
+                //log_level |= LOG_DROP_ACT|LOG_BUF_DUMP;
                 // Stop adding data points until all samples from ended file are processed and output.
                 break;
             }
@@ -177,6 +179,10 @@ bool AudioProcessor::fillUntilBufferFull()
             prebuffer.push_back(work_pair);
             // Increase internal sample pair index for current file.
             sample_index++;
+            /*if(sample_index>317000)
+            {
+                log_level |= LOG_DROP_ACT|LOG_BUF_DUMP;
+            }*/
         }
     }
     // Unlock shared access.
@@ -190,11 +196,11 @@ bool AudioProcessor::fillUntilBufferFull()
         {
             qInfo()<<"[AP] Added"<<added<<"data points into the buffer";
         }
-        /*if((log_level&LOG_BUF_DUMP)!=0)
+        if((log_level&LOG_BUF_DUMP)!=0)
         {
             qInfo()<<"[AP] Prebuffer after filling (added"<<added<<"data points):";
             dumpPrebuffer();
-        }*/
+        }
 #endif
         return true;
     }
@@ -466,7 +472,7 @@ uint16_t AudioProcessor::clearInvalids(std::deque<PCMSample> *samples, Coordinat
         for(int16_t queue_idx=range.data_start;queue_idx<=range.data_stop;queue_idx++)
         {
             // Mark as fixed.
-            (*samples)[queue_idx].setFixed();
+            (*samples)[queue_idx].setValid();
             mark_cnt++;
         }
 #ifdef AP_EN_DBG_OUT
@@ -493,8 +499,24 @@ uint16_t AudioProcessor::clearInvalids(std::deque<PCMSample> *samples, Coordinat
     return mark_cnt;
 }
 
-//------------------------ Perform zeroing out on all dropouts in the provided range.
-uint16_t AudioProcessor::performMute(std::deque<PCMSample> *samples, CoordinatePair &range)
+//------------------------ Perform zeroing out on a sample, pointet by [offset].
+uint16_t AudioProcessor::sampleMute(std::deque<PCMSample> *samples, int16_t offset)
+{
+    // Check if provided coordinate fit inside the buffer.
+    if((offset<0)||(offset>(uint16_t)(samples->size()-1)))
+    {
+        qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinate is out of range!"<<offset<<samples->size()<<sample_index;
+        return 0;
+    }
+    // Mute one sample.
+    (*samples)[offset].setValid();
+    (*samples)[offset].setMasked();
+    (*samples)[offset].setValue(SMP_NULL);
+    return 1;
+}
+
+//------------------------ Perform zeroing out on all samples in the provided range.
+uint16_t AudioProcessor::rangeMute(std::deque<PCMSample> *samples, CoordinatePair &range)
 {
     uint16_t mask_cnt;
 
@@ -504,7 +526,7 @@ uint16_t AudioProcessor::performMute(std::deque<PCMSample> *samples, CoordinateP
         // Check if provided coordinates fit inside the buffer.
         if((range.data_start<0)||(range.data_stop>=(int16_t)samples->size()))
         {
-            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates of out range!"<<range.data_start<<range.data_stop<<samples->size();
+            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates are out of range!"<<range.data_start<<range.data_stop<<samples->size()<<sample_index;
             return mask_cnt;
         }
         // Cycle through the region.
@@ -515,10 +537,10 @@ uint16_t AudioProcessor::performMute(std::deque<PCMSample> *samples, CoordinateP
                 // Mute and mark as processed only if the value differs.
                 mask_cnt++;
                 (*samples)[queue_idx].setValue(SMP_NULL);
-                (*samples)[queue_idx].setProcessed();
+                (*samples)[queue_idx].setMasked();
             }
             // Mark as fixed.
-            (*samples)[queue_idx].setFixed();
+            (*samples)[queue_idx].setValid();
         }
 #ifdef AP_EN_DBG_OUT
         if((log_level&LOG_DROP_ACT)!=0)
@@ -548,13 +570,13 @@ uint16_t AudioProcessor::performMute(std::deque<PCMSample> *samples, CoordinateP
     }
     else
     {
-        qWarning()<<DBG_ANCHOR<<"[AP] Invalid coordinates provided";
+        qWarning()<<DBG_ANCHOR<<"[AP] Invalid coordinates provided"<<range.data_start<<range.data_stop<<samples->size()<<sample_index;
     }
     return mask_cnt;
 }
 
 //------------------------ Perform level hold on all dropouts in the provided range.
-uint16_t AudioProcessor::performLevelHold(std::deque<PCMSample> *samples, CoordinatePair &range)
+uint16_t AudioProcessor::rangeLevelHold(std::deque<PCMSample> *samples, CoordinatePair &range)
 {
     uint16_t mask_cnt;
     int16_t hold_word;
@@ -565,7 +587,7 @@ uint16_t AudioProcessor::performLevelHold(std::deque<PCMSample> *samples, Coordi
         // Check if provided coordinates fit inside the buffer.
         if((range.data_start<0)||(range.data_stop>=(int16_t)samples->size()))
         {
-            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates of out range!"<<range.data_start<<range.data_stop<<samples->size();
+            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates are out of range!"<<range.data_start<<range.data_stop<<samples->size()<<sample_index;
             return mask_cnt;
         }
         // Save starting value to hold.
@@ -578,10 +600,10 @@ uint16_t AudioProcessor::performLevelHold(std::deque<PCMSample> *samples, Coordi
                 // Hold the same starting level and mark as processed only if the value differs.
                 mask_cnt++;
                 (*samples)[queue_idx].setValue(hold_word);
-                (*samples)[queue_idx].setProcessed();
+                (*samples)[queue_idx].setMasked();
             }
             // Mark as fixed.
-            (*samples)[queue_idx].setFixed();
+            (*samples)[queue_idx].setValid();
         }
 #ifdef AP_EN_DBG_OUT
         if((log_level&LOG_DROP_ACT)!=0)
@@ -612,13 +634,13 @@ uint16_t AudioProcessor::performLevelHold(std::deque<PCMSample> *samples, Coordi
     }
     else
     {
-        qWarning()<<DBG_ANCHOR<<"[AP] Invalid coordinates provided";
+        qWarning()<<DBG_ANCHOR<<"[AP] Invalid coordinates provided"<<range.data_start<<range.data_stop<<samples->size()<<sample_index;
     }
     return mask_cnt;
 }
 
 //------------------------ Perform level linear interpolation on all dropouts in the provided range.
-uint16_t AudioProcessor::performLinearInterpolation(std::deque<PCMSample> *samples, CoordinatePair &range)
+uint16_t AudioProcessor::rangeLinearInterpolation(std::deque<PCMSample> *samples, CoordinatePair &range)
 {
     bool same_level;
     uint16_t mask_cnt, int_idx;
@@ -633,7 +655,7 @@ uint16_t AudioProcessor::performLinearInterpolation(std::deque<PCMSample> *sampl
         // Check if provided coordinates fit inside the buffer.
         if((range.data_start<0)||(range.data_stop>=(int16_t)samples->size()))
         {
-            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates of out range!"<<range.data_start<<range.data_stop<<samples->size();
+            qWarning()<<DBG_ANCHOR<<"[AP] Provided coordinates are out of range!"<<range.data_start<<range.data_stop<<samples->size()<<sample_index;
             return mask_cnt;
         }
         // Get valid levels at the boundaries.
@@ -694,10 +716,10 @@ uint16_t AudioProcessor::performLinearInterpolation(std::deque<PCMSample> *sampl
                 // Interpolate and mark as processed only if the value differs.
                 mask_cnt++;
                 (*samples)[queue_idx].setValue((int16_t)lvl_delta);
-                (*samples)[queue_idx].setProcessed();
+                (*samples)[queue_idx].setMasked();
             }
             // Mark as fixed.
-            (*samples)[queue_idx].setFixed();
+            (*samples)[queue_idx].setValid();
             int_idx++;
         }
 #ifdef AP_EN_DBG_OUT
@@ -717,7 +739,7 @@ uint16_t AudioProcessor::performLinearInterpolation(std::deque<PCMSample> *sampl
     }
     else
     {
-        qWarning()<<DBG_ANCHOR<<"[AP] Invalid coordinates provided";
+        qWarning()<<DBG_ANCHOR<<"[AP] Invalid coordinates provided"<<range.data_start<<range.data_stop<<samples->size()<<sample_index;
     }
     return mask_cnt;
 }
@@ -727,9 +749,9 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
 {
     bool suppress_log;
     bool good_after_bad, good_before_bad, bad_lock;
-    int16_t leftover;
+    int16_t leftover, bad_stop, good_at_the_end, good_end;
     uint16_t masks_cnt;
-    size_t queue_size, queue_idx, bad_stop, good_at_the_end, good_end;
+    size_t queue_size, queue_idx;
     std::deque<CoordinatePair> bad_regions;
 
 #ifdef AP_EN_DBG_OUT
@@ -778,7 +800,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                 // Invalid samples were not found before.
                 // Save and lock bad position.
                 bad_lock = true;
-                bad_stop = queue_idx;
+                bad_stop = (int16_t)queue_idx;
 #ifdef AP_EN_DBG_OUT
                 if(suppress_log==false)
                 {
@@ -797,7 +819,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                 // Invalid samples were not detected yet,
                 // every sample from the end of the buffer is still valid.
                 // Update last location with valid samples.
-                good_at_the_end = queue_idx;
+                good_at_the_end = (int16_t)queue_idx;
 #ifdef AP_EN_DBG_OUT
                 if(suppress_log==false)
                 {
@@ -817,7 +839,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                 // Some invalid samples were found towards the end of the buffer,
                 // maybe an invalid region is found.
                 // Save position of valid samples before invalid ones.
-                good_end = queue_idx;
+                good_end = (int16_t)queue_idx;
 #ifdef AP_EN_DBG_OUT
                 if(suppress_log==false)
                 {
@@ -835,7 +857,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                 {
                     // No valid samples found after this one and found some invalid samples.
                     // Check how far from the end of the buffer valid data ends.
-                    if(good_end>=(samples->size()-(max_ramp_down+max_ramp_up+1)))
+                    if(good_end>=((int16_t)samples->size()-(int16_t)(max_ramp_down+max_ramp_up+1)))
                     {
                         // Not enough invalid samples to choose between one region
                         // or two ramps and silent region.
@@ -856,9 +878,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                         // Calculating ending coordinate for the ramp-down.
                         new_region.data_stop = new_region.data_start+max_ramp_down+1;
                         // Force last sample of the ramp to valid zero.
-                        (*samples)[new_region.data_stop].setFixed();
-                        (*samples)[new_region.data_stop].setProcessed();
-                        (*samples)[new_region.data_stop].setValue(SMP_NULL);
+                        sampleMute(samples, new_region.data_stop);
                         // Ramp-down region will be added to the list at the end.
 #ifdef AP_EN_DBG_OUT
                         if(suppress_log==false)
@@ -904,7 +924,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                         }
 #endif
                         // Check if starting sample was processed earlier.
-                        if(((*samples)[new_region.data_start].isProcessed()==false)||
+                        if(((*samples)[new_region.data_start].isMasked()==false)||
                            ((*samples)[new_region.data_start].audio_word!=SMP_NULL))
                         {
                             // Starting sample was not altered - it was valid from the source.
@@ -932,9 +952,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                                 new_region.data_start = new_region.data_stop-max_ramp_up-1;
                                 bad_regions.push_front(new_region);
                                 // Force first sample of the ramp-up (last sample of muted region) to zero.
-                                (*samples)[new_region.data_start].setFixed();
-                                (*samples)[new_region.data_start].setProcessed();
-                                (*samples)[new_region.data_start].setValue(SMP_NULL);
+                                sampleMute(samples, new_region.data_start);
 #ifdef AP_EN_DBG_OUT
                                 if(suppress_log==false)
                                 {
@@ -955,9 +973,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                                 {
                                     bad_regions.push_front(new_region);
                                     // Force last sample of the ramp-down (first sample of muted region) to zero.
-                                    (*samples)[new_region.data_start].setFixed();
-                                    (*samples)[new_region.data_start].setProcessed();
-                                    (*samples)[new_region.data_start].setValue(SMP_NULL);
+                                    sampleMute(samples, new_region.data_start);
 #ifdef AP_EN_DBG_OUT
                                     if(suppress_log==false)
                                     {
@@ -1013,9 +1029,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                                 new_region.data_start = new_region.data_stop-max_ramp_up-1;
                                 bad_regions.push_front(new_region);
                                 // Force first sample of the ramp-up (last sample of muted region) to zero.
-                                (*samples)[new_region.data_start].setFixed();
-                                (*samples)[new_region.data_start].setProcessed();
-                                (*samples)[new_region.data_start].setValue(SMP_NULL);
+                                sampleMute(samples, new_region.data_start);
 #ifdef AP_EN_DBG_OUT
                                 if(suppress_log==false)
                                 {
@@ -1063,7 +1077,7 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                 good_after_bad = true;
                 bad_lock = false;
                 // Update last location with valid samples.
-                good_at_the_end = queue_idx;
+                good_at_the_end = (int16_t)queue_idx;
             }
         }
         if(queue_idx==0) break;
@@ -1095,17 +1109,17 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
         if((mask_mode==DROP_MUTE_BLOCK)||(mask_mode==DROP_MUTE_WORD))
         {
             // Mute dropouts.
-            masks_cnt += performMute(samples, *buf_scaner);
+            masks_cnt += rangeMute(samples, *buf_scaner);
         }
         else if((mask_mode==DROP_HOLD_BLOCK)||(mask_mode==DROP_HOLD_WORD))
         {
             // Hold last valid level on dropouts.
-            masks_cnt += performLevelHold(samples, *buf_scaner);
+            masks_cnt += rangeLevelHold(samples, *buf_scaner);
         }
         else if((mask_mode==DROP_INTER_LIN_BLOCK)||(mask_mode==DROP_INTER_LIN_WORD))
         {
             // Perform linear interpolation on dropouts.
-            masks_cnt += performLinearInterpolation(samples, *buf_scaner);
+            masks_cnt += rangeLinearInterpolation(samples, *buf_scaner);
         }
         buf_scaner++;
     }
@@ -1153,14 +1167,15 @@ void AudioProcessor::fixBadSamples(std::deque<PCMSample> *samples)
                                  new_region.data_start, new_region.data_stop,
                                  (uint32_t)(*samples)[new_region.data_start].getIndex(), (uint32_t)(*samples)[new_region.data_stop].getIndex());
                 qInfo()<<log_line;
+                log_line.sprintf("[AP] Forcing to mute invalid sample at [%03u] ([%08u])",
+                                 new_region.data_stop, (uint32_t)(*samples)[new_region.data_stop].getIndex());
+                qInfo()<<log_line;
             }
 #endif
             // Force last sample of the ramp-down to zero.
-            (*samples)[new_region.data_stop].setFixed();
-            (*samples)[new_region.data_stop].setProcessed();
-            (*samples)[new_region.data_stop].setValue(SMP_NULL);
+            sampleMute(samples, new_region.data_stop);
             // Perform ramp-down.
-            masks_cnt += performLinearInterpolation(samples, new_region);
+            masks_cnt += rangeLinearInterpolation(samples, new_region);
         }
     }
 
@@ -1200,7 +1215,7 @@ void AudioProcessor::fillBufferForOutput()
     {
         if(prebuffer.size()!=channel_bufs[chnl_idx].size())
         {
-            qWarning()<<DBG_ANCHOR<<"[AP] Internal buffer size mismatch! Logic error!";
+            qWarning()<<DBG_ANCHOR<<"[AP] Internal buffer size mismatch! Logic error!"<<prebuffer.size()<<chnl_idx<<channel_bufs[chnl_idx].size();
             return;
         }
     }
@@ -1224,6 +1239,36 @@ void AudioProcessor::fillBufferForOutput()
 #endif
 }
 
+//------------------------ Convert sample pair to VU levels.
+void AudioProcessor::samplesToVU(PCMSamplePair *in_samples)
+{
+    uint16_t amp_left, amp_right;
+    if(out_to_live==false)
+    {
+        // Don't show and update levels when not in live playback.
+        vu_left = vu_right = 0;
+    }
+    else
+    {
+        // Get rectified sample for the left channel.
+        amp_left = in_samples->samples[PCMSamplePair::CH_LEFT].getAmplitude();
+        // Convert to logarithmic scale 8-bit level.
+        amp_left = sample2vu[amp_left];
+        // Do the same for the right channel.
+        amp_right = in_samples->samples[PCMSamplePair::CH_RIGHT].getAmplitude();
+        amp_right = sample2vu[amp_right];
+        // Make current VU meters levels not less than current level from samples.
+        if(vu_left<(uint8_t)amp_left)
+        {
+            vu_left = (uint8_t)amp_left;
+        }
+        if(vu_right<(uint8_t)amp_right)
+        {
+            vu_right = (uint8_t)amp_right;
+        }
+    }
+}
+
 //------------------------ Write an element to the outputs.
 void AudioProcessor::outputWordPair(PCMSamplePair *out_samples)
 {
@@ -1241,6 +1286,7 @@ void AudioProcessor::outputWordPair(PCMSamplePair *out_samples)
     {
         sc_output.saveAudio(*out_samples);
     }
+    samplesToVU(out_samples);
     emit outSamples(*out_samples);
 }
 
@@ -1251,7 +1297,7 @@ void AudioProcessor::outputAudio()
     uint16_t points_done, lim_play, lim_cutoff;
     PCMSamplePair data_point;
 
-    lim_play = lim_cutoff = 0;
+    lim_play = lim_cutoff = min_valid_before;
     if(file_end==false)
     {
         // If not EOF yet - leave some data in the buffer for look-ahead.
@@ -1270,7 +1316,7 @@ void AudioProcessor::outputAudio()
     // Dump processed audio until minimum look-ahead number of data points left in the buffer.
     while(prebuffer.size()>min_valid_before)
     {
-        // Make sure that first sample in the queue will remain valid.
+        // Make sure that first samples in the queue will remain valid.
         for(uint8_t idx=0;idx<=min_valid_before;idx++)
         {
             stop_output = stop_output||(prebuffer.at(idx).isReadyForOutput()==false);
@@ -1327,7 +1373,7 @@ bool AudioProcessor::scanBuffer()
     {
         scan_limit = prebuffer.size()-min_valid_before-max_ramp_down-max_ramp_up;
     }
-    if((unprocessed!=false)&&(prebuffer.size()>scan_limit))
+    if(prebuffer.size()>scan_limit)
     {
         // Split prebuffer into per-channel buffers.
         splitPerChannel();
@@ -1371,12 +1417,6 @@ bool AudioProcessor::scanBuffer()
             }
             // TODO: perform de-emphasis if required.
         }
-        // Re-fill prebuffer from per-channel buffers.
-        fillBufferForOutput();
-        // Output from the buffer until half of it is empty.
-        outputAudio();
-        unprocessed = false;
-
         return true;
     }
     else
@@ -1408,8 +1448,14 @@ void AudioProcessor::restartFlushTimer()
     tim_outflush->start();
 }
 
+//------------------------ Receive error message and redirect it.
+void AudioProcessor::redirectError(QString in_err)
+{
+    emit mediaError(in_err);
+}
+
 //------------------------ Close output by timeout.
-void AudioProcessor::actCloseOutput()
+void AudioProcessor::actFlushOutput()
 {
 #ifdef AP_EN_DBG_OUT
     if((log_level&LOG_PROCESS)!=0)
@@ -1421,10 +1467,42 @@ void AudioProcessor::actCloseOutput()
     tim_outflush->stop();
 }
 
-//------------------------ Reacting on live playback state.
+//------------------------ Emit [guiLivePB] signal to report live playback state.
 void AudioProcessor::livePlayUpdate(bool flag)
 {
     emit guiLivePB(flag);
+}
+
+//------------------------ Timer event for VU-meters updating and fading.
+void AudioProcessor::updateVUMeters()
+{
+    // Report VU meters values.
+    if(out_to_live==false)
+    {
+        // Don't show levels if live playback is not enabled.
+        vu_left = vu_right = 0;
+    }
+    else
+    {
+        // Fade meters down.
+        if(vu_left>6)
+        {
+            vu_left -= 6;
+        }
+        else if(vu_left>0)
+        {
+            vu_left--;
+        }
+        if(vu_right>6)
+        {
+            vu_right -= 6;
+        }
+        else if(vu_right>0)
+        {
+            vu_right--;
+        }
+    }
+    emit outVULevels(vu_left, vu_right);
 }
 
 //------------------------ Set logging level.
@@ -1442,7 +1520,6 @@ void AudioProcessor::setFolder(QString in_path)
         qInfo()<<"[AP] Target folder set to"<<in_path;
     }
 #endif
-    //dumpBuffer();
     wav_output.setFolder(in_path);
 }
 
@@ -1455,7 +1532,6 @@ void AudioProcessor::setFileName(QString in_name)
         qInfo()<<"[AP] Target file name set to"<<in_name;
     }
 #endif
-    //dumpBuffer();
     wav_output.setName(in_name);
 }
 
@@ -1558,17 +1634,24 @@ void AudioProcessor::processAudio()
     // Check working pointers.
     if((in_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[AP] Empty input pointer provided in [AudioProcessor::doAudioFill()], unable to continue!";
+        qWarning()<<DBG_ANCHOR<<"[AP] Empty input pointer provided, unable to continue!";
         emit finished();
         return;
     }
 
+    connect(this, SIGNAL(stopOutput()), &sc_output, SLOT(stopOutput()));
+
     QTimer timCloseTimer;
-    connect(&timCloseTimer, SIGNAL(timeout()), this, SLOT(actCloseOutput()));
     timCloseTimer.setInterval(250);
     tim_outflush = &timCloseTimer;
+    connect(tim_outflush, SIGNAL(timeout()), this, SLOT(actFlushOutput()));
 
-    connect(this, SIGNAL(stopOutput()), &sc_output, SLOT(stopOutput()));
+    QTimer timVUTimer;
+    timVUTimer.setSingleShot(false);
+    timVUTimer.setInterval(15);
+    tim_vu_fade = &timVUTimer;
+    connect(tim_vu_fade, SIGNAL(timeout()), this, SLOT(updateVUMeters()));
+    tim_vu_fade->start();
 
     // Inf. loop in a thread.
     while(finish_work==false)
@@ -1614,11 +1697,20 @@ void AudioProcessor::processAudio()
         {
             // No new data has been added.
             // Calm down.
-            QThread::msleep(100);
+            QThread::msleep(50);
         }
-
-        // Process data in the internal buffer.
-        scanBuffer();
+        else
+        {
+            // Process data in the internal buffer.
+            if(scanBuffer()!=false)
+            {
+                // Re-fill prebuffer from per-channel buffers.
+                fillBufferForOutput();
+                // Output from the internal buffer.
+                outputAudio();
+                unprocessed = false;
+            }
+        }
 
         file_end = false;
     }
@@ -1654,7 +1746,7 @@ void AudioProcessor::purgePipeline()
         channel_bufs[idx].clear();
         long_bads[idx].clear();
     }
-    empty_smp.setSamplePair(SMP_NULL, SMP_NULL, true, true, true, true);
+    empty_smp.setSamplePair(SMP_NULL, SMP_NULL, true, true, true, true, false, false);
     prebuffer.push_back(empty_smp);
     sample_index = 1;
 }

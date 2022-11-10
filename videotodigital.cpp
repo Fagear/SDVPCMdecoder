@@ -26,7 +26,7 @@ void VideoToDigital::setInputPointers(std::deque<VideoLine> *in_vline, QMutex *m
 {
     if((in_vline==NULL)||(mtx_vline==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[V2D] Empty input pointer provided in [VideoToDigital::setInputPointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[V2D] Empty input pointer provided, unable to apply!";
     }
     else
     {
@@ -40,7 +40,7 @@ void VideoToDigital::setOutPCM1Pointers(std::deque<PCM1Line> *out_pcmline, QMute
 {
     if((out_pcmline==NULL)||(mtx_pcmline==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[V2D] Empty output pointer provided in [VideoToDigital::setOutPCM1Pointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[V2D] Empty output pointer provided, unable to apply!";
     }
     else
     {
@@ -54,7 +54,7 @@ void VideoToDigital::setOutPCM16X0Pointers(std::deque<PCM16X0SubLine> *out_pcmli
 {
     if((out_pcmline==NULL)||(mtx_pcmline==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[V2D] Empty output pointer provided in [VideoToDigital::setOutPCM16X0Pointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[V2D] Empty output pointer provided, unable to apply!";
     }
     else
     {
@@ -68,7 +68,7 @@ void VideoToDigital::setOutSTC007Pointers(std::deque<STC007Line> *out_pcmline, Q
 {
     if((out_pcmline==NULL)||(mtx_pcmline==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[V2D] Empty output pointer provided in [VideoToDigital::setOutSTC007Pointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[V2D] Empty output pointer provided, unable to apply!";
     }
     else
     {
@@ -350,7 +350,7 @@ void VideoToDigital::outNewLine(PCMLine *in_line)
         //return;
         if((out_pcm1==NULL)||(mtx_pcm1==NULL))
         {
-            qWarning()<<DBG_ANCHOR<<"[V2D] Empty PCM-1 pointer provided in [VideoToDigital::outNewLine()], result discarded!";
+            qWarning()<<DBG_ANCHOR<<"[V2D] Empty PCM-1 pointer provided, result discarded!";
         }
         else
         {
@@ -404,7 +404,7 @@ void VideoToDigital::outNewLine(PCMLine *in_line)
         //return;
         if((out_pcm16x0==NULL)||(mtx_pcm16x0==NULL))
         {
-            qWarning()<<DBG_ANCHOR<<"[V2D] Empty PCM-16x0 pointer provided in [VideoToDigital::outNewLine()], result discarded!";
+            qWarning()<<DBG_ANCHOR<<"[V2D] Empty PCM-16x0 pointer provided, result discarded!";
         }
         else
         {
@@ -458,7 +458,7 @@ void VideoToDigital::outNewLine(PCMLine *in_line)
         //return;
         if((out_stc007==NULL)||(mtx_stc007==NULL))
         {
-            qWarning()<<DBG_ANCHOR<<"[V2D] Empty STC-007 pointer provided in [VideoToDigital::outNewLine()], result discarded!";
+            qWarning()<<DBG_ANCHOR<<"[V2D] Empty STC-007 pointer provided, result discarded!";
         }
         else
         {
@@ -690,7 +690,7 @@ void VideoToDigital::doBinarize()
     // Check working pointers.
     if((in_video==NULL)||(mtx_vid==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[V2D] Empty video pointer provided in [VideoToDigital::doBinarize()], unable to continue!";
+        qWarning()<<DBG_ANCHOR<<"[V2D] Empty video pointer provided, unable to continue!";
         emit finished();
         return;
     }

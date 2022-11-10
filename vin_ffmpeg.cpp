@@ -38,6 +38,7 @@ VideoInFFMPEG::VideoInFFMPEG(QObject *parent) : QObject(parent)
 
     setDefaultFineSettings();
     new_file = false;
+    src_open = false;
     step_play = false;
     detect_frame_drop = false;
     finish_work = false;
@@ -818,7 +819,7 @@ void VideoInFFMPEG::runFrameDecode()
     // Check working pointers.
     if((out_lines==NULL)||(mtx_lines==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[VIP] Empty output pointer provided in [VideoInFFMPEG::runFrameDecode()], unable to continue!";
+        qWarning()<<DBG_ANCHOR<<"[VIP] Empty output pointer provided, unable to continue!";
         emit finished();
         return;
     }
@@ -863,7 +864,7 @@ void VideoInFFMPEG::runFrameDecode()
 
     qInfo()<<"[VIP] Starting FFMPEG thread...";
     // Start the thread with FFMPEG wrapper.
-    ffmpeg_thread->start();
+    ffmpeg_thread->start(QThread::HighPriority);
 
     // Inf. loop in a thread.
     while(finish_work==false)
@@ -1367,6 +1368,7 @@ void VideoInFFMPEG::captureReady(int in_width, int in_height, uint32_t in_frames
 #endif
     evt_frame_cnt = in_frames;
     event_cap |= EVT_CAP_OPEN;
+    src_open = true;
 }
 
 
@@ -1380,6 +1382,7 @@ void VideoInFFMPEG::captureClosed()
     }
 #endif
     event_cap |= EVT_CAP_CLOSE;
+    src_open = false;
 }
 
 //------------------------ Something went wrong with capture process.

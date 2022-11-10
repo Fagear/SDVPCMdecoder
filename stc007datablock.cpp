@@ -109,7 +109,7 @@ void STC007DataBlock::setValid(uint8_t index)
 {
     if(index<WORD_CNT)
     {
-        line_crc[index] = true;
+        //line_crc[index] = true;   // Enabling this breaks CWD
         word_valid[index] = true;
         cwd_fixed[index] = false;
     }
@@ -139,6 +139,7 @@ void STC007DataBlock::markAsOriginalData()
 //------------------------ Mark data block as fixed by Cross-Word Decoding.
 void STC007DataBlock::markAsFixedByCWD()
 {
+    // Set the mark that normal ECC can't deal with amount of errors and some were cleared with CWD.
     cwd_applied = true;
 }
 
@@ -157,60 +158,37 @@ void STC007DataBlock::markAsFixedByQ()
 //------------------------ Mark fixed words as bad again to prevent clicks on possible incorrect "corrections".
 void STC007DataBlock::markAsUnsafe()
 {
-    bool full_bad;
-    full_bad = false;
-    if((resolution==RES_14BIT)&&(line_crc[WORD_P0]==false)&&(line_crc[WORD_Q0]==false)&&(getErrorsAudioSource()>0))
+    if(audio_state==AUD_BROKEN)
     {
-        // 14-bit data block has some errors marked with CRC, but all error-correction words are bad,
-        // so data block was not fixed or checked for possible BROKEN state, thus to prevent future use of not-damaged words in the block
-        // due to its probable misassembling, invalidate all words.
-        full_bad = true;
+        return;
     }
-    else if((resolution==RES_16BIT)&&(line_crc[WORD_P0]==false)&&(getErrorsAudioSource()>0))
+    uint8_t ind_limit;
+    // Determine word limit.
+    if(resolution==RES_16BIT)
     {
-        // 16-bit data block has some errors marked with CRC, but error-correction word is bad,
-        // so data block was not fixed or checked for possible BROKEN state, thus to prevent future use of not-damaged words in the block
-        // due to its probable misassembling, invalidate all words.
-        full_bad = true;
+        // Up to P word for 16-bit mode.
+        ind_limit = WORD_P0;
     }
-    if(audio_state!=AUD_BROKEN)
+    else
     {
-        uint8_t ind_limit;
-        // Determine word limit.
-        if(resolution==RES_16BIT)
-        {
-            // Up to P word for 16-bit mode.
-            ind_limit = WORD_P0;
-        }
-        else
-        {
-            // Up to Q word for 14-bit mode.
-            ind_limit = WORD_Q0;
-        }
-        // Revert word validity to "before error-correction" state,
-        // so damaged words that could be incorrectly "fixed" due to misassembling will be interpolated later.
-        for(uint8_t index=WORD_L0;index<=ind_limit;index++)
-        {
-            if(full_bad==false)
-            {
-                // Revert word validity to "before error-correction" state.
-                word_valid[index] = line_crc[index];
-            }
-            else
-            {
-                // Shut down the whole data block.
-                word_valid[index] = false;
-            }
-            line_crc[index] = cwd_fixed[index] = false;
-        }
-        audio_state = AUD_ORIG;
-        cwd_applied = false;
+        // Up to Q word for 14-bit mode.
+        ind_limit = WORD_Q0;
+    }
+    // Revert words validity to "before error-correction" state,
+    // so damaged words that could be incorrectly "fixed" due to misassembling will be interpolated later.
+    for(uint8_t index=WORD_L0;index<=ind_limit;index++)
+    {
+        // Revert word validity to "before error-correction" state.
+        word_valid[index] = line_crc[index];
+        line_crc[index] = cwd_fixed[index] = false;
+    }
+    audio_state = AUD_ORIG;
+    cwd_applied = false;
 #ifdef DB_EN_DBG_OUT
-        QString log_line;
-        log_line.sprintf("[DB] Marked INVALID [%03u/%03u...%03u/%03u]", start_frame, start_line, stop_frame, stop_line);
-        qInfo()<<log_line;
+    QString log_line;
+    log_line.sprintf("[DB] Marked INVALID [%03u/%03u...%03u/%03u]", start_frame, start_line, stop_frame, stop_line);
+    qInfo()<<log_line;
 #endif
-    }
 }
 
 //------------------------ Mark all words as bad.
@@ -266,7 +244,7 @@ bool STC007DataBlock::canForceCheck()
         if(resolution==RES_14BIT)
         {
             // 14-bit mode.
-            if(getErrorsTotalSource()<=1)
+            if(getErrorsTotalCWD()<=1)
             {
                 // If only one word is damaged, it can be any - P or Q will always be available.
                 check_available = true;
@@ -276,7 +254,7 @@ bool STC007DataBlock::canForceCheck()
         {
             // 16-bit mode.
             // Parity check can only be available if there are no errors.
-            if(getErrorsTotalSource()==0)
+            if(getErrorsTotalCWD()==0)
             {
                 // No errors at all.
                 check_available = true;
@@ -293,10 +271,7 @@ bool STC007DataBlock::isWordLineCRCOk(uint8_t index)
     {
         return line_crc[index];
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if the word is fixed with CWD after binarization.
@@ -306,10 +281,7 @@ bool STC007DataBlock::isWordCWDFixed(uint8_t index)
     {
         return cwd_fixed[index];
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if word is safe to playback (not damaged or fixed by ECC).
@@ -319,42 +291,53 @@ bool STC007DataBlock::isWordValid(uint8_t index)
     {
         return word_valid[index];
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if data block is valid.
 bool STC007DataBlock::isBlockValid()
 {
-    bool valid;
-    valid = true;
     if(getErrorsAudioFixed()>0)
     {
-        valid = false;
+        return false;
     }
-    return valid;
+    return true;
 }
 
-//------------------------ Check if data block was repaired by Cross-Word Decoding.
-bool STC007DataBlock::isDataFixedByCWD()
+//------------------------ Check if some audio words in data block were repaired using Cross-Word Decoding.
+bool STC007DataBlock::isAudioAlteredByCWD()
 {
-    bool cwd_det;
-
-    cwd_det = false;
-
-    if(cwd_applied!=false)
+    for(uint8_t index=WORD_L0;index<=WORD_R2;index++)
     {
-        for(uint8_t index=WORD_L0;index<=WORD_Q0;index++)
+        if(isWordCWDFixed(index)!=false)
         {
-            if(isWordCWDFixed(index)!=false)
-            {
-                cwd_det = true;
-            }
+            return true;
         }
     }
-    return cwd_det;
+    return false;
+}
+
+//------------------------ Check if some words in data block were repaired using Cross-Word Decoding.
+bool STC007DataBlock::isDataAlteredByCWD()
+{
+    for(uint8_t index=WORD_L0;index<=WORD_Q0;index++)
+    {
+        if(isWordCWDFixed(index)!=false)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+//------------------------ Check if data block was repaired using Cross-Word Decoding.
+bool STC007DataBlock::isDataFixedByCWD()
+{
+    if(cwd_applied!=false)
+    {
+        return isDataAlteredByCWD();
+    }
+    return false;
 }
 
 //------------------------ Check if data block was repaired by P-code.
@@ -364,10 +347,7 @@ bool STC007DataBlock::isDataFixedByP()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if data block was repaired by Q-code.
@@ -377,23 +357,23 @@ bool STC007DataBlock::isDataFixedByQ()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if data block was repaired.
 bool STC007DataBlock::isDataFixed()
 {
-    if((isDataFixedByP()==false)&&(isDataFixedByQ()==false))
+    for(uint8_t index=WORD_L0;index<=WORD_Q0;index++)
     {
-        return false;
+        if(line_crc[index]==false)
+        {
+            if(word_valid[index]!=false)
+            {
+                return true;
+            }
+        }
     }
-    else
-    {
-        return true;
-    }
+    return false;
 }
 
 //------------------------ Check if data block is broken (probably frame miss or bad frame stitching).
@@ -403,10 +383,7 @@ bool STC007DataBlock::isDataBroken()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if data block contains 14-bit audio samples.
@@ -416,10 +393,7 @@ bool STC007DataBlock::isData14bit()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if data block contains 16-bit audio samples.
@@ -429,10 +403,7 @@ bool STC007DataBlock::isData16bit()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Is audio sample near zero value?
@@ -451,7 +422,6 @@ bool STC007DataBlock::isNearSilence(uint8_t index)
         {
             return false;
         }
-        return true;
     }
     else
     {
@@ -464,8 +434,8 @@ bool STC007DataBlock::isNearSilence(uint8_t index)
         {
             return false;
         }
-        return true;
     }
+    return true;
 }
 
 //------------------------ Are most audio samples are near "0"?
@@ -507,10 +477,7 @@ bool STC007DataBlock::isOnSeam()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Do samples in the block need de-emphasis for playback?
@@ -526,10 +493,7 @@ uint16_t STC007DataBlock::getWord(uint8_t index)
     {
         return words[index];
     }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
 
 //------------------------ Get audio sample according to its resolution.
@@ -548,10 +512,7 @@ int16_t STC007DataBlock::getSample(uint8_t index)
             return (int16_t)(words[index]<<2);
         }
     }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
 
 //------------------------ Get resolution of audio samples.
@@ -575,6 +536,22 @@ uint8_t STC007DataBlock::getErrorsAudioSource()
     for(uint8_t index=WORD_L0;index<=WORD_R2;index++)
     {
         if(line_crc[index]==false)
+        {
+            crc_errs++;
+        }
+    }
+    return crc_errs;
+}
+
+//------------------------ Get error count for audio samples (after CWD, before ECC).
+uint8_t STC007DataBlock::getErrorsAudioCWD()
+{
+    uint8_t crc_errs;
+    crc_errs = 0;
+    // Search for audio samples with bad CRC.
+    for(uint8_t index=WORD_L0;index<=WORD_R2;index++)
+    {
+        if((line_crc[index]==false)&&(cwd_fixed[index]==false))
         {
             crc_errs++;
         }
@@ -619,6 +596,34 @@ uint8_t STC007DataBlock::getErrorsTotalSource()
     for(uint8_t index=WORD_L0;index<=ind_limit;index++)
     {
         if(line_crc[index]==false)
+        {
+            crc_errs++;
+        }
+    }
+    return crc_errs;
+}
+
+//------------------------ Get total error count for all words (after CWD, before ECC).
+uint8_t STC007DataBlock::getErrorsTotalCWD()
+{
+    uint8_t crc_errs;
+    crc_errs = 0;
+
+    // Determine word limit.
+    uint8_t ind_limit;
+    if(resolution==RES_16BIT)
+    {
+        ind_limit = WORD_P0;
+    }
+    else
+    {
+        ind_limit = WORD_Q0;
+    }
+
+    // Search for words with bad CRC.
+    for(uint8_t index=WORD_L0;index<=ind_limit;index++)
+    {
+        if((line_crc[index]==false)&&(cwd_fixed[index]==false))
         {
             crc_errs++;
         }
@@ -846,8 +851,10 @@ std::string STC007DataBlock::dumpContentString()
     }
     text_out += "] ";
 
-    sprintf(c_buf, "EA[%01u|%01u] ET[%01u|%01u] T[%04u] ",
-            getErrorsAudioSource(), getErrorsAudioFixed(), getErrorsTotalSource(), getErrorsTotalFixed(), process_time);
+    sprintf(c_buf, "EA[%01u|%01u|%01u] ET[%01u|%01u|%01u] T[%04u] ",
+            getErrorsAudioSource(), getErrorsAudioCWD(), getErrorsAudioFixed(),
+            getErrorsTotalSource(), getErrorsTotalCWD(), getErrorsTotalFixed(),
+            process_time);
     text_out += c_buf;
 
     if(isSilent()!=false)
@@ -886,13 +893,17 @@ std::string STC007DataBlock::dumpContentString()
 
     if(audio_state==AUD_ORIG)
     {
-        if(isDataFixedByCWD()==false)
+        if(isDataFixedByCWD()!=false)
         {
-            sprintf(c_buf, "ORIG ");
+            sprintf(c_buf, "O_CWD");
+        }
+        else if(isDataFixed()!=false)
+        {
+            sprintf(c_buf, "FIXED");
         }
         else
         {
-            sprintf(c_buf, "O_CWD");
+            sprintf(c_buf, "ORIG ");
         }
     }
     else if(audio_state==AUD_FIX_P)

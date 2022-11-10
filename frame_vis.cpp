@@ -15,12 +15,19 @@ frame_vis::frame_vis(QWidget *parent) :
     prev_width = 640;
     prev_height = 480;
 
+    update_time.start();
+
     pos_timer.setSingleShot(true);
     pos_timer.setInterval(500);
     connect(&pos_timer, SIGNAL(timeout()), this, SLOT(updateWindowPosition()));
 
     scene = new QGraphicsScene(this);
 
+    ui->viewport->setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
+    //ui->viewport->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    ui->viewport->setOptimizationFlags(QGraphicsView::DontSavePainterState|QGraphicsView::DontAdjustForAntialiasing);
+    ui->viewport->setInteractive(false);
+    ui->viewport->setViewport(new QGLWidget(QGLFormat()));
     ui->viewport->setScene(scene);
     ui->viewport->setAlignment(Qt::AlignLeft|Qt::AlignTop);
     //ui->viewport->setCacheMode(QGraphicsView::CacheBackground);
@@ -34,6 +41,8 @@ frame_vis::frame_vis(QWidget *parent) :
     pixels = new QGraphicsPixmapItem(pix_data);
     pixels->setShapeMode(QGraphicsPixmapItem::BoundingRectShape);
     scene->addItem(pixels);
+
+    connect(scene, SIGNAL(changed(QList<QRectF>)), this, SLOT(redrawDone()));
 
     settings_hdl = new QSettings(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
     if(settings_hdl!=NULL)
@@ -112,16 +121,22 @@ void frame_vis::setTitle(QString in_str)
 }
 
 //------------------------ Get new frame from renderer and display it.
-void frame_vis::drawFrame(QPixmap in_pixmap, uint32_t in_frame_no)
+void frame_vis::drawFrame(QImage in_img, uint32_t in_frame_no)
 {
-    if((prev_width!=in_pixmap.width())||(prev_height!=in_pixmap.height()))
+    if(in_img.isNull()!=false)
     {
-        qInfo()<<"[VIS] Resized to"<<in_pixmap.width()<<"x"<<in_pixmap.height();
-        prev_width = in_pixmap.width();
-        prev_height = in_pixmap.height();
-        pixels->setPixmap(pix_data);
+        return;
+    }
+    if((prev_width!=in_img.width())||(prev_height!=in_img.height()))
+    {
+        qInfo()<<"[VIS] Resized to"<<in_img.width()<<"x"<<in_img.height();
+        // Save new dimensions.
+        prev_width = in_img.width();
+        prev_height = in_img.height();
+        // Update pixmap.
+        pixels->setPixmap(QPixmap::fromImage(in_img.copy()));
 
-        scene->setSceneRect(0,0,prev_width,prev_height);
+        scene->setSceneRect(0, 0, prev_width, prev_height);
         ui->viewport->setSceneRect(scene->sceneRect());
         ui->viewport->adjustSize();
         ui->viewport->viewport()->update();
@@ -132,10 +147,13 @@ void frame_vis::drawFrame(QPixmap in_pixmap, uint32_t in_frame_no)
     }
     else
     {
-        pixels->setPixmap(in_pixmap);
+        //pixels->setPixmap(QPixmap::fromImage(in_img.copy()));
+        pixels->setPixmap(QPixmap::fromImage(in_img));
         ui->viewport->viewport()->update();
     }
+    // Update frame number in the window title;
     this->setWindowTitle(win_title+QString::number(in_frame_no));
+    update_time.start();
 }
 
 //------------------------ Update window position and size in settings.
@@ -152,4 +170,11 @@ void frame_vis::updateWindowPosition()
             settings_hdl->endGroup();
         }
     }
+}
+
+//------------------------ Scene redraw is done after last frame update.
+void frame_vis::redrawDone()
+{
+    //qDebug()<<"[VIS] Preview updated"<<update_time.elapsed();
+    emit readyToDraw();
 }

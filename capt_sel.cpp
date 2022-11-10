@@ -13,6 +13,9 @@ capt_sel::capt_sel(QWidget *parent) :
     capt_dev = NULL;
     capture_rate = 100;
 
+    //ui->viewport->setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
+    ui->viewport->setOptimizationFlags(QGraphicsView::DontSavePainterState|QGraphicsView::DontAdjustForAntialiasing);
+
     scene = new QGraphicsScene(this);
     ui->viewport->setScene(scene);
     ui->viewport->setAlignment(Qt::AlignLeft|Qt::AlignTop);
@@ -42,7 +45,7 @@ capt_sel::capt_sel(QWidget *parent) :
     connect(capt_dev, SIGNAL(sigInputClosed()), this, SLOT(captureClosed()));
     connect(capt_dev, SIGNAL(sigVideoError(uint32_t)), this, SLOT(captureError(uint32_t)));
     connect(capt_dev, SIGNAL(newDeviceList(VCapList)), this, SLOT(refillDevList(VCapList)));
-    ffmpeg_thread->start();
+    ffmpeg_thread->start(QThread::HighPriority);
 
     connect(ui->btnClose, SIGNAL(clicked(bool)), this, SLOT(usrClose()));
     connect(ui->btnSave, SIGNAL(clicked(bool)), this, SLOT(usrSave()));
@@ -466,8 +469,10 @@ void capt_sel::redrawPreview(QImage in_image, bool in_double)
         return;
     }
     draw_rate = capt_meas.elapsed();
+    // Check if this frame contains dropped frames counter.
     if(in_image.height()!=FFMPEGWrapper::DUMMY_HEIGTH)
     {
+        // It's normal frame for displaying.
         //qDebug()<<"[CSEL] New image";
         // Update pixmap.
         pixels->setPixmap(QPixmap::fromImage(in_image.copy()));
@@ -488,6 +493,7 @@ void capt_sel::redrawPreview(QImage in_image, bool in_double)
     }
     else
     {
+        // It's a dummy, containing dropped frames counter.
         qDebug()<<"[CSEL] New dummy image";
         // Skip dummy frame and request next one.
         pollCapture();

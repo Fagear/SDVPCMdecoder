@@ -7,7 +7,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1108</width>
+    <width>1142</width>
     <height>680</height>
    </rect>
   </property>
@@ -404,7 +404,7 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>0</width>
+             <width>200</width>
              <height>7</height>
             </size>
            </property>
@@ -412,6 +412,12 @@
             <font>
              <pointsize>3</pointsize>
             </font>
+           </property>
+           <property name="toolTip">
+            <string>Индикатор уровня аудио, левый канал</string>
+           </property>
+           <property name="statusTip">
+            <string>Индикатор уровня аудио, левый канал</string>
            </property>
            <property name="maximum">
             <number>255</number>
@@ -440,7 +446,7 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>0</width>
+             <width>200</width>
              <height>7</height>
             </size>
            </property>
@@ -448,6 +454,12 @@
             <font>
              <pointsize>3</pointsize>
             </font>
+           </property>
+           <property name="toolTip">
+            <string>Индикатор уровня аудио, правый канал</string>
+           </property>
+           <property name="statusTip">
+            <string>Индикатор уровня аудио, правый канал</string>
            </property>
            <property name="maximum">
             <number>255</number>
@@ -515,35 +527,22 @@
              <property name="bottomMargin">
               <number>0</number>
              </property>
-             <item row="1" column="1">
-              <widget class="QLabel" name="lblPCM1PadTop">
+             <item row="2" column="4">
+              <widget class="QLabel" name="lblPCM1EvenOfs">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Смещение (в строках) данных от верха чётного поля</string>
+               </property>
+               <property name="statusTip">
+                <string>Смещение (в строках) данных от верха чётного поля</string>
                </property>
                <property name="text">
-                <string>Вставка сверху:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QSpinBox" name="spbPCM1BottomPad">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>25</height>
-                </size>
+                <string>Чётное поле:</string>
                </property>
               </widget>
              </item>
@@ -554,6 +553,12 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>120</width>
+                 <height>0</height>
+                </size>
                </property>
                <property name="toolTip">
                 <string>Порядок полей в кадрах исходного видео</string>
@@ -566,13 +571,13 @@
                </property>
               </widget>
              </item>
-             <item row="0" column="2">
+             <item row="0" column="2" colspan="3">
               <widget class="QComboBox" name="lbxPCM1FieldOrder">
                <property name="enabled">
                 <bool>true</bool>
                </property>
                <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -604,35 +609,233 @@
                </item>
               </widget>
              </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="lblPCM1PadBottom">
+             <item row="3" column="2">
+              <widget class="QSlider" name="sldPCM1OddOfs">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Смещение (в строках) данных от верха нечётного поля</string>
+               </property>
+               <property name="statusTip">
+                <string>Смещение (в строках) данных от верха нечётного поля</string>
+               </property>
+               <property name="minimum">
+                <number>-120</number>
+               </property>
+               <property name="maximum">
+                <number>120</number>
+               </property>
+               <property name="tracking">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::TicksBelow</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="4">
+              <widget class="QSlider" name="sldPCM1EvenOfs">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Смещение (в строках) данных от верха чётного поля</string>
+               </property>
+               <property name="statusTip">
+                <string>Смещение (в строках) данных от верха чётного поля</string>
+               </property>
+               <property name="minimum">
+                <number>-120</number>
+               </property>
+               <property name="maximum">
+                <number>120</number>
+               </property>
+               <property name="value">
+                <number>-1</number>
+               </property>
+               <property name="tracking">
+                <bool>false</bool>
+               </property>
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="tickPosition">
+                <enum>QSlider::TicksBelow</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="4">
+              <widget class="QLineEdit" name="edtPCM1EvenOfs">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Смещение (в строках) данных от верха чётного поля</string>
+               </property>
+               <property name="statusTip">
+                <string>Смещение (в строках) данных от верха чётного поля</string>
+               </property>
                <property name="text">
-                <string>Вставка снизу:</string>
+                <string notr="true">0</string>
+               </property>
+               <property name="maxLength">
+                <number>5</number>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
              <item row="2" column="2">
-              <widget class="QSpinBox" name="spbPCM1TopPad">
-               <property name="enabled">
+              <widget class="QLabel" name="lblPCM1OddOfs">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Смещение (в строках) данных от верха нечётного поля</string>
+               </property>
+               <property name="statusTip">
+                <string>Смещение (в строках) данных от верха нечётного поля</string>
+               </property>
+               <property name="text">
+                <string>Нечётное поле:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="2">
+              <widget class="QLineEdit" name="edtPCM1OddOfs">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
                 <bool>false</bool>
                </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Смещение (в строках) данных от верха нечётного поля</string>
+               </property>
+               <property name="statusTip">
+                <string>Смещение (в строках) данных от верха нечётного поля</string>
+               </property>
+               <property name="text">
+                <string notr="true">0</string>
+               </property>
+               <property name="maxLength">
+                <number>5</number>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="3">
+              <widget class="QPushButton" name="btnPCM1OfsSync">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
                <property name="minimumSize">
                 <size>
-                 <width>0</width>
-                 <height>25</height>
+                 <width>10</width>
+                 <height>0</height>
                 </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>30</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string notr="true">&gt;&gt;</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
+               <property name="flat">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="lblPCM1Offset">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Параметры смещения данных в полях по вертикали</string>
+               </property>
+               <property name="statusTip">
+                <string>Параметры смещения данных в полях по вертикали</string>
+               </property>
+               <property name="text">
+                <string>Смещение сверху:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2" colspan="3">
+              <widget class="QCheckBox" name="cbxPCM1Offset">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Попытаться автоматически выровнять данные в полях по высоте (результат не гарантирован)</string>
+               </property>
+               <property name="statusTip">
+                <string>Попытаться автоматически выровнять данные в полях по высоте (результат не гарантирован)</string>
+               </property>
+               <property name="text">
+                <string>Автоматически по содержимому</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
@@ -778,6 +981,12 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>120</width>
+                 <height>0</height>
+                </size>
                </property>
                <property name="toolTip">
                 <string>Порядок полей в кадрах исходного видео</string>
@@ -993,6 +1202,12 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>120</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="toolTip">
                 <string>Порядок полей в кадрах исходного видео</string>
                </property>
@@ -1049,9 +1264,6 @@
              </item>
              <item row="2" column="2">
               <widget class="QComboBox" name="lbxSTC007CWD">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
                  <horstretch>0</horstretch>
@@ -1420,7 +1632,7 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>100</width>
+             <width>120</width>
              <height>0</height>
             </size>
            </property>
@@ -1512,10 +1724,10 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>Применение коррекции АЧХ</string>
+            <string>Функционал ещё не готов</string>
            </property>
            <property name="statusTip">
-            <string>Применение коррекции АЧХ</string>
+            <string>Функционал ещё не готов</string>
            </property>
            <property name="currentIndex">
             <number>0</number>
@@ -1549,7 +1761,7 @@
          <enum>QFrame::Plain</enum>
         </property>
         <property name="currentIndex">
-         <number>2</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="pgPCM1Frame">
          <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -2047,6 +2259,12 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты данных по горизонтали (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты данных по горизонтали (в пикселях)</string>
+               </property>
                <property name="text">
                 <string>Координаты:</string>
                </property>
@@ -2062,6 +2280,12 @@
                </property>
                <property name="focusPolicy">
                 <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -2087,6 +2311,12 @@
                </property>
                <property name="focusPolicy">
                 <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -2650,6 +2880,12 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты данных по горизонтали (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты данных по горизонтали (в пикселях)</string>
+               </property>
                <property name="text">
                 <string>Координаты:</string>
                </property>
@@ -2665,6 +2901,12 @@
                </property>
                <property name="focusPolicy">
                 <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -2690,6 +2932,12 @@
                </property>
                <property name="focusPolicy">
                 <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -2993,6 +3241,12 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты данных по горизонтали (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты данных по горизонтали (в пикселях)</string>
+               </property>
                <property name="text">
                 <string>Координаты:</string>
                </property>
@@ -3008,6 +3262,12 @@
                </property>
                <property name="focusPolicy">
                 <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -3033,6 +3293,12 @@
                </property>
                <property name="focusPolicy">
                 <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -4006,7 +4272,7 @@
             <enum>QFrame::Sunken</enum>
            </property>
            <property name="digitCount">
-            <number>7</number>
+            <number>8</number>
            </property>
            <property name="segmentStyle">
             <enum>QLCDNumber::Flat</enum>
@@ -4099,7 +4365,7 @@
             <enum>QFrame::Sunken</enum>
            </property>
            <property name="digitCount">
-            <number>7</number>
+            <number>8</number>
            </property>
            <property name="segmentStyle">
             <enum>QLCDNumber::Flat</enum>
@@ -4221,7 +4487,7 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="2">
+         <item row="6" column="2">
           <widget class="QLCDNumber" name="lcdBroken">
            <property name="palette">
             <palette>
@@ -4319,7 +4585,7 @@ Q-коррекций:</string>
            </property>
           </widget>
          </item>
-         <item row="5" column="1">
+         <item row="6" column="1">
           <widget class="QLabel" name="lblBroken">
            <property name="toolTip">
             <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
@@ -4361,7 +4627,7 @@ Q-коррекций:</string>
            </property>
           </widget>
          </item>
-         <item row="6" column="1" colspan="2">
+         <item row="7" column="1" colspan="2">
           <widget class="QProgressBar" name="pgrDeintTime">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
@@ -4377,6 +4643,76 @@ Q-коррекций:</string>
            </property>
            <property name="format">
             <string notr="true">%p%</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="2">
+          <widget class="QLCDNumber" name="lcdCWDCorr">
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>0</red>
+                 <green>170</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>0</red>
+                 <green>170</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>120</red>
+                 <green>120</green>
+                 <blue>120</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLabel" name="lblCWDCorr">
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+           </property>
+           <property name="text">
+            <string>Успешных
+CWD-коррекций:</string>
            </property>
           </widget>
          </item>
@@ -4631,79 +4967,6 @@ Q-коррекций:</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="lblMute">
-           <property name="toolTip">
-            <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
-           </property>
-           <property name="statusTip">
-            <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
-           </property>
-           <property name="text">
-            <string>Заглушено
-аудио-отсчётов:</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QLCDNumber" name="lcdMute">
-           <property name="palette">
-            <palette>
-             <active>
-              <colorrole role="WindowText">
-               <brush brushstyle="SolidPattern">
-                <color alpha="255">
-                 <red>190</red>
-                 <green>130</green>
-                 <blue>0</blue>
-                </color>
-               </brush>
-              </colorrole>
-             </active>
-             <inactive>
-              <colorrole role="WindowText">
-               <brush brushstyle="SolidPattern">
-                <color alpha="255">
-                 <red>190</red>
-                 <green>130</green>
-                 <blue>0</blue>
-                </color>
-               </brush>
-              </colorrole>
-             </inactive>
-             <disabled>
-              <colorrole role="WindowText">
-               <brush brushstyle="SolidPattern">
-                <color alpha="255">
-                 <red>210</red>
-                 <green>210</green>
-                 <blue>210</blue>
-                </color>
-               </brush>
-              </colorrole>
-             </disabled>
-            </palette>
-           </property>
-           <property name="toolTip">
-            <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
-           </property>
-           <property name="statusTip">
-            <string>Число аудио-отсчётов, в которых заглушено выпадение</string>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
-           </property>
-           <property name="digitCount">
-            <number>8</number>
-           </property>
-           <property name="segmentStyle">
-            <enum>QLCDNumber::Flat</enum>
-           </property>
-          </widget>
-         </item>
         </layout>
        </item>
       </layout>
@@ -4711,6 +4974,9 @@ Q-коррекций:</string>
     </item>
     <item>
      <widget class="QGroupBox" name="gbxDebug">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="title">
        <string>Отладка: время выполнения</string>
       </property>
@@ -4769,7 +5035,7 @@ Q-коррекций:</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1108</width>
+     <width>1142</width>
      <height>21</height>
     </rect>
    </property>
@@ -5543,12 +5809,13 @@ Q-коррекций:</string>
   <tabstop>btnPlay</tabstop>
   <tabstop>cbxFrameStep</tabstop>
   <tabstop>btnPause</tabstop>
-  <tabstop>btnStatReset</tabstop>
   <tabstop>lbxBinQuality</tabstop>
   <tabstop>lbxPCMType</tabstop>
   <tabstop>lbxPCM1FieldOrder</tabstop>
-  <tabstop>spbPCM1BottomPad</tabstop>
-  <tabstop>spbPCM1TopPad</tabstop>
+  <tabstop>cbxPCM1Offset</tabstop>
+  <tabstop>sldPCM1OddOfs</tabstop>
+  <tabstop>btnPCM1OfsSync</tabstop>
+  <tabstop>sldPCM1EvenOfs</tabstop>
   <tabstop>lbxPCM16x0Format</tabstop>
   <tabstop>lbxPCM16x0FieldOrder</tabstop>
   <tabstop>lbxPCM16x0ECC</tabstop>
@@ -5561,6 +5828,7 @@ Q-коррекций:</string>
   <tabstop>lbxSTC007SampleRate</tabstop>
   <tabstop>lbxDeemphasis</tabstop>
   <tabstop>lbxDropAction</tabstop>
+  <tabstop>btnStatReset</tabstop>
  </tabstops>
  <resources>
   <include location="icons.qrc"/>

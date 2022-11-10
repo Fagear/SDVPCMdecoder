@@ -141,7 +141,7 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
     if(out_data_block==NULL)
     {
 #ifdef DI_EN_DBG_OUT
-        qWarning()<<DBG_ANCHOR<<"[DI-16x0] Null output pointer for PCM-16x0 data block provided in [PCM16X0Deinterleaver::processBlock()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[DI-16x0] Null output pointer for PCM-16x0 data block provided, exiting...";
 #endif
         return DI_RET_NULL_BLOCK;
     }
@@ -160,7 +160,7 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
         if(input_vector==NULL)
         {
 #ifdef DI_EN_DBG_OUT
-            qWarning()<<DBG_ANCHOR<<"[DI-16x0] Null output pointer for PCM-16x0 line buffer provided in [PCM16X0Deinterleaver::processBlock()], exiting...";
+            qWarning()<<DBG_ANCHOR<<"[DI-16x0] Null output pointer for PCM-16x0 line buffer provided, exiting...";
 #endif
             return DI_RET_NULL_LINES;
         }
@@ -657,7 +657,7 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
             else
             {
 #ifdef DI_EN_DBG_OUT
-                qWarning()<<DBG_ANCHOR<<"[DI-16x0] Impossible state detected in [PCM16X0Deinterleaver::processBlock()], breaking...";
+                qWarning()<<DBG_ANCHOR<<"[DI-16x0] Impossible state detected, breaking...";
 #endif
                 // Exit stage cycle.
                 break;
@@ -667,7 +667,7 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
             if(stage_count>STG_CONVERT_MAX)
             {
 #ifdef DI_EN_DBG_OUT
-                qWarning()<<DBG_ANCHOR<<"[DI-16x0] Inf. loop detected in [PCM16X0Deinterleaver::processBlock()], breaking...";
+                qWarning()<<DBG_ANCHOR<<"[DI-16x0] Inf. loop detected, breaking...";
 #endif
                 // Exit stage cycle.
                 break;

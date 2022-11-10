@@ -9,9 +9,9 @@
 *
 *                   This module takes one video line (of type [VideoLine]) and performs:
 *                       - AGC (Automatic Gain Control), statistically detecting BLACK and WHITE levels;
-*                       - Automatic reference level detection, detecting the best threshold for binarization;
+*                       - ARLD (Automatic Reference Level Detection), detecting the best threshold for binarization;
 *                       - TBC (Time-Based Correction), detecting horizontal offset of the PCM data in the line;
-*                       - binarization with set mode;
+*                       - Binarization with set mode;
 *                       - Brute force picking bits that were cut off the edge of the video line (for PCM-1 and PCM-16x0).
 *
 *                   Binarization itself can be done with different speed/quality ratios,

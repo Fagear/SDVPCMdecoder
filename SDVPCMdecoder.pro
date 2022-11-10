@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui winextras
+QT       += core gui opengl winextras
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia concurrent
 
@@ -28,10 +28,10 @@ QMAKE_CFLAGS_RELEASE += -O3 -march=pentium3m
 
 QMAKE_CXXFLAGS+= -D__STDC_CONSTANT_MACROS -fpermissive
 
-VERSION = 0.99.5
+VERSION = 0.99.6
 win32: QMAKE_TARGET_COMPANY = Fagear
 win32: QMAKE_TARGET_PRODUCT = SD video PCM decoder
-win32: QMAKE_TARGET_DESCRIPTION = SD video to digital audio PCM decoder
+win32: QMAKE_TARGET_DESCRIPTION = SD video to digital audio decoder
 win32: QMAKE_TARGET_COPYRIGHT = (c) Fagear
 win32: RC_LANG = 0x0419
 

@@ -229,6 +229,11 @@ public:
     uint16_t blocks_fix_p;          // Number of data blocks that were fixed with P-code.
     uint16_t blocks_fix_q;          // Number of data blocks that were fixed with Q-code.
     uint16_t blocks_fix_cwd;        // Number of data blocks that were fixed with help of CWD.
+    int8_t ctrl_index;              // Index code from address word of Control Block.
+    int8_t ctrl_hour;               // Hour (time code) from address word of Control Block.
+    int8_t ctrl_minute;             // Minute (time code) from address word of Control Block.
+    int8_t ctrl_second;             // Second (time code) from address word of Control Block.
+    int8_t ctrl_field;              // Field code from address word of Control Block.
 
 public:
     FrameAsmSTC007();
@@ -238,5 +243,6 @@ public:
     void clearMisc();
     void clearAsmStats();
     void updateVidStdSoft(uint8_t in_std);
+    bool isAddressSet();
 };
 #endif // FRAMETRIMSET_H

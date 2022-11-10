@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1030</width>
-    <height>586</height>
+    <width>1017</width>
+    <height>588</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -38,6 +38,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Разрешение захватываемого изображения</string>
+            </property>
+            <property name="statusTip">
+             <string>Разрешение захватываемого изображения</string>
+            </property>
             <property name="text">
              <string>Разрешение:</string>
             </property>
@@ -50,6 +56,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Смещение левого верхнего угла конечного кадра по горизонтали</string>
+            </property>
+            <property name="statusTip">
+             <string>Смещение левого верхнего угла конечного кадра по горизонтали</string>
             </property>
             <property name="suffix">
              <string> пикс.</string>
@@ -69,6 +81,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Горизонтальное разрешение захватываемого изображения</string>
+            </property>
+            <property name="statusTip">
+             <string>Горизонтальное разрешение захватываемого изображения</string>
             </property>
             <property name="suffix">
              <string> пикс.</string>
@@ -92,6 +110,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Частота кадров в секунду для захвата</string>
+            </property>
+            <property name="statusTip">
+             <string>Частота кадров в секунду для захвата</string>
+            </property>
             <property name="suffix">
              <string> кадр/сек</string>
             </property>
@@ -114,6 +138,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Установить параметры захвата для PAL видео</string>
+            </property>
+            <property name="statusTip">
+             <string>Установить параметры захвата для PAL видео</string>
+            </property>
             <property name="text">
              <string notr="true">PAL</string>
             </property>
@@ -127,6 +157,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Параметры, с которыми производится захват (могут отличаться от заданных из-за ограничений устройства захвата)</string>
+            </property>
+            <property name="statusTip">
+             <string>Параметры, с которыми производится захват (могут отличаться от заданных из-за ограничений устройства захвата)</string>
+            </property>
             <property name="text">
              <string>Применено:</string>
             </property>
@@ -139,6 +175,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Установить параметры захвата по видео стандарту</string>
+            </property>
+            <property name="statusTip">
+             <string>Установить параметры захвата по видео стандарту</string>
             </property>
             <property name="text">
              <string>Предустановка:</string>
@@ -162,6 +204,12 @@
             <property name="focusPolicy">
              <enum>Qt::NoFocus</enum>
             </property>
+            <property name="toolTip">
+             <string>Параметры, с которыми производится захват (могут отличаться от заданных из-за ограничений устройства захвата)</string>
+            </property>
+            <property name="statusTip">
+             <string>Параметры, с которыми производится захват (могут отличаться от заданных из-за ограничений устройства захвата)</string>
+            </property>
             <property name="readOnly">
              <bool>true</bool>
             </property>
@@ -174,6 +222,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Частота кадров в секунду для захвата</string>
+            </property>
+            <property name="statusTip">
+             <string>Частота кадров в секунду для захвата</string>
             </property>
             <property name="text">
              <string>Частота кадров:</string>
@@ -188,6 +242,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Смещение левого верхнего угла конечного кадра от кадра источника</string>
+            </property>
+            <property name="statusTip">
+             <string>Смещение левого верхнего угла конечного кадра от кадра источника</string>
+            </property>
             <property name="text">
              <string>Смещение:</string>
             </property>
@@ -201,6 +261,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Установить параметры захвата для NTSC видео</string>
+            </property>
+            <property name="statusTip">
+             <string>Установить параметры захвата для NTSC видео</string>
+            </property>
             <property name="text">
              <string notr="true">NTSC</string>
             </property>
@@ -213,6 +279,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Вертикальное разрешение захватываемого изображения</string>
+            </property>
+            <property name="statusTip">
+             <string>Вертикальное разрешение захватываемого изображения</string>
             </property>
             <property name="suffix">
              <string> пикс.</string>
@@ -236,6 +308,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Смещение левого верхнего угла конечного кадра по вертикали</string>
+            </property>
+            <property name="statusTip">
+             <string>Смещение левого верхнего угла конечного кадра по вертикали</string>
+            </property>
             <property name="suffix">
              <string> пикс.</string>
             </property>
@@ -255,6 +333,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Применить настройки выше для текущего выбранного устройства</string>
+            </property>
+            <property name="statusTip">
+             <string>Применить настройки выше для текущего выбранного устройства</string>
+            </property>
             <property name="text">
              <string>Применить</string>
             </property>
@@ -268,6 +352,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Оставить настройки захвата по умолчанию</string>
+            </property>
+            <property name="statusTip">
+             <string>Оставить настройки захвата по умолчанию</string>
+            </property>
             <property name="text">
              <string>Настройки устройства по умолчанию</string>
             </property>
@@ -280,6 +370,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Используемый для захвата изображения цветовой канал</string>
+            </property>
+            <property name="statusTip">
+             <string>Используемый для захвата изображения цветовой канал</string>
             </property>
             <item>
              <property name="text">
@@ -311,6 +407,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Используемый для захвата изображения цветовой канал</string>
+            </property>
+            <property name="statusTip">
+             <string>Используемый для захвата изображения цветовой канал</string>
+            </property>
             <property name="text">
              <string>Цветовой канал:</string>
             </property>
@@ -333,6 +435,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Список доступных в системе устройств захвата видео</string>
+            </property>
+            <property name="statusTip">
+             <string>Список доступных в системе устройств захвата видео</string>
+            </property>
             <property name="frameShape">
              <enum>QFrame::Panel</enum>
             </property>
@@ -345,6 +453,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Запросить актуальный список устройств захвата</string>
+            </property>
+            <property name="statusTip">
+             <string>Запросить актуальный список устройств захвата</string>
             </property>
             <property name="text">
              <string>Обновить список</string>
@@ -384,6 +498,12 @@
           </property>
           <property name="focusPolicy">
            <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="toolTip">
+           <string>Предпросмотр устройства захвата в реальном времени</string>
+          </property>
+          <property name="statusTip">
+           <string>Предпросмотр устройства захвата в реальном времени</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::Panel</enum>
@@ -434,10 +554,16 @@
      <item>
       <widget class="QPushButton" name="btnSave">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Функционал ещё не готов</string>
+       </property>
+       <property name="statusTip">
+        <string>Функционал ещё не готов</string>
        </property>
        <property name="text">
         <string>Сохранить</string>
@@ -447,10 +573,16 @@
      <item>
       <widget class="QPushButton" name="btnClose">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Закрыть окно без сохранения изменений</string>
+       </property>
+       <property name="statusTip">
+        <string>Закрыть окно без сохранения изменений</string>
        </property>
        <property name="text">
         <string>Закрыть</string>

@@ -109,7 +109,7 @@ public:
     uint16_t w_line[WORD_CNT];      // Number of source lines for words.
     uint16_t sample_rate;           // Sample rate of samples in the data block [Hz].
     bool emphasis;                  // Do samples need de-emphasis for playback?
-    bool cwd_applied;               // Flag for CWD correction applied.
+    bool cwd_applied;               // Flag for fixing block with CWD (applied corrections from ECC pre-scan).
     uint32_t process_time;          // Amount of time spent processing the data block [us].
 
 private:
@@ -145,6 +145,8 @@ public:
     bool isWordCWDFixed(uint8_t index);
     bool isWordValid(uint8_t index);
     bool isBlockValid();
+    bool isAudioAlteredByCWD();
+    bool isDataAlteredByCWD();
     bool isDataFixedByCWD();
     bool isDataFixedByP();
     bool isDataFixedByQ();
@@ -162,8 +164,10 @@ public:
     uint8_t getResolution();
     uint8_t getAudioState();
     uint8_t getErrorsAudioSource();
+    uint8_t getErrorsAudioCWD();
     uint8_t getErrorsAudioFixed();
     uint8_t getErrorsTotalSource();
+    uint8_t getErrorsTotalCWD();
     uint8_t getErrorsTotalFixed();
     uint32_t getStartFrame();
     uint32_t getStopFrame();

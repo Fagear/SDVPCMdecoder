@@ -20,11 +20,11 @@ extern "C"
 #define DBG_QLINE       QString::number(__LINE__, 10)
 #define DBG_ANCHOR      QString("["+DBG_QFILE+": "+DBG_QFUNCTION+"(): #"+DBG_QLINE+"]")
 #define APP_ORG_NAME    QString("Fagear")
-#define APP_ORG_HTTP    QString("http://fagear.ru")
+#define APP_ORG_HTTP    QString("https://discord.gg/4GcefbPffX")
 #define APP_NAME        QString("Video PCM decoder")
 #define APP_NAME_LONG   (QObject::tr("SDVPCM: декодер PCM аудио из SD видео"))
 #define APP_EXEC        QString("SDVPCMdecoder")
-#define APP_VERSION     "0.99.5"
+#define APP_VERSION     "0.99.6"
 #define APP_INI_NAME    QString("sdv2pcm")
 #define APP_LANG_PATH   (qApp->applicationDirPath())
 

@@ -24,7 +24,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="402"/>
+        <location filename="mainwindow.ui" line="490"/>
         <source>Настройки декодера</source>
         <translation>Ustawienia dekodera</translation>
     </message>
@@ -55,188 +55,242 @@
         <translation>Wykrywanie zduplikowanych linii</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1276"/>
-        <location filename="mainwindow.ui" line="1279"/>
-        <location filename="mainwindow.ui" line="1304"/>
-        <location filename="mainwindow.ui" line="1307"/>
+        <location filename="mainwindow.ui" line="417"/>
+        <location filename="mainwindow.ui" line="420"/>
+        <source>Индикатор уровня аудио, левый канал</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="459"/>
+        <location filename="mainwindow.ui" line="462"/>
+        <source>Индикатор уровня аудио, правый канал</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="539"/>
+        <location filename="mainwindow.ui" line="542"/>
+        <location filename="mainwindow.ui" line="652"/>
+        <location filename="mainwindow.ui" line="655"/>
+        <location filename="mainwindow.ui" line="695"/>
+        <location filename="mainwindow.ui" line="698"/>
+        <source>Смещение (в строках) данных от верха чётного поля</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="621"/>
+        <location filename="mainwindow.ui" line="624"/>
+        <location filename="mainwindow.ui" line="723"/>
+        <location filename="mainwindow.ui" line="726"/>
+        <location filename="mainwindow.ui" line="751"/>
+        <location filename="mainwindow.ui" line="754"/>
+        <source>Смещение (в строках) данных от верха нечётного поля</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="810"/>
+        <location filename="mainwindow.ui" line="813"/>
+        <source>Параметры смещения данных в полях по вертикали</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="816"/>
+        <source>Смещение сверху:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="829"/>
+        <location filename="mainwindow.ui" line="832"/>
+        <source>Попытаться автоматически выровнять данные в полях по высоте (результат не гарантирован)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="835"/>
+        <source>Автоматически по содержимому</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1564"/>
+        <location filename="mainwindow.ui" line="1567"/>
+        <location filename="mainwindow.ui" line="1592"/>
+        <location filename="mainwindow.ui" line="1595"/>
         <source>Метод бинаризации (определение &quot;0&quot; и &quot;1&quot; в видео)</source>
         <translation>Metoda binaryzacji (konwersja wideo na &quot;0&quot; i &quot;1&quot;)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1282"/>
+        <location filename="mainwindow.ui" line="1570"/>
         <source>Бинаризация:</source>
         <translation>Binaryzacja:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1314"/>
+        <location filename="mainwindow.ui" line="1602"/>
         <source>экстремальная (медленно)</source>
         <translation>dokładna (wolno)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1319"/>
+        <location filename="mainwindow.ui" line="1607"/>
         <source>качественная</source>
         <translation>normalna</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1324"/>
+        <location filename="mainwindow.ui" line="1612"/>
         <source>быстрая</source>
         <translation>szybka</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1329"/>
+        <location filename="mainwindow.ui" line="1617"/>
         <source>черновая</source>
         <translation>niedokładna</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="858"/>
-        <location filename="mainwindow.ui" line="861"/>
-        <location filename="mainwindow.ui" line="1073"/>
-        <location filename="mainwindow.ui" line="1076"/>
+        <location filename="mainwindow.ui" line="1143"/>
+        <location filename="mainwindow.ui" line="1146"/>
+        <location filename="mainwindow.ui" line="1361"/>
+        <location filename="mainwindow.ui" line="1364"/>
         <source>Формат входного видео (число строк и частота кадров)</source>
         <translation>Format źródłowego wideo (liczba linii i klatek na sekundę)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="864"/>
+        <location filename="mainwindow.ui" line="1149"/>
         <source>Строк в кадре:</source>
         <translation>Linie na klatkę:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="623"/>
-        <location filename="mainwindow.ui" line="799"/>
-        <location filename="mainwindow.ui" line="1040"/>
-        <location filename="mainwindow.ui" line="1083"/>
-        <location filename="mainwindow.ui" line="1126"/>
-        <location filename="mainwindow.ui" line="1166"/>
-        <location filename="mainwindow.ui" line="1449"/>
+        <location filename="mainwindow.ui" line="902"/>
+        <location filename="mainwindow.ui" line="1084"/>
+        <location filename="mainwindow.ui" line="1328"/>
+        <location filename="mainwindow.ui" line="1371"/>
+        <location filename="mainwindow.ui" line="1414"/>
+        <location filename="mainwindow.ui" line="1454"/>
+        <location filename="mainwindow.ui" line="1737"/>
         <source>автоматически</source>
         <translation>automatycznie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1088"/>
+        <location filename="mainwindow.ui" line="1376"/>
         <source>525 (NTSC, 2x245)</source>
         <translation>525 (NTSC, 2x245)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1093"/>
+        <location filename="mainwindow.ui" line="1381"/>
         <source>625 (PAL, 2x294)</source>
         <translation>625 (PAL, 2x294)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="483"/>
-        <location filename="mainwindow.ui" line="486"/>
-        <location filename="mainwindow.ui" line="511"/>
-        <location filename="mainwindow.ui" line="514"/>
-        <location filename="mainwindow.ui" line="707"/>
-        <location filename="mainwindow.ui" line="710"/>
-        <location filename="mainwindow.ui" line="735"/>
-        <location filename="mainwindow.ui" line="738"/>
-        <location filename="mainwindow.ui" line="921"/>
-        <location filename="mainwindow.ui" line="924"/>
-        <location filename="mainwindow.ui" line="1030"/>
-        <location filename="mainwindow.ui" line="1033"/>
+        <location filename="mainwindow.ui" line="564"/>
+        <location filename="mainwindow.ui" line="567"/>
+        <location filename="mainwindow.ui" line="592"/>
+        <location filename="mainwindow.ui" line="595"/>
+        <location filename="mainwindow.ui" line="992"/>
+        <location filename="mainwindow.ui" line="995"/>
+        <location filename="mainwindow.ui" line="1020"/>
+        <location filename="mainwindow.ui" line="1023"/>
+        <location filename="mainwindow.ui" line="1212"/>
+        <location filename="mainwindow.ui" line="1215"/>
+        <location filename="mainwindow.ui" line="1318"/>
+        <location filename="mainwindow.ui" line="1321"/>
         <source>Порядок полей в кадрах исходного видео</source>
         <translation>Kolejność pól w klatkach oryginalnego wideo</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="489"/>
-        <location filename="mainwindow.ui" line="713"/>
-        <location filename="mainwindow.ui" line="927"/>
-        <location filename="mainwindow.ui" line="1719"/>
-        <location filename="mainwindow.ui" line="2103"/>
-        <location filename="mainwindow.ui" line="2777"/>
+        <location filename="mainwindow.ui" line="570"/>
+        <location filename="mainwindow.ui" line="998"/>
+        <location filename="mainwindow.ui" line="1218"/>
+        <location filename="mainwindow.ui" line="2007"/>
+        <location filename="mainwindow.ui" line="2409"/>
+        <location filename="mainwindow.ui" line="3101"/>
         <source>Порядок полей:</source>
         <translation>Kolejność pól:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="521"/>
-        <location filename="mainwindow.ui" line="745"/>
-        <location filename="mainwindow.ui" line="1045"/>
+        <location filename="mainwindow.ui" line="602"/>
+        <location filename="mainwindow.ui" line="1030"/>
+        <location filename="mainwindow.ui" line="1333"/>
         <source>TFF (сначала нечётное)</source>
         <translation>TFF (najpierw górne)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="526"/>
-        <location filename="mainwindow.ui" line="750"/>
-        <location filename="mainwindow.ui" line="1050"/>
+        <location filename="mainwindow.ui" line="607"/>
+        <location filename="mainwindow.ui" line="1035"/>
+        <location filename="mainwindow.ui" line="1338"/>
         <source>BFF (сначала чётное)</source>
         <translation>BFF (najpierw dolne)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="902"/>
-        <location filename="mainwindow.ui" line="905"/>
-        <location filename="mainwindow.ui" line="949"/>
-        <location filename="mainwindow.ui" line="952"/>
+        <location filename="mainwindow.ui" line="1187"/>
+        <location filename="mainwindow.ui" line="1190"/>
+        <location filename="mainwindow.ui" line="1240"/>
+        <location filename="mainwindow.ui" line="1243"/>
         <source>Разрешённые ступени исправления ошибок CRC (Q-код доступен только для 14 бит)</source>
         <translation>Dozwolone kroki korekcji błędów CRC (Q-kod jest dostępny tylko dla 14 bit)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="656"/>
-        <location filename="mainwindow.ui" line="908"/>
+        <location filename="mainwindow.ui" line="935"/>
+        <location filename="mainwindow.ui" line="1193"/>
         <source>Коррекция ошибок:</source>
         <translation>Korekcja błędów:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="693"/>
-        <location filename="mainwindow.ui" line="969"/>
+        <location filename="mainwindow.ui" line="972"/>
+        <location filename="mainwindow.ui" line="1260"/>
         <source>отключена</source>
         <translation>wyłączona</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1197"/>
-        <location filename="mainwindow.ui" line="1200"/>
-        <location filename="mainwindow.ui" line="1222"/>
-        <location filename="mainwindow.ui" line="1225"/>
+        <location filename="mainwindow.ui" line="1485"/>
+        <location filename="mainwindow.ui" line="1488"/>
+        <location filename="mainwindow.ui" line="1510"/>
+        <location filename="mainwindow.ui" line="1513"/>
         <source>Действие с выпадениями (неисправимыми аудио-отсчётами)</source>
         <translation type="unfinished">Akcja dla zakłóceń (nieprawidłowy blok danych)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1203"/>
+        <location filename="mainwindow.ui" line="1491"/>
         <source>Выпадения:</source>
         <translation>Zakłócenia:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1232"/>
+        <location filename="mainwindow.ui" line="1520"/>
         <source>интерполировать по отсчётам</source>
         <translation>interpolacja z próbek</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1237"/>
+        <location filename="mainwindow.ui" line="1525"/>
         <source>интерполировать по блокам</source>
         <translation>interpolacja z bloków</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1242"/>
+        <location filename="mainwindow.ui" line="1530"/>
         <source>держать уровень по отсчётам</source>
         <translation>powtarzanie próbek</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1247"/>
+        <location filename="mainwindow.ui" line="1535"/>
         <source>держать уровень по блокам</source>
         <translation>powtarzanie bloków</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1257"/>
+        <location filename="mainwindow.ui" line="1545"/>
         <source>заглушать по блокам</source>
         <translation>wyciszanie bloków</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1262"/>
+        <location filename="mainwindow.ui" line="1550"/>
         <source>пропускать (не маскировать)</source>
         <translation>ignorowanie (nie maskuj)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="886"/>
-        <location filename="mainwindow.ui" line="3037"/>
+        <location filename="mainwindow.ui" line="1171"/>
+        <location filename="mainwindow.ui" line="3379"/>
         <source>Разрешение аудио:</source>
         <translation>Rozdzielczość dźwięku:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1131"/>
+        <location filename="mainwindow.ui" line="1419"/>
         <source>14 бит (STC-007)</source>
         <translation>14 bit (STC-007)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1136"/>
+        <location filename="mainwindow.ui" line="1424"/>
         <source>16 бит (PCM-F1)</source>
         <translation>16 bit (PCM F-1)</translation>
     </message>
@@ -247,118 +301,120 @@
         <translation>Ścieżka do źródłowego pliku wideo</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1522"/>
-        <location filename="mainwindow.ui" line="1525"/>
-        <location filename="mainwindow.ui" line="2163"/>
-        <location filename="mainwindow.ui" line="2166"/>
-        <location filename="mainwindow.ui" line="3210"/>
-        <location filename="mainwindow.ui" line="3213"/>
+        <location filename="mainwindow.ui" line="1810"/>
+        <location filename="mainwindow.ui" line="1813"/>
+        <location filename="mainwindow.ui" line="2469"/>
+        <location filename="mainwindow.ui" line="2472"/>
+        <location filename="mainwindow.ui" line="3552"/>
+        <location filename="mainwindow.ui" line="3555"/>
         <source>Параметры нечётного поля видео сигнала</source>
         <translation>Parametry dolnego pola</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1528"/>
-        <location filename="mainwindow.ui" line="2169"/>
-        <location filename="mainwindow.ui" line="3216"/>
+        <location filename="mainwindow.ui" line="729"/>
+        <location filename="mainwindow.ui" line="1816"/>
+        <location filename="mainwindow.ui" line="2475"/>
+        <location filename="mainwindow.ui" line="3558"/>
         <source>Нечётное поле:</source>
         <translation>Dolne pole:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1751"/>
-        <location filename="mainwindow.ui" line="1754"/>
-        <location filename="mainwindow.ui" line="2182"/>
-        <location filename="mainwindow.ui" line="2185"/>
-        <location filename="mainwindow.ui" line="2721"/>
-        <location filename="mainwindow.ui" line="2724"/>
+        <location filename="mainwindow.ui" line="2039"/>
+        <location filename="mainwindow.ui" line="2042"/>
+        <location filename="mainwindow.ui" line="2488"/>
+        <location filename="mainwindow.ui" line="2491"/>
+        <location filename="mainwindow.ui" line="3045"/>
+        <location filename="mainwindow.ui" line="3048"/>
         <source>Параметры чётного поля видео сигнала</source>
         <translation>Parametry górnego pola</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1757"/>
-        <location filename="mainwindow.ui" line="2188"/>
-        <location filename="mainwindow.ui" line="2727"/>
+        <location filename="mainwindow.ui" line="545"/>
+        <location filename="mainwindow.ui" line="2045"/>
+        <location filename="mainwindow.ui" line="2494"/>
+        <location filename="mainwindow.ui" line="3051"/>
         <source>Чётное поле:</source>
         <translation>Górne pole:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1572"/>
-        <location filename="mainwindow.ui" line="1575"/>
-        <location filename="mainwindow.ui" line="2263"/>
-        <location filename="mainwindow.ui" line="2266"/>
-        <location filename="mainwindow.ui" line="3137"/>
-        <location filename="mainwindow.ui" line="3140"/>
+        <location filename="mainwindow.ui" line="1860"/>
+        <location filename="mainwindow.ui" line="1863"/>
+        <location filename="mainwindow.ui" line="2569"/>
+        <location filename="mainwindow.ui" line="2572"/>
+        <location filename="mainwindow.ui" line="3479"/>
+        <location filename="mainwindow.ui" line="3482"/>
         <source>Номер строки, с которой начинаются PCM-данные</source>
         <translation>Pierwsza linia z danymi PCM</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1581"/>
-        <location filename="mainwindow.ui" line="2272"/>
-        <location filename="mainwindow.ui" line="3146"/>
+        <location filename="mainwindow.ui" line="1869"/>
+        <location filename="mainwindow.ui" line="2578"/>
+        <location filename="mainwindow.ui" line="3488"/>
         <source>Начальная строка:</source>
         <translation>Pierwsza linia:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1547"/>
-        <location filename="mainwindow.ui" line="1550"/>
-        <location filename="mainwindow.ui" line="2207"/>
-        <location filename="mainwindow.ui" line="2210"/>
-        <location filename="mainwindow.ui" line="2696"/>
-        <location filename="mainwindow.ui" line="2699"/>
+        <location filename="mainwindow.ui" line="1835"/>
+        <location filename="mainwindow.ui" line="1838"/>
+        <location filename="mainwindow.ui" line="2513"/>
+        <location filename="mainwindow.ui" line="2516"/>
+        <location filename="mainwindow.ui" line="3020"/>
+        <location filename="mainwindow.ui" line="3023"/>
         <source>Начальная строка PCM-данных в нечётном поле</source>
         <translation>Pierwsza linia z danymi PCM w dolnym polu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1776"/>
-        <location filename="mainwindow.ui" line="1779"/>
-        <location filename="mainwindow.ui" line="2238"/>
-        <location filename="mainwindow.ui" line="2241"/>
-        <location filename="mainwindow.ui" line="2746"/>
-        <location filename="mainwindow.ui" line="2749"/>
+        <location filename="mainwindow.ui" line="2064"/>
+        <location filename="mainwindow.ui" line="2067"/>
+        <location filename="mainwindow.ui" line="2544"/>
+        <location filename="mainwindow.ui" line="2547"/>
+        <location filename="mainwindow.ui" line="3070"/>
+        <location filename="mainwindow.ui" line="3073"/>
         <source>Начальная строка PCM-данных в чётном поле</source>
         <translation>Pierwsza linia z danymi PCM w górnym polu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3118"/>
-        <location filename="mainwindow.ui" line="3121"/>
+        <location filename="mainwindow.ui" line="3460"/>
+        <location filename="mainwindow.ui" line="3463"/>
         <source>Разрешение аудио в нечётном поле</source>
         <translation>Rozdzielczość dźwięku w dolnym polu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3059"/>
-        <location filename="mainwindow.ui" line="3062"/>
+        <location filename="mainwindow.ui" line="3401"/>
+        <location filename="mainwindow.ui" line="3404"/>
         <source>Разрешение аудио в чётном поле</source>
         <translation>Rozdzielczość dźwięku w górnym polu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3229"/>
+        <location filename="mainwindow.ui" line="3571"/>
         <source>Внутри кадра:</source>
         <translation>W klatce:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3159"/>
+        <location filename="mainwindow.ui" line="3501"/>
         <source>Между кадрами:</source>
         <translation>Między klatkami:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3191"/>
+        <location filename="mainwindow.ui" line="3533"/>
         <source>Количество строк, которое необходимо вставить между полями</source>
         <translation>Liczba pustych linii do wstawienia między pola</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3197"/>
+        <location filename="mainwindow.ui" line="3539"/>
         <source>Дополнение строк:</source>
         <translation>Puste linie:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="2993"/>
-        <location filename="mainwindow.ui" line="2996"/>
-        <location filename="mainwindow.ui" line="3012"/>
-        <location filename="mainwindow.ui" line="3015"/>
+        <location filename="mainwindow.ui" line="3335"/>
+        <location filename="mainwindow.ui" line="3338"/>
+        <location filename="mainwindow.ui" line="3354"/>
+        <location filename="mainwindow.ui" line="3357"/>
         <source>Установленный стандарт исходного видео</source>
         <translation>Wykryty standard wideo</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3018"/>
+        <location filename="mainwindow.ui" line="3360"/>
         <source>Стандарт видео:</source>
         <translation>Standard wideo:</translation>
     </message>
@@ -428,231 +484,231 @@
         <translation>Pauza</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3365"/>
+        <location filename="mainwindow.ui" line="3707"/>
         <source>Статистика</source>
         <translation>Statystyki</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3391"/>
-        <location filename="mainwindow.ui" line="3394"/>
+        <location filename="mainwindow.ui" line="3733"/>
+        <location filename="mainwindow.ui" line="3736"/>
         <source>Сброс статистики</source>
         <translation>Wyzeruj liczniki</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3397"/>
+        <location filename="mainwindow.ui" line="3739"/>
         <source>Сброс</source>
         <translation>Reset</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3466"/>
-        <location filename="mainwindow.ui" line="3469"/>
-        <location filename="mainwindow.ui" line="3498"/>
-        <location filename="mainwindow.ui" line="3501"/>
+        <location filename="mainwindow.ui" line="3808"/>
+        <location filename="mainwindow.ui" line="3811"/>
+        <location filename="mainwindow.ui" line="3840"/>
+        <location filename="mainwindow.ui" line="3843"/>
         <source>Число считанных кадров</source>
         <translation>Liczba odczytanych klatek ze źródła</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3472"/>
+        <location filename="mainwindow.ui" line="3814"/>
         <source>Считано кадров:</source>
         <translation>Klatki odczytane:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3444"/>
-        <location filename="mainwindow.ui" line="3447"/>
-        <location filename="mainwindow.ui" line="3482"/>
-        <location filename="mainwindow.ui" line="3485"/>
+        <location filename="mainwindow.ui" line="3786"/>
+        <location filename="mainwindow.ui" line="3789"/>
+        <location filename="mainwindow.ui" line="3824"/>
+        <location filename="mainwindow.ui" line="3827"/>
         <source>Число кадров, выпавших в исходном видео</source>
         <translation>Liczba opuszczonych klatek</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3488"/>
+        <location filename="mainwindow.ui" line="3830"/>
         <source>Выпавших кадров:</source>
         <translation>Klatki opuszczone:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3529"/>
-        <location filename="mainwindow.ui" line="3532"/>
+        <location filename="mainwindow.ui" line="3871"/>
+        <location filename="mainwindow.ui" line="3874"/>
         <source>Содержание PCM-данных в кадре</source>
         <translation>Procent linii z danymi PCM w klatce</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3614"/>
-        <location filename="mainwindow.ui" line="3617"/>
+        <location filename="mainwindow.ui" line="3956"/>
+        <location filename="mainwindow.ui" line="3959"/>
         <source>Соотношение сигнал/шум PCM данных</source>
         <translation>Odstęp sygnału od szumu w liniach danych PCM</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3548"/>
-        <location filename="mainwindow.ui" line="3551"/>
-        <location filename="mainwindow.ui" line="3564"/>
-        <location filename="mainwindow.ui" line="3567"/>
+        <location filename="mainwindow.ui" line="3890"/>
+        <location filename="mainwindow.ui" line="3893"/>
+        <location filename="mainwindow.ui" line="3906"/>
+        <location filename="mainwindow.ui" line="3909"/>
         <source>Число полностью обработанных кадров</source>
         <translation>Liczba przetworzonych klatek</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3554"/>
+        <location filename="mainwindow.ui" line="3896"/>
         <source>Обработано кадров:</source>
         <translation>Klatki przetworzone:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3737"/>
-        <location filename="mainwindow.ui" line="3740"/>
+        <location filename="mainwindow.ui" line="4079"/>
+        <location filename="mainwindow.ui" line="4082"/>
         <source>Заполненность буфера видео-строк</source>
         <translation>Zapełnienie bufora linii wideo</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3924"/>
-        <location filename="mainwindow.ui" line="3943"/>
+        <location filename="mainwindow.ui" line="4266"/>
+        <location filename="mainwindow.ui" line="4285"/>
         <source>Текущий уровень порога бинаризатора</source>
         <translation>Bieżący próg binaryzacji</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3927"/>
-        <location filename="mainwindow.ui" line="3946"/>
+        <location filename="mainwindow.ui" line="4269"/>
+        <location filename="mainwindow.ui" line="4288"/>
         <source>Текущий уровень порога бинаризатора (0...255)</source>
         <translation>Aktualny próg binaryzacji (0...255)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3949"/>
+        <location filename="mainwindow.ui" line="4291"/>
         <source>Пороговый
 уровень:</source>
         <translation>Próg
 poziom:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3712"/>
-        <location filename="mainwindow.ui" line="3715"/>
-        <location filename="mainwindow.ui" line="3759"/>
-        <location filename="mainwindow.ui" line="3762"/>
+        <location filename="mainwindow.ui" line="4054"/>
+        <location filename="mainwindow.ui" line="4057"/>
+        <location filename="mainwindow.ui" line="4101"/>
+        <location filename="mainwindow.ui" line="4104"/>
         <source>Число видео-строк без PCM</source>
         <translation>Liczba linii wideo bez danych PCM</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3765"/>
+        <location filename="mainwindow.ui" line="4107"/>
         <source>Пустые строки
 (без PCM):</source>
         <translation>Puste linie
 (bez PCM):</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3888"/>
-        <location filename="mainwindow.ui" line="3891"/>
-        <location filename="mainwindow.ui" line="3910"/>
-        <location filename="mainwindow.ui" line="3913"/>
+        <location filename="mainwindow.ui" line="4230"/>
+        <location filename="mainwindow.ui" line="4233"/>
+        <location filename="mainwindow.ui" line="4252"/>
+        <location filename="mainwindow.ui" line="4255"/>
         <source>Число видео-строк с ошибками</source>
         <translation>Liczba linii wideo z błędami</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3916"/>
+        <location filename="mainwindow.ui" line="4258"/>
         <source>Повреждённые
 строки (CRC):</source>
         <translation>Uszkodzone
 linie (CRC):</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3813"/>
-        <location filename="mainwindow.ui" line="3832"/>
+        <location filename="mainwindow.ui" line="4155"/>
+        <location filename="mainwindow.ui" line="4174"/>
         <source>Число видео-строк, одинаковых с предшествующими</source>
         <translation>Liczba powtórzonych linii wideo</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3816"/>
-        <location filename="mainwindow.ui" line="3835"/>
+        <location filename="mainwindow.ui" line="4158"/>
+        <location filename="mainwindow.ui" line="4177"/>
         <source>Число видео-строк, одинаковых с предшествующими (возможные ошибки из-за компенсаторов выпадений)</source>
         <translation>Liczba powtórzonych linii wideo (możliwe błędy spowodowane przez kompensator zakłóceń magnetowidu)</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3838"/>
+        <location filename="mainwindow.ui" line="4180"/>
         <source>Дубликатов строк:</source>
         <translation>Linie powtórzone:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4272"/>
-        <location filename="mainwindow.ui" line="4275"/>
+        <location filename="mainwindow.ui" line="4614"/>
+        <location filename="mainwindow.ui" line="4617"/>
         <source>Заполненность буфера бинаризированных PCM-строк</source>
         <translation>Zapełnienie bufora linii PCM</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4017"/>
-        <location filename="mainwindow.ui" line="4020"/>
-        <location filename="mainwindow.ui" line="4207"/>
-        <location filename="mainwindow.ui" line="4210"/>
+        <location filename="mainwindow.ui" line="4359"/>
+        <location filename="mainwindow.ui" line="4362"/>
+        <location filename="mainwindow.ui" line="4549"/>
+        <location filename="mainwindow.ui" line="4552"/>
         <source>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</source>
         <translation>Liczba kombinacji pól, które nie zostały zweryfikowane pod kątem poprawności złozonych bloków danych</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4213"/>
+        <location filename="mainwindow.ui" line="4555"/>
         <source>Непроверенных
 сшивок полей:</source>
         <translation>Niesprawdzone
 kombinacje pól:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4073"/>
-        <location filename="mainwindow.ui" line="4076"/>
-        <location filename="mainwindow.ui" line="4221"/>
-        <location filename="mainwindow.ui" line="4224"/>
+        <location filename="mainwindow.ui" line="4415"/>
+        <location filename="mainwindow.ui" line="4418"/>
+        <location filename="mainwindow.ui" line="4563"/>
+        <location filename="mainwindow.ui" line="4566"/>
         <source>Число блоков данных, в которых успешно исправлена одиночная ошибка</source>
         <translation>Liczba bloków danych w których pojedyncze błędy próbek zostały naprawione</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4227"/>
+        <location filename="mainwindow.ui" line="4569"/>
         <source>Успешных
 P-коррекций:</source>
         <translation>Udane
 korekcje P-kodu:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4132"/>
-        <location filename="mainwindow.ui" line="4135"/>
-        <location filename="mainwindow.ui" line="4235"/>
-        <location filename="mainwindow.ui" line="4238"/>
+        <location filename="mainwindow.ui" line="4474"/>
+        <location filename="mainwindow.ui" line="4477"/>
+        <location filename="mainwindow.ui" line="4577"/>
+        <location filename="mainwindow.ui" line="4580"/>
         <source>Число блоков данных, в которых успешно исправлена двойная ошибка</source>
         <translation>Liczba bloków danych w których podwójne błędy próbek zostały naprawione</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4241"/>
+        <location filename="mainwindow.ui" line="4583"/>
         <source>Успешных
 Q-коррекций:</source>
         <translation>Udane
 korekcje Q-kodu:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4351"/>
-        <location filename="mainwindow.ui" line="4354"/>
-        <location filename="mainwindow.ui" line="4395"/>
-        <location filename="mainwindow.ui" line="4398"/>
+        <location filename="mainwindow.ui" line="4763"/>
+        <location filename="mainwindow.ui" line="4766"/>
+        <location filename="mainwindow.ui" line="4838"/>
+        <location filename="mainwindow.ui" line="4841"/>
         <source>Число блоков данных, которые невозможно восстановить кодами P и Q</source>
         <translation>Liczba bloków danych, które nie zostały naprawione przez P i Q-kody</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4401"/>
+        <location filename="mainwindow.ui" line="4844"/>
         <source>Неисправленных
 блоков данных:</source>
         <translation type="unfinished">Zakłócenia
 bloku danych:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4376"/>
-        <location filename="mainwindow.ui" line="4379"/>
+        <location filename="mainwindow.ui" line="4878"/>
+        <location filename="mainwindow.ui" line="4881"/>
         <source>Заполненность буфера PCM блоков данных</source>
         <translation>Zapełnienie bufora bloku danych</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1352"/>
-        <location filename="mainwindow.ui" line="1355"/>
-        <location filename="mainwindow.ui" line="1377"/>
-        <location filename="mainwindow.ui" line="1380"/>
+        <location filename="mainwindow.ui" line="1640"/>
+        <location filename="mainwindow.ui" line="1643"/>
+        <location filename="mainwindow.ui" line="1665"/>
+        <location filename="mainwindow.ui" line="1668"/>
         <source>Формат кодирования PCM в исходном видео-файле</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1358"/>
+        <location filename="mainwindow.ui" line="1646"/>
         <source>Формат PCM:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1397"/>
+        <location filename="mainwindow.ui" line="1685"/>
         <source>STC-007/Sony PCM-F1</source>
         <oldsource>STC-007/PCM-F1</oldsource>
         <translation type="unfinished"></translation>
@@ -664,55 +720,55 @@ bloku danych:</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="880"/>
-        <location filename="mainwindow.ui" line="883"/>
-        <location filename="mainwindow.ui" line="1116"/>
-        <location filename="mainwindow.ui" line="1119"/>
+        <location filename="mainwindow.ui" line="1165"/>
+        <location filename="mainwindow.ui" line="1168"/>
+        <location filename="mainwindow.ui" line="1404"/>
+        <location filename="mainwindow.ui" line="1407"/>
         <source>Разрешение декодируемого аудио (будет приведено к 16 битам на выходе)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="764"/>
-        <location filename="mainwindow.ui" line="767"/>
-        <location filename="mainwindow.ui" line="792"/>
-        <location filename="mainwindow.ui" line="795"/>
-        <location filename="mainwindow.ui" line="839"/>
-        <location filename="mainwindow.ui" line="842"/>
-        <location filename="mainwindow.ui" line="1159"/>
-        <location filename="mainwindow.ui" line="1162"/>
+        <location filename="mainwindow.ui" line="1049"/>
+        <location filename="mainwindow.ui" line="1052"/>
+        <location filename="mainwindow.ui" line="1077"/>
+        <location filename="mainwindow.ui" line="1080"/>
+        <location filename="mainwindow.ui" line="1124"/>
+        <location filename="mainwindow.ui" line="1127"/>
+        <location filename="mainwindow.ui" line="1447"/>
+        <location filename="mainwindow.ui" line="1450"/>
         <source>Частота отсчётов декодируемого аудио (будет записана в заголовок WAV)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="770"/>
-        <location filename="mainwindow.ui" line="845"/>
+        <location filename="mainwindow.ui" line="1055"/>
+        <location filename="mainwindow.ui" line="1130"/>
         <source>Частота отсчётов:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="804"/>
-        <location filename="mainwindow.ui" line="1171"/>
+        <location filename="mainwindow.ui" line="1089"/>
+        <location filename="mainwindow.ui" line="1459"/>
         <source>44056 Гц</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="809"/>
-        <location filename="mainwindow.ui" line="1176"/>
+        <location filename="mainwindow.ui" line="1094"/>
+        <location filename="mainwindow.ui" line="1464"/>
         <source>44100 Гц</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="628"/>
+        <location filename="mainwindow.ui" line="907"/>
         <source>SI-формат</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="633"/>
+        <location filename="mainwindow.ui" line="912"/>
         <source>EI-формат</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="594"/>
+        <location filename="mainwindow.ui" line="873"/>
         <source>Режим PCM-1630:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -722,433 +778,466 @@ bloku danych:</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="451"/>
-        <source>Вставка сверху:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="540"/>
-        <source>Вставка снизу:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="588"/>
-        <location filename="mainwindow.ui" line="591"/>
-        <location filename="mainwindow.ui" line="613"/>
-        <location filename="mainwindow.ui" line="616"/>
+        <location filename="mainwindow.ui" line="867"/>
+        <location filename="mainwindow.ui" line="870"/>
+        <location filename="mainwindow.ui" line="892"/>
+        <location filename="mainwindow.ui" line="895"/>
         <source>Режим кодирования PCM-1630</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="650"/>
-        <location filename="mainwindow.ui" line="653"/>
-        <location filename="mainwindow.ui" line="678"/>
-        <location filename="mainwindow.ui" line="681"/>
+        <location filename="mainwindow.ui" line="929"/>
+        <location filename="mainwindow.ui" line="932"/>
+        <location filename="mainwindow.ui" line="957"/>
+        <location filename="mainwindow.ui" line="960"/>
         <source>Разрешение исправления ошибок CRC кодами коррекции</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="688"/>
+        <location filename="mainwindow.ui" line="967"/>
         <source>включена (P-код)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="959"/>
+        <location filename="mainwindow.ui" line="1250"/>
         <source>полная (P и Q коды)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="964"/>
+        <location filename="mainwindow.ui" line="1255"/>
         <source>частичная (P-код)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="992"/>
-        <location filename="mainwindow.ui" line="995"/>
+        <location filename="mainwindow.ui" line="1280"/>
+        <location filename="mainwindow.ui" line="1283"/>
         <source>Активация дополнительной коррекции Cross-Word Decoding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1002"/>
+        <location filename="mainwindow.ui" line="1290"/>
         <source>CWD коррекция</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1007"/>
+        <location filename="mainwindow.ui" line="1295"/>
         <source>CWD отключено</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1252"/>
+        <location filename="mainwindow.ui" line="1540"/>
         <source>заглушать по отсчётам</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1387"/>
+        <location filename="mainwindow.ui" line="1675"/>
         <source>PCM-1 (Sony Standard B)</source>
         <oldsource>PCM-1 (Standard B)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1392"/>
+        <location filename="mainwindow.ui" line="1680"/>
         <source>PCM-16x0 (Sony Standard A)</source>
         <oldsource>PCM-16x0 (Standard A)</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1411"/>
-        <location filename="mainwindow.ui" line="1414"/>
-        <location filename="mainwindow.ui" line="1439"/>
-        <location filename="mainwindow.ui" line="1442"/>
+        <location filename="mainwindow.ui" line="1699"/>
+        <location filename="mainwindow.ui" line="1702"/>
         <source>Применение коррекции АЧХ</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1417"/>
+        <location filename="mainwindow.ui" line="1705"/>
         <source>Деэмфазис:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1454"/>
+        <location filename="mainwindow.ui" line="1727"/>
+        <location filename="mainwindow.ui" line="1730"/>
+        <source>Функционал ещё не готов</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="1742"/>
         <source>включён</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1459"/>
+        <location filename="mainwindow.ui" line="1747"/>
         <source>отключён</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1495"/>
+        <location filename="mainwindow.ui" line="1783"/>
         <source>Параметры сборки кадра PCM-1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1594"/>
-        <location filename="mainwindow.ui" line="1597"/>
-        <location filename="mainwindow.ui" line="2285"/>
-        <location filename="mainwindow.ui" line="2288"/>
-        <location filename="mainwindow.ui" line="3172"/>
-        <location filename="mainwindow.ui" line="3175"/>
+        <location filename="mainwindow.ui" line="1882"/>
+        <location filename="mainwindow.ui" line="1885"/>
+        <location filename="mainwindow.ui" line="2591"/>
+        <location filename="mainwindow.ui" line="2594"/>
+        <location filename="mainwindow.ui" line="3514"/>
+        <location filename="mainwindow.ui" line="3517"/>
         <source>Количество строк, в которых могут быть PCM-данные</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1600"/>
-        <location filename="mainwindow.ui" line="2291"/>
-        <location filename="mainwindow.ui" line="3178"/>
+        <location filename="mainwindow.ui" line="1888"/>
+        <location filename="mainwindow.ui" line="2597"/>
+        <location filename="mainwindow.ui" line="3520"/>
         <source>Строк данных:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1619"/>
-        <location filename="mainwindow.ui" line="1622"/>
-        <location filename="mainwindow.ui" line="2310"/>
-        <location filename="mainwindow.ui" line="2313"/>
+        <location filename="mainwindow.ui" line="1907"/>
+        <location filename="mainwindow.ui" line="1910"/>
+        <location filename="mainwindow.ui" line="2616"/>
+        <location filename="mainwindow.ui" line="2619"/>
         <source>Количество строк, которое необходимо вставить выше PCM-данных в нечётном поле</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1644"/>
-        <location filename="mainwindow.ui" line="1647"/>
-        <location filename="mainwindow.ui" line="2116"/>
-        <location filename="mainwindow.ui" line="2119"/>
+        <location filename="mainwindow.ui" line="1932"/>
+        <location filename="mainwindow.ui" line="1935"/>
+        <location filename="mainwindow.ui" line="2422"/>
+        <location filename="mainwindow.ui" line="2425"/>
         <source>Количество строк, которое необходимо вставить выше PCM-данных для корректной сборки кадра</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1650"/>
-        <location filename="mainwindow.ui" line="2122"/>
+        <location filename="mainwindow.ui" line="1938"/>
+        <location filename="mainwindow.ui" line="2428"/>
         <source>Дополнение сверху:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1669"/>
-        <location filename="mainwindow.ui" line="1672"/>
-        <location filename="mainwindow.ui" line="2372"/>
-        <location filename="mainwindow.ui" line="2375"/>
+        <location filename="mainwindow.ui" line="1957"/>
+        <location filename="mainwindow.ui" line="1960"/>
+        <location filename="mainwindow.ui" line="2678"/>
+        <location filename="mainwindow.ui" line="2681"/>
         <source>Количество строк, которое необходимо вставить ниже PCM-данных в нечётном поле</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1694"/>
-        <location filename="mainwindow.ui" line="1697"/>
-        <location filename="mainwindow.ui" line="2078"/>
-        <location filename="mainwindow.ui" line="2081"/>
+        <location filename="mainwindow.ui" line="1982"/>
+        <location filename="mainwindow.ui" line="1985"/>
+        <location filename="mainwindow.ui" line="2384"/>
+        <location filename="mainwindow.ui" line="2387"/>
         <source>Количество строк, которое необходимо вставить ниже PCM-данных для корректной сборки кадра</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1700"/>
-        <location filename="mainwindow.ui" line="2084"/>
+        <location filename="mainwindow.ui" line="1988"/>
+        <location filename="mainwindow.ui" line="2390"/>
         <source>Дополнение снизу:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1713"/>
-        <location filename="mainwindow.ui" line="1716"/>
-        <location filename="mainwindow.ui" line="1872"/>
-        <location filename="mainwindow.ui" line="1875"/>
-        <location filename="mainwindow.ui" line="2097"/>
-        <location filename="mainwindow.ui" line="2100"/>
-        <location filename="mainwindow.ui" line="2437"/>
-        <location filename="mainwindow.ui" line="2440"/>
-        <location filename="mainwindow.ui" line="2771"/>
-        <location filename="mainwindow.ui" line="2774"/>
-        <location filename="mainwindow.ui" line="2799"/>
-        <location filename="mainwindow.ui" line="2802"/>
+        <location filename="mainwindow.ui" line="2001"/>
+        <location filename="mainwindow.ui" line="2004"/>
+        <location filename="mainwindow.ui" line="2160"/>
+        <location filename="mainwindow.ui" line="2163"/>
+        <location filename="mainwindow.ui" line="2403"/>
+        <location filename="mainwindow.ui" line="2406"/>
+        <location filename="mainwindow.ui" line="2743"/>
+        <location filename="mainwindow.ui" line="2746"/>
+        <location filename="mainwindow.ui" line="3095"/>
+        <location filename="mainwindow.ui" line="3098"/>
+        <location filename="mainwindow.ui" line="3123"/>
+        <location filename="mainwindow.ui" line="3126"/>
         <source>Установленный порядок полей в кадре</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1732"/>
-        <location filename="mainwindow.ui" line="1735"/>
-        <location filename="mainwindow.ui" line="1900"/>
-        <location filename="mainwindow.ui" line="1903"/>
-        <location filename="mainwindow.ui" line="2456"/>
-        <location filename="mainwindow.ui" line="2459"/>
-        <location filename="mainwindow.ui" line="2484"/>
-        <location filename="mainwindow.ui" line="2487"/>
-        <location filename="mainwindow.ui" line="2818"/>
-        <location filename="mainwindow.ui" line="2821"/>
-        <location filename="mainwindow.ui" line="2846"/>
-        <location filename="mainwindow.ui" line="2849"/>
+        <location filename="mainwindow.ui" line="2020"/>
+        <location filename="mainwindow.ui" line="2023"/>
+        <location filename="mainwindow.ui" line="2188"/>
+        <location filename="mainwindow.ui" line="2191"/>
+        <location filename="mainwindow.ui" line="2762"/>
+        <location filename="mainwindow.ui" line="2765"/>
+        <location filename="mainwindow.ui" line="2790"/>
+        <location filename="mainwindow.ui" line="2793"/>
+        <location filename="mainwindow.ui" line="3142"/>
+        <location filename="mainwindow.ui" line="3145"/>
+        <location filename="mainwindow.ui" line="3170"/>
+        <location filename="mainwindow.ui" line="3173"/>
         <source>Номер кадра исходного видео, для которого применяются параметры сборки</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1738"/>
-        <location filename="mainwindow.ui" line="2462"/>
-        <location filename="mainwindow.ui" line="2824"/>
+        <location filename="mainwindow.ui" line="2026"/>
+        <location filename="mainwindow.ui" line="2768"/>
+        <location filename="mainwindow.ui" line="3148"/>
         <source>Номер кадра:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1807"/>
-        <location filename="mainwindow.ui" line="1810"/>
-        <location filename="mainwindow.ui" line="2341"/>
-        <location filename="mainwindow.ui" line="2344"/>
+        <location filename="mainwindow.ui" line="2095"/>
+        <location filename="mainwindow.ui" line="2098"/>
+        <location filename="mainwindow.ui" line="2647"/>
+        <location filename="mainwindow.ui" line="2650"/>
         <source>Количество строк, которое необходимо вставить выше PCM-данных в чётном поле</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1838"/>
-        <location filename="mainwindow.ui" line="1841"/>
-        <location filename="mainwindow.ui" line="2403"/>
-        <location filename="mainwindow.ui" line="2406"/>
+        <location filename="mainwindow.ui" line="2126"/>
+        <location filename="mainwindow.ui" line="2129"/>
+        <location filename="mainwindow.ui" line="2709"/>
+        <location filename="mainwindow.ui" line="2712"/>
         <source>Количество строк, которое необходимо вставить ниже PCM-данных в чётном поле</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1928"/>
-        <location filename="mainwindow.ui" line="1931"/>
-        <location filename="mainwindow.ui" line="2512"/>
-        <location filename="mainwindow.ui" line="2515"/>
-        <location filename="mainwindow.ui" line="2874"/>
-        <location filename="mainwindow.ui" line="2877"/>
+        <location filename="mainwindow.ui" line="2216"/>
+        <location filename="mainwindow.ui" line="2219"/>
+        <location filename="mainwindow.ui" line="2818"/>
+        <location filename="mainwindow.ui" line="2821"/>
+        <location filename="mainwindow.ui" line="3198"/>
+        <location filename="mainwindow.ui" line="3201"/>
         <source>Количество строк PCM-данных в нечётном поле</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1956"/>
-        <location filename="mainwindow.ui" line="1959"/>
-        <location filename="mainwindow.ui" line="2540"/>
-        <location filename="mainwindow.ui" line="2543"/>
-        <location filename="mainwindow.ui" line="2902"/>
-        <location filename="mainwindow.ui" line="2905"/>
+        <location filename="mainwindow.ui" line="2244"/>
+        <location filename="mainwindow.ui" line="2247"/>
+        <location filename="mainwindow.ui" line="2846"/>
+        <location filename="mainwindow.ui" line="2849"/>
+        <location filename="mainwindow.ui" line="3226"/>
+        <location filename="mainwindow.ui" line="3229"/>
         <source>Количество строк PCM-данных в чётном поле</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1975"/>
-        <location filename="mainwindow.ui" line="2578"/>
-        <location filename="mainwindow.ui" line="2921"/>
+        <location filename="mainwindow.ui" line="2263"/>
+        <location filename="mainwindow.ui" line="2266"/>
+        <location filename="mainwindow.ui" line="2884"/>
+        <location filename="mainwindow.ui" line="2887"/>
+        <location filename="mainwindow.ui" line="3245"/>
+        <location filename="mainwindow.ui" line="3248"/>
+        <source>Усреднённые по кадру координаты данных по горизонтали (в пикселях)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="2269"/>
+        <location filename="mainwindow.ui" line="2890"/>
+        <location filename="mainwindow.ui" line="3251"/>
         <source>Координаты:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="2051"/>
+        <location filename="mainwindow.ui" line="2285"/>
+        <location filename="mainwindow.ui" line="2288"/>
+        <location filename="mainwindow.ui" line="2906"/>
+        <location filename="mainwindow.ui" line="2909"/>
+        <location filename="mainwindow.ui" line="3267"/>
+        <location filename="mainwindow.ui" line="3270"/>
+        <source>Усреднённые по кадру координаты начала данных (в пикселях)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="2316"/>
+        <location filename="mainwindow.ui" line="2319"/>
+        <location filename="mainwindow.ui" line="2937"/>
+        <location filename="mainwindow.ui" line="2940"/>
+        <location filename="mainwindow.ui" line="3298"/>
+        <location filename="mainwindow.ui" line="3301"/>
+        <source>Усреднённые по кадру координаты конца данных (в пикселях)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="2357"/>
         <source>Параметры сборки кадра PCM-1600/PCM-1610/PCM-1630</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="2144"/>
-        <location filename="mainwindow.ui" line="2147"/>
-        <location filename="mainwindow.ui" line="2559"/>
-        <location filename="mainwindow.ui" line="2562"/>
+        <location filename="mainwindow.ui" line="2450"/>
+        <location filename="mainwindow.ui" line="2453"/>
+        <location filename="mainwindow.ui" line="2865"/>
+        <location filename="mainwindow.ui" line="2868"/>
         <source>Формат данных PCM-1630</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="2565"/>
+        <location filename="mainwindow.ui" line="2871"/>
         <source>Формат данных:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="2663"/>
+        <location filename="mainwindow.ui" line="2987"/>
         <source>Параметры сборки кадра STC-007/PCM-F1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3031"/>
-        <location filename="mainwindow.ui" line="3034"/>
+        <location filename="mainwindow.ui" line="3373"/>
+        <location filename="mainwindow.ui" line="3376"/>
         <source>Установленное разрешение аудио</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3084"/>
-        <location filename="mainwindow.ui" line="3087"/>
+        <location filename="mainwindow.ui" line="3426"/>
+        <location filename="mainwindow.ui" line="3429"/>
         <source>Вставка строк между PCM-данными из полей одного кадра</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3194"/>
+        <location filename="mainwindow.ui" line="3536"/>
         <source>Количество строк, которое необходимо вставить между PCM-данными соседних полей для корректной сборки кадра</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3248"/>
-        <location filename="mainwindow.ui" line="3251"/>
+        <location filename="mainwindow.ui" line="3590"/>
+        <location filename="mainwindow.ui" line="3593"/>
         <source>Вставка строк между PCM-данными из смежных полей соседних кадров</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3633"/>
-        <location filename="mainwindow.ui" line="3636"/>
-        <location filename="mainwindow.ui" line="3646"/>
-        <location filename="mainwindow.ui" line="3649"/>
+        <location filename="mainwindow.ui" line="3975"/>
+        <location filename="mainwindow.ui" line="3978"/>
+        <location filename="mainwindow.ui" line="3988"/>
+        <location filename="mainwindow.ui" line="3991"/>
         <source>Общее число кадров в источнике</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="3639"/>
+        <location filename="mainwindow.ui" line="3981"/>
         <source>Всего кадров:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4188"/>
-        <location filename="mainwindow.ui" line="4191"/>
-        <location filename="mainwindow.ui" line="4249"/>
-        <location filename="mainwindow.ui" line="4252"/>
+        <location filename="mainwindow.ui" line="4530"/>
+        <location filename="mainwindow.ui" line="4533"/>
+        <location filename="mainwindow.ui" line="4591"/>
+        <location filename="mainwindow.ui" line="4594"/>
         <source>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4255"/>
+        <location filename="mainwindow.ui" line="4597"/>
         <source>&quot;Сломанных&quot;
 блоков данных:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4412"/>
-        <location filename="mainwindow.ui" line="4415"/>
-        <location filename="mainwindow.ui" line="4466"/>
-        <location filename="mainwindow.ui" line="4469"/>
+        <location filename="mainwindow.ui" line="4689"/>
+        <location filename="mainwindow.ui" line="4692"/>
+        <location filename="mainwindow.ui" line="4708"/>
+        <location filename="mainwindow.ui" line="4711"/>
+        <source>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="4714"/>
+        <source>Успешных
+CWD-коррекций:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="4819"/>
+        <location filename="mainwindow.ui" line="4822"/>
+        <location filename="mainwindow.ui" line="4855"/>
+        <location filename="mainwindow.ui" line="4858"/>
         <source>Число аудио-отсчётов, которые невозможно восстановить кодами P и Q</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4418"/>
+        <location filename="mainwindow.ui" line="4861"/>
         <source>Неисправленных
 аудио-отсчётов:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4485"/>
-        <location filename="mainwindow.ui" line="4488"/>
-        <location filename="mainwindow.ui" line="4542"/>
-        <location filename="mainwindow.ui" line="4545"/>
+        <location filename="mainwindow.ui" line="4897"/>
+        <location filename="mainwindow.ui" line="4900"/>
+        <location filename="mainwindow.ui" line="4954"/>
+        <location filename="mainwindow.ui" line="4957"/>
         <source>Число аудио-отсчётов, в которых замаскировано выпадение</source>
         <translation>Liczba próbek dźwięku, które zostały zamaskowane</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4491"/>
+        <location filename="mainwindow.ui" line="4903"/>
         <source>Маскировано
 аудио-отсчётов:</source>
         <translation>Zamaskowane
 zakłócenia:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4561"/>
-        <location filename="mainwindow.ui" line="4564"/>
-        <location filename="mainwindow.ui" line="4615"/>
-        <location filename="mainwindow.ui" line="4618"/>
         <source>Число аудио-отсчётов, в которых заглушено выпадение</source>
-        <translation>Liczba wyciszonych zakłóceń próbek dźwięku</translation>
+        <translation type="vanished">Liczba wyciszonych zakłóceń próbek dźwięku</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4567"/>
         <source>Заглушено
 аудио-отсчётов:</source>
-        <translation>Wyciszone
+        <translation type="vanished">Wyciszone
 zakłócenia:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4639"/>
+        <location filename="mainwindow.ui" line="4981"/>
         <source>Отладка: время выполнения</source>
         <translation>Debugowanie: czas działania</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4702"/>
+        <location filename="mainwindow.ui" line="5044"/>
         <source>Файл</source>
         <translation>Plik</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4712"/>
+        <location filename="mainwindow.ui" line="5054"/>
         <source>Отладка</source>
         <translation>Debugowanie</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4716"/>
-        <location filename="mainwindow.ui" line="4719"/>
-        <location filename="mainwindow.ui" line="4737"/>
-        <location filename="mainwindow.ui" line="4740"/>
-        <location filename="mainwindow.ui" line="4761"/>
-        <location filename="mainwindow.ui" line="4764"/>
-        <location filename="mainwindow.ui" line="4788"/>
-        <location filename="mainwindow.ui" line="4791"/>
-        <location filename="mainwindow.ui" line="4824"/>
-        <location filename="mainwindow.ui" line="4827"/>
+        <location filename="mainwindow.ui" line="5058"/>
+        <location filename="mainwindow.ui" line="5061"/>
+        <location filename="mainwindow.ui" line="5079"/>
+        <location filename="mainwindow.ui" line="5082"/>
+        <location filename="mainwindow.ui" line="5103"/>
+        <location filename="mainwindow.ui" line="5106"/>
+        <location filename="mainwindow.ui" line="5130"/>
+        <location filename="mainwindow.ui" line="5133"/>
+        <location filename="mainwindow.ui" line="5166"/>
+        <location filename="mainwindow.ui" line="5169"/>
         <source>Вывод отладочной информации в консоль</source>
         <translation>Kieruj informacje debugowania do konsoli</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4996"/>
+        <location filename="mainwindow.ui" line="5338"/>
         <source>Сырые данные при бинаризации</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5417"/>
+        <location filename="mainwindow.ui" line="5759"/>
         <source>Сбросить настройки декодирования в главном окне</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5422"/>
+        <location filename="mainwindow.ui" line="5764"/>
         <source>Отключиться от захвата</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5431"/>
+        <location filename="mainwindow.ui" line="5773"/>
         <source>Захватить PCM с видео захвата...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5434"/>
+        <location filename="mainwindow.ui" line="5776"/>
         <source>Захват видео с устройства для декодирования PCM</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5442"/>
+        <location filename="mainwindow.ui" line="5784"/>
         <source>Закрыть источник</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5445"/>
+        <location filename="mainwindow.ui" line="5787"/>
         <source>Отключиться от выбранного источника видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5456"/>
+        <location filename="mainwindow.ui" line="5798"/>
         <source>Координаты данных</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1161,124 +1250,124 @@ zakłócenia:</translation>
         <translation type="vanished">Binaryzacja</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4767"/>
+        <location filename="mainwindow.ui" line="5109"/>
         <source>Деинтерливинг, пересборка кадров</source>
         <translation>Rozplatanie i ponowne składanie klatek</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4794"/>
+        <location filename="mainwindow.ui" line="5136"/>
         <source>Общее</source>
         <translation>Ogólne</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4807"/>
-        <location filename="mainwindow.ui" line="4810"/>
+        <location filename="mainwindow.ui" line="5149"/>
+        <location filename="mainwindow.ui" line="5152"/>
         <source>Запуск фоновых процессов тестирования внутренних вычислений</source>
         <translation>Uruchom w tle testy wewnętrznych obliczeń i logiki</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4813"/>
+        <location filename="mainwindow.ui" line="5155"/>
         <source>Вычислительные тесты</source>
         <translation>Testy obliczeniowe</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4830"/>
+        <location filename="mainwindow.ui" line="5172"/>
         <source>Обработка и вывод аудио</source>
         <translation>Przetwarzanie dźwięku i wyjście</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4857"/>
+        <location filename="mainwindow.ui" line="5199"/>
         <source>Настройки</source>
         <translation>Ustawienia</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4861"/>
-        <location filename="mainwindow.ui" line="4864"/>
+        <location filename="mainwindow.ui" line="5203"/>
+        <location filename="mainwindow.ui" line="5206"/>
         <source>Выбор языка интерфейса</source>
         <translation>Wybierz język interfejsu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4867"/>
+        <location filename="mainwindow.ui" line="5209"/>
         <source>Язык интерфейса</source>
         <translation>Język interfejsu</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4886"/>
+        <location filename="mainwindow.ui" line="5228"/>
         <source>Визуализация</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4897"/>
+        <location filename="mainwindow.ui" line="5239"/>
         <source>Справка</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4912"/>
+        <location filename="mainwindow.ui" line="5254"/>
         <source>Это строка состояния, здесь выводятся подсказки</source>
         <translation>To jest pasek stanu ze wskazówkami pomocy</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4921"/>
+        <location filename="mainwindow.ui" line="5263"/>
         <source>Открыть видео с PCM...</source>
         <translation>Otwórz plik wideo z PCM...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4924"/>
+        <location filename="mainwindow.ui" line="5266"/>
         <source>Открытие видео-файла поддерживаемого формата, содержащего PCM</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4938"/>
+        <location filename="mainwindow.ui" line="5280"/>
         <source>Диалог открытия файла изображения, содержащего PCM</source>
         <oldsource>Диалог открытия видео-файла поддерживаемого формата, содержащего PCM</oldsource>
         <translation type="unfinished">Otwórz okno wyboru pliku wideo z PCM</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4935"/>
+        <location filename="mainwindow.ui" line="5277"/>
         <source>Открыть изображение с PCM...</source>
         <translation>Otwórz plik obrazu z PCM...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4722"/>
+        <location filename="mainwindow.ui" line="5064"/>
         <source>Захват и декодирование видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4743"/>
+        <location filename="mainwindow.ui" line="5085"/>
         <source>Поиск данных, бинаризация</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4950"/>
+        <location filename="mainwindow.ui" line="5292"/>
         <source>Выход</source>
         <translation>Zakończ</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4953"/>
+        <location filename="mainwindow.ui" line="5295"/>
         <source>Закрыть приложение</source>
         <translation>Zamknij aplikację</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4964"/>
+        <location filename="mainwindow.ui" line="5306"/>
         <source>Данные по кадрам</source>
         <translation>Dane klatki</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4972"/>
+        <location filename="mainwindow.ui" line="5314"/>
         <source>Данные по строкам</source>
         <translation>Dane linii</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4980"/>
+        <location filename="mainwindow.ui" line="5322"/>
         <source>Данные по пикселям</source>
         <translation>Dane pikseli</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="4988"/>
-        <location filename="mainwindow.ui" line="5035"/>
-        <location filename="mainwindow.ui" line="5043"/>
-        <location filename="mainwindow.ui" line="5180"/>
-        <location filename="mainwindow.ui" line="5217"/>
+        <location filename="mainwindow.ui" line="5330"/>
+        <location filename="mainwindow.ui" line="5377"/>
+        <location filename="mainwindow.ui" line="5385"/>
+        <location filename="mainwindow.ui" line="5522"/>
+        <location filename="mainwindow.ui" line="5559"/>
         <source>Общий процесс</source>
         <translation>Ogólny proces</translation>
     </message>
@@ -1287,175 +1376,175 @@ zakłócenia:</translation>
         <translation type="vanished">Współrzędne pikseli, dane surowe</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5004"/>
+        <location filename="mainwindow.ui" line="5346"/>
         <source>Статистика распределения яркостей</source>
         <translation>Statystyki poziomów luminacji</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5012"/>
+        <location filename="mainwindow.ui" line="5354"/>
         <source>Полный процесс подбора порога бинаризации</source>
         <translation>Proces przeszukiwania progowego binaryzacji</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5021"/>
+        <location filename="mainwindow.ui" line="5363"/>
         <source>Выключить весь вывод отладки</source>
         <translation>Wyłącz wszystkie wyjścia debugowania</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5024"/>
+        <location filename="mainwindow.ui" line="5366"/>
         <source>Отключить вывод всей отладки в консоль</source>
         <translation>Wyłącz wszystkie wyjścia debugowania na konsoli</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5051"/>
+        <location filename="mainwindow.ui" line="5393"/>
         <source>Дампы обработанных PCM-строк</source>
         <translation>Zrzut przetworzonych linii PCM</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5059"/>
+        <location filename="mainwindow.ui" line="5401"/>
         <source>Дампы обработанных блоков данных</source>
         <translation>Zrzut przetworzonych bloków danych PCM</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5067"/>
-        <location filename="mainwindow.ui" line="5080"/>
-        <location filename="mainwindow.ui" line="5093"/>
-        <location filename="mainwindow.ui" line="5130"/>
-        <location filename="mainwindow.ui" line="5172"/>
+        <location filename="mainwindow.ui" line="5409"/>
+        <location filename="mainwindow.ui" line="5422"/>
+        <location filename="mainwindow.ui" line="5435"/>
+        <location filename="mainwindow.ui" line="5472"/>
+        <location filename="mainwindow.ui" line="5514"/>
         <source>Ввод настроек</source>
         <translation>Zmiany ustawień</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5072"/>
-        <location filename="mainwindow.ui" line="5085"/>
-        <location filename="mainwindow.ui" line="5117"/>
-        <location filename="mainwindow.ui" line="5122"/>
-        <location filename="mainwindow.ui" line="5201"/>
+        <location filename="mainwindow.ui" line="5414"/>
+        <location filename="mainwindow.ui" line="5427"/>
+        <location filename="mainwindow.ui" line="5459"/>
+        <location filename="mainwindow.ui" line="5464"/>
+        <location filename="mainwindow.ui" line="5543"/>
         <source>Выключить все</source>
         <translation>Wyłącz wszystkie powyższe</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5104"/>
+        <location filename="mainwindow.ui" line="5446"/>
         <source>Дамп полей при подборе вставки</source>
         <translation>Zrzut pola podczas detekcji pustych linii</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5112"/>
+        <location filename="mainwindow.ui" line="5454"/>
         <source>Дамп блоков данных при подборе вставки</source>
         <translation>Zrzut bloku danych podczas detekcji pustych linii</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5138"/>
+        <location filename="mainwindow.ui" line="5480"/>
         <source>Подбор вставок для полей кадра</source>
         <translation type="unfinished">Wykrywanie pustych linii pomiędzy polami</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5146"/>
+        <location filename="mainwindow.ui" line="5488"/>
         <source>Определение границ PCM в кадре</source>
         <translation>Przycinanie klatki</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5154"/>
+        <location filename="mainwindow.ui" line="5496"/>
         <source>Преобразование строк в блоки данных</source>
         <translation>PCM-lines to data blocks conversion</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5159"/>
+        <location filename="mainwindow.ui" line="5501"/>
         <source>Проверить подсчёт CRCC</source>
         <translation>Sprawdź obliczanie CRCC</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5164"/>
+        <location filename="mainwindow.ui" line="5506"/>
         <source>Проверить работу ECC STC-007 (корректора ошибок)</source>
         <translation type="unfinished">Sprawdź obliczanie ECC</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5188"/>
+        <location filename="mainwindow.ui" line="5530"/>
         <source>Операции глушения и маскирования</source>
         <translation>Operacje maskowania i wyciszania</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5196"/>
+        <location filename="mainwindow.ui" line="5538"/>
         <source>Дамп буфера аудио</source>
         <translation>Zrzut bufora próbek audio</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5209"/>
+        <location filename="mainwindow.ui" line="5551"/>
         <source>Сохранение в файл</source>
         <translation>Zapisywanie do pliku</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5225"/>
+        <location filename="mainwindow.ui" line="5567"/>
         <source>Пересборка кадров со вставками</source>
         <translation>Ponowne składanie klatek z pustymi liniami</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5233"/>
+        <location filename="mainwindow.ui" line="5575"/>
         <source>Исправление ошибок по P и Q кодам</source>
         <translation>Korekcja błędów P i Q-kodem</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5241"/>
+        <location filename="mainwindow.ui" line="5583"/>
         <source>Вывод аудио в звуковой интерфейс</source>
         <translation>Wyjście audio w czasie rzeczywistym</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5250"/>
+        <location filename="mainwindow.ui" line="5592"/>
         <source>Тонкие настройки бинаризатора...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5253"/>
+        <location filename="mainwindow.ui" line="5595"/>
         <source>Открыть диалог тонкой настройки бинаризатора</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5265"/>
+        <location filename="mainwindow.ui" line="5607"/>
         <source>Тонкие настройки деинтерливера...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5268"/>
+        <location filename="mainwindow.ui" line="5610"/>
         <source>Открыть диалог тонкой настройки деинтерливера</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5366"/>
+        <location filename="mainwindow.ui" line="5708"/>
         <source>Тонкие настройки видео-декодера...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5369"/>
+        <location filename="mainwindow.ui" line="5711"/>
         <source>Открыть диалог тонкой настройки видео-декодера</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5384"/>
+        <location filename="mainwindow.ui" line="5726"/>
         <source>О программе...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5387"/>
+        <location filename="mainwindow.ui" line="5729"/>
         <source>Открытие окна с информацией о программе</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5395"/>
+        <location filename="mainwindow.ui" line="5737"/>
         <source>Сбросить все настройки</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5398"/>
+        <location filename="mainwindow.ui" line="5740"/>
         <source>Сбросить все настройки приложения (включая последнюю папку и положения окон)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5406"/>
+        <location filename="mainwindow.ui" line="5748"/>
         <source>Сбросить положения окон</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5414"/>
+        <location filename="mainwindow.ui" line="5756"/>
         <source>Сбросить настройки декодера</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1464,106 +1553,106 @@ zakłócenia:</translation>
         <translation type="vanished">Otwórz okno ustawień</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5321"/>
+        <location filename="mainwindow.ui" line="5663"/>
         <source>Источник видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5332"/>
+        <location filename="mainwindow.ui" line="5674"/>
         <source>Бинаризированные кадры</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5343"/>
+        <location filename="mainwindow.ui" line="5685"/>
         <source>Пересобранные кадры</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="5354"/>
+        <location filename="mainwindow.ui" line="5696"/>
         <source>Блоки данных</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1439"/>
-        <location filename="mainwindow.cpp" line="3292"/>
-        <location filename="mainwindow.cpp" line="3304"/>
+        <location filename="mainwindow.cpp" line="1371"/>
+        <location filename="mainwindow.cpp" line="3163"/>
+        <location filename="mainwindow.cpp" line="3175"/>
         <source>Ошибка</source>
         <translation>Błąd</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1481"/>
+        <location filename="mainwindow.cpp" line="1384"/>
         <source>Открыть видео с PCM</source>
         <translation>Otwórz wideo z PCM</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1483"/>
+        <location filename="mainwindow.cpp" line="1386"/>
         <source>Видео-файлы (*.avi *.mkv *.mpg *.mp4)</source>
         <translation>Pliki wideo (*.avi *.mkv *.mpg *.mp4)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1645"/>
-        <location filename="mainwindow.cpp" line="1698"/>
+        <location filename="mainwindow.cpp" line="1563"/>
+        <location filename="mainwindow.cpp" line="1616"/>
         <source>Сброс настроек</source>
         <translation type="unfinished">Resetowanie ustawień</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1646"/>
+        <location filename="mainwindow.cpp" line="1564"/>
         <source>Сброс настроек декодера</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1647"/>
+        <location filename="mainwindow.cpp" line="1565"/>
         <source>Вернуть настройки к состоянию по умолчанию?</source>
         <translation type="unfinished">Przywrócić ustawienia domyślne?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1667"/>
+        <location filename="mainwindow.cpp" line="1585"/>
         <source>Сброс расположения</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1668"/>
+        <location filename="mainwindow.cpp" line="1586"/>
         <source>Сброс расположения окон визуализации</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1669"/>
+        <location filename="mainwindow.cpp" line="1587"/>
         <source>Сбросить положения окон визуализации?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1699"/>
+        <location filename="mainwindow.cpp" line="1617"/>
         <source>Сброс ВСЕХ настроек</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1700"/>
+        <location filename="mainwindow.cpp" line="1618"/>
         <source>Вернуть ВСЕ настройки программы к состоянию по умолчанию?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3286"/>
-        <location filename="mainwindow.cpp" line="3298"/>
+        <location filename="mainwindow.cpp" line="3157"/>
+        <location filename="mainwindow.cpp" line="3169"/>
         <source>Результат</source>
         <translation>Rezultat</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3286"/>
+        <location filename="mainwindow.cpp" line="3157"/>
         <source>Тест CRCC пройден успешно.</source>
         <translation>Test CRCC zakończony pomyślnie.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3292"/>
+        <location filename="mainwindow.cpp" line="3163"/>
         <source>Тест CRCC не пройден! Подробности в отладочной консоли.</source>
         <translation>Test CRCC nieudany! Szczegóły w konsoli debugowania.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3298"/>
+        <location filename="mainwindow.cpp" line="3169"/>
         <source>Тест ECC пройден успешно.</source>
         <translation>Test ECC zakończony pomyślnie.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3304"/>
+        <location filename="mainwindow.cpp" line="3175"/>
         <source>Тест ECC не пройден! Подробности в отладочной консоли.</source>
         <translation>Test ECC nieudany! Szczegóły w konsoli debugowania.</translation>
     </message>
@@ -1571,98 +1660,98 @@ zakłócenia:</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="mainwindow.h" line="61"/>
-        <location filename="mainwindow.h" line="66"/>
+        <location filename="mainwindow.h" line="63"/>
+        <location filename="mainwindow.h" line="68"/>
         <source>не определён</source>
         <translation>nie określono</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="62"/>
+        <location filename="mainwindow.h" line="64"/>
         <source>TFF, нечётное поле первое</source>
         <translation>TFF, najpierw górne pole</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="63"/>
+        <location filename="mainwindow.h" line="65"/>
         <source>BFF, чётное поле первое</source>
         <translation>BFF, najpierw dolne pole</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="64"/>
+        <location filename="mainwindow.h" line="66"/>
         <source> (форсировано)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="67"/>
+        <location filename="mainwindow.h" line="69"/>
         <source>NTSC (525i), 245 строк с PCM в поле</source>
         <translation>NTSC (525i), 245 linii PCM na pole</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="68"/>
+        <location filename="mainwindow.h" line="70"/>
         <source>PAL (625i), 294 строк с PCM в поле</source>
         <translation>PAL (625i), 294 linii PCM na pole</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="58"/>
+        <location filename="mainwindow.h" line="60"/>
         <source>Формат SI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="59"/>
+        <location filename="mainwindow.h" line="61"/>
         <source>Формат EI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="69"/>
+        <location filename="mainwindow.h" line="71"/>
         <source> (форсирован)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="71"/>
+        <location filename="mainwindow.h" line="73"/>
         <source>14 бит (STC-007)</source>
         <translation>14 bit (STC-007)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="72"/>
+        <location filename="mainwindow.h" line="74"/>
         <source>14 бит (неточно)</source>
         <translation>14 bit (nie określono)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="73"/>
+        <location filename="mainwindow.h" line="75"/>
         <source>16 бит (неточно)</source>
         <translation>16 bit (nie określono)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="74"/>
+        <location filename="mainwindow.h" line="76"/>
         <source>16 бит (PCM-F1)</source>
         <translation>16 bit (PCM F-1)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="77"/>
+        <location filename="mainwindow.h" line="79"/>
         <source>Источник видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="78"/>
+        <location filename="mainwindow.h" line="80"/>
         <source>Бинаризированные кадры</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="79"/>
+        <location filename="mainwindow.h" line="81"/>
         <source>Пересобранные кадры</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="80"/>
+        <location filename="mainwindow.h" line="82"/>
         <source>Блоки данных</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="82"/>
+        <location filename="mainwindow.h" line="84"/>
         <source>Для использования меню отладки запустите приложение из коммандной строки</source>
         <translation>Aby skorzystać z menu debugowania, uruchom aplikację za pomocą wiersza poleceń</translation>
     </message>
     <message>
-        <location filename="frame_vis.h" line="24"/>
+        <location filename="frame_vis.h" line="25"/>
         <source>Кадр:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1683,79 +1772,111 @@ zakłócenia:</translation>
     </message>
 </context>
 <context>
+    <name>SamplesToWAV</name>
+    <message>
+        <location filename="samples2wav.cpp" line="70"/>
+        <source>Вывод в WAV: не удалось открыть на запись файл &apos;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="samples2wav.cpp" line="83"/>
+        <source>Вывод в WAV: не удалось добавить заголовок, файл не открыт!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="samples2wav.cpp" line="98"/>
+        <source>Вывод в WAV: не удалось добавить заголовок в файл!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="samples2wav.cpp" line="137"/>
+        <location filename="samples2wav.cpp" line="153"/>
+        <location filename="samples2wav.cpp" line="169"/>
+        <location filename="samples2wav.cpp" line="185"/>
+        <location filename="samples2wav.cpp" line="196"/>
+        <source>Вывод в WAV: не удалось обновить заголовок в файле!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="samples2wav.cpp" line="319"/>
+        <source>Вывод в WAV: не удалось записать аудио данные в файл!</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VideoInFFMPEG</name>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="639"/>
+        <location filename="vin_ffmpeg.cpp" line="640"/>
         <source>Указанный файл источника не найден!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="643"/>
+        <location filename="vin_ffmpeg.cpp" line="644"/>
         <source>Недостаточно прав для чтения файла источника!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="959"/>
+        <location filename="vin_ffmpeg.cpp" line="960"/>
         <source>FFMPEG: Не удалось открыть файл</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="963"/>
+        <location filename="vin_ffmpeg.cpp" line="964"/>
         <source>FFMPEG: Не удалось получить информацию о потоке видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="967"/>
+        <location filename="vin_ffmpeg.cpp" line="968"/>
         <source>FFMPEG: Не удалось найти поток видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="971"/>
+        <location filename="vin_ffmpeg.cpp" line="972"/>
         <source>FFMPEG: Не удалось найти декодер для видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="975"/>
+        <location filename="vin_ffmpeg.cpp" line="976"/>
         <source>FFMPEG: Не удалось выделить ОЗУ для декодера видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="979"/>
+        <location filename="vin_ffmpeg.cpp" line="980"/>
         <source>FFMPEG: Не удалось установить параметры для декодера видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="983"/>
+        <location filename="vin_ffmpeg.cpp" line="984"/>
         <source>FFMPEG: Не удалось запустить декодер видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="987"/>
+        <location filename="vin_ffmpeg.cpp" line="988"/>
         <source>FFMPEG: Не удалось выделить ОЗУ для буфера кадра</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="991"/>
+        <location filename="vin_ffmpeg.cpp" line="992"/>
         <source>FFMPEG: Не удалось считать пакет данных из декодера</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="995"/>
+        <location filename="vin_ffmpeg.cpp" line="996"/>
         <source>FFMPEG: Не удалось инициализировать преобразователь кадра</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="999"/>
+        <location filename="vin_ffmpeg.cpp" line="1000"/>
         <source>FFMPEG: Не удалось преобразовать формат кадра видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="1003"/>
+        <location filename="vin_ffmpeg.cpp" line="1004"/>
         <source>FFMPEG: Не задан источник видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="vin_ffmpeg.cpp" line="1007"/>
+        <location filename="vin_ffmpeg.cpp" line="1008"/>
         <source>FFMPEG: Неизвестная ошибка чтения видео</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1775,8 +1896,8 @@ zakłócenia:</translation>
     </message>
     <message>
         <location filename="about_wnd.ui" line="61"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, Sony Standard B, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, Sony Standard A, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC/PAL)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <oldsource>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, STANDARD B, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, STANDARD A, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC/PAL)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</oldsource>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, Sony Standard B, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, Sony Standard A, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, Sony PCM-F1, NTSC/PAL)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <oldsource>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1&lt;/span&gt; (2 канала, 13 бит, 44056 Гц, Sony Standard B, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1600&lt;/span&gt; (2 канала, 16 бит, 44056 Гц, Sony Standard A, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1610&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-1630&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-007&lt;/span&gt; (2 канала, 14 бит, 44056 Гц, EIAJ NTSC)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;STC-008&lt;/span&gt; (2 канала, 14 бит, 44100 Гц, EIAJ PAL)&lt;br/&gt;+ &lt;span style=&quot; font-weight:600;&quot;&gt;PCM-F1&lt;/span&gt; (2 канала, 16 бит, 44056/44100 Гц, NTSC/PAL)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1829,189 +1950,309 @@ zakłócenia:</translation>
     </message>
     <message>
         <location filename="capt_sel.ui" line="42"/>
+        <location filename="capt_sel.ui" line="45"/>
+        <source>Разрешение захватываемого изображения</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="48"/>
         <source>Разрешение:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="55"/>
-        <location filename="capt_sel.ui" line="74"/>
-        <location filename="capt_sel.ui" line="218"/>
-        <location filename="capt_sel.ui" line="240"/>
+        <location filename="capt_sel.ui" line="61"/>
+        <location filename="capt_sel.ui" line="64"/>
+        <source>Смещение левого верхнего угла конечного кадра по горизонтали</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="67"/>
+        <location filename="capt_sel.ui" line="92"/>
+        <location filename="capt_sel.ui" line="290"/>
+        <location filename="capt_sel.ui" line="318"/>
         <source> пикс.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="96"/>
+        <location filename="capt_sel.ui" line="86"/>
+        <location filename="capt_sel.ui" line="89"/>
+        <source>Горизонтальное разрешение захватываемого изображения</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="114"/>
+        <location filename="capt_sel.ui" line="117"/>
+        <location filename="capt_sel.ui" line="227"/>
+        <location filename="capt_sel.ui" line="230"/>
+        <source>Частота кадров в секунду для захвата</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="120"/>
         <source> кадр/сек</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="131"/>
+        <location filename="capt_sel.ui" line="142"/>
+        <location filename="capt_sel.ui" line="145"/>
+        <source>Установить параметры захвата для PAL видео</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="161"/>
+        <location filename="capt_sel.ui" line="164"/>
+        <location filename="capt_sel.ui" line="208"/>
+        <location filename="capt_sel.ui" line="211"/>
+        <source>Параметры, с которыми производится захват (могут отличаться от заданных из-за ограничений устройства захвата)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="167"/>
         <source>Применено:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="144"/>
+        <location filename="capt_sel.ui" line="180"/>
+        <location filename="capt_sel.ui" line="183"/>
+        <source>Установить параметры захвата по видео стандарту</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="186"/>
         <source>Предустановка:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="179"/>
+        <location filename="capt_sel.ui" line="233"/>
         <source>Частота кадров:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="192"/>
+        <location filename="capt_sel.ui" line="246"/>
+        <location filename="capt_sel.ui" line="249"/>
+        <source>Смещение левого верхнего угла конечного кадра от кадра источника</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="252"/>
         <source>Смещение:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="259"/>
+        <location filename="capt_sel.ui" line="265"/>
+        <location filename="capt_sel.ui" line="268"/>
+        <source>Установить параметры захвата для NTSC видео</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="284"/>
+        <location filename="capt_sel.ui" line="287"/>
+        <source>Вертикальное разрешение захватываемого изображения</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="312"/>
+        <location filename="capt_sel.ui" line="315"/>
+        <source>Смещение левого верхнего угла конечного кадра по вертикали</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="337"/>
+        <location filename="capt_sel.ui" line="340"/>
+        <source>Применить настройки выше для текущего выбранного устройства</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="343"/>
         <source>Применить</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="272"/>
-        <source>Настройки устройства по умолчанию</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="capt_sel.ui" line="286"/>
-        <source>Яркость (канал Y)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="capt_sel.ui" line="291"/>
-        <source>Красный (канал R)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="capt_sel.ui" line="296"/>
-        <source>Зелёный (канал G)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="capt_sel.ui" line="301"/>
-        <source>Синий (канал B)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="capt_sel.ui" line="315"/>
-        <source>Цветовой канал:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="capt_sel.ui" line="325"/>
-        <source>Доступные устройства захвата видео</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="capt_sel.ui" line="350"/>
-        <source>Обновить список</source>
+        <location filename="capt_sel.ui" line="356"/>
+        <location filename="capt_sel.ui" line="359"/>
+        <source>Оставить настройки захвата по умолчанию</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="capt_sel.ui" line="362"/>
+        <source>Настройки устройства по умолчанию</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="375"/>
+        <location filename="capt_sel.ui" line="378"/>
+        <location filename="capt_sel.ui" line="411"/>
+        <location filename="capt_sel.ui" line="414"/>
+        <source>Используемый для захвата изображения цветовой канал</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="382"/>
+        <source>Яркость (канал Y)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="387"/>
+        <source>Красный (канал R)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="392"/>
+        <source>Зелёный (канал G)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="397"/>
+        <source>Синий (канал B)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="417"/>
+        <source>Цветовой канал:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="427"/>
+        <source>Доступные устройства захвата видео</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="439"/>
+        <location filename="capt_sel.ui" line="442"/>
+        <source>Список доступных в системе устройств захвата видео</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="458"/>
+        <location filename="capt_sel.ui" line="461"/>
+        <source>Запросить актуальный список устройств захвата</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="464"/>
+        <source>Обновить список</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="476"/>
         <source>Предпросмотр (чёрно-белый)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="443"/>
+        <location filename="capt_sel.ui" line="503"/>
+        <location filename="capt_sel.ui" line="506"/>
+        <source>Предпросмотр устройства захвата в реальном времени</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="563"/>
+        <location filename="capt_sel.ui" line="566"/>
+        <source>Функционал ещё не готов</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="569"/>
         <source>Сохранить</source>
         <translation type="unfinished">Zapisz</translation>
     </message>
     <message>
-        <location filename="capt_sel.ui" line="456"/>
+        <location filename="capt_sel.ui" line="582"/>
+        <location filename="capt_sel.ui" line="585"/>
+        <source>Закрыть окно без сохранения изменений</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="capt_sel.ui" line="588"/>
         <source>Закрыть</source>
         <translation type="unfinished">Zamknij</translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="146"/>
+        <location filename="capt_sel.cpp" line="149"/>
         <source>Список обновляется...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="312"/>
+        <location filename="capt_sel.cpp" line="315"/>
         <source>Ошибка</source>
         <translation type="unfinished">Błąd</translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="312"/>
+        <location filename="capt_sel.cpp" line="315"/>
         <source>Не получен вовремя ответ от FFMPEG, возможно библиотека зависла.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="331"/>
+        <location filename="capt_sel.cpp" line="334"/>
         <source>Нет устройств захвата видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="338"/>
+        <location filename="capt_sel.cpp" line="341"/>
         <source>Устройство не выбрано</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="408"/>
+        <location filename="capt_sel.cpp" line="411"/>
         <source>FFMPEG: Не удалось открыть захват с заданными параметрами</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="412"/>
+        <location filename="capt_sel.cpp" line="415"/>
         <source>FFMPEG: Не удалось получить информацию о потоке видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="416"/>
+        <location filename="capt_sel.cpp" line="419"/>
         <source>FFMPEG: Не удалось найти поток видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="420"/>
+        <location filename="capt_sel.cpp" line="423"/>
         <source>FFMPEG: Не удалось найти декодер для видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="424"/>
+        <location filename="capt_sel.cpp" line="427"/>
         <source>FFMPEG: Не удалось выделить ОЗУ для декодера видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="428"/>
+        <location filename="capt_sel.cpp" line="431"/>
         <source>FFMPEG: Не удалось установить параметры для декодера видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="432"/>
+        <location filename="capt_sel.cpp" line="435"/>
         <source>FFMPEG: Не удалось запустить декодер видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="436"/>
+        <location filename="capt_sel.cpp" line="439"/>
         <source>FFMPEG: Не удалось выделить ОЗУ для буфера кадра</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="440"/>
+        <location filename="capt_sel.cpp" line="443"/>
         <source>FFMPEG: Не удалось считать пакет данных из декодера</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="444"/>
+        <location filename="capt_sel.cpp" line="447"/>
         <source>FFMPEG: Не удалось инициализировать преобразователь кадра</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="448"/>
+        <location filename="capt_sel.cpp" line="451"/>
         <source>FFMPEG: Не удалось преобразовать формат кадра видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="452"/>
+        <location filename="capt_sel.cpp" line="455"/>
         <source>FFMPEG: Неизвестная ошибка захвата видео</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="capt_sel.cpp" line="455"/>
+        <location filename="capt_sel.cpp" line="458"/>
         <source>Ошибка захвата видео</source>
         <translation type="unfinished"></translation>
     </message>

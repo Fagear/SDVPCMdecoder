@@ -78,12 +78,15 @@ private:
     std::deque<PCM1SubLine> conv_queue;         // Output PCM lines buffer after trimming and padding, before converting into data blocks.
     std::string file_name;                      // Name of the file being processed (passed onto audio processing chain).
     uint8_t preset_field_order;                 // Field order, set externally.
+    int8_t preset_odd_offset;                   // Odd line offset, set externally.
+    int8_t preset_even_offset;                  // Even line offset, set externally.
     uint16_t log_level;                         // Level of debug output.
     uint16_t trim_fill;                         // Number of filled sub-lines in [trim_buf] from input queue.
     uint16_t f1_max_line;                       // Largest line number in Frame.
     bool ignore_CRC;                            // Ignore CRC from video lines or not (and force parity check).
     bool header_present;                        // Topmost line with header is detected in current frame.
     bool emphasis_set;                          // Current frame contains emphasis line flag.
+    bool auto_offset;                           // Auto line offset, set externally.
     bool file_start;                            // Detected start of a new file, filename saved to [file_name].
     bool file_end;                              // Detected end of a file.
     bool finish_work;                           // Flag to break executing loop.
@@ -116,6 +119,9 @@ private:
 public slots:
     void setLogLevel(uint16_t);             // Set logging level.
     void setFieldOrder(uint8_t);            // Preset field order.
+    void setAutoLineOffset(bool);           // Preset auto line offset.
+    void setOddLineOffset(int8_t);          // Preset odd line offset from the top.
+    void setEvenLineOffset(int8_t);         // Preset even line offset from the top.
     void setFineUseECC(bool);               // Set fine settings: usage of ECC on CRC-marked words.
     void setDefaultFineSettings();          // Set fine settings to defaults.
     void requestCurrentFineSettings();      // Get current fine settings.

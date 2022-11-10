@@ -551,10 +551,7 @@ bool STC007Line::isServCtrlBlk()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if word is marked after binarization with CRC as "not damaged".
@@ -566,15 +563,9 @@ bool STC007Line::isWordCRCOk(uint8_t index)
         {
             return word_crc[index];
         }
-        else
-        {
-            return false;
-        }
-    }
-    else
-    {
         return false;
     }
+    return false;
 }
 
 //------------------------ Check if word is safe to playback (not damaged or fixed by ECC).
@@ -586,15 +577,9 @@ bool STC007Line::isWordValid(uint8_t index)
         {
             return word_valid[index];
         }
-        else
-        {
-            return false;
-        }
-    }
-    else
-    {
         return false;
     }
+    return false;
 }
 
 //------------------------ Get one word.
@@ -604,10 +589,7 @@ uint16_t STC007Line::getWord(uint8_t index)
     {
         return words[index];
     }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
 
 //------------------------ Convert PCM data to string for debug.
@@ -864,13 +846,22 @@ std::string STC007Line::dumpContentString()
         }
         if((isDataBySkip()!=false)&&(hasStartMarker()!=false))
         {
-            sprintf(c_buf, "[%02d|%02d] ", marker_start_bg_coord, coords.data_start);
+            sprintf(c_buf, "[%02d|", marker_start_bg_coord);
         }
         else
         {
-            sprintf(c_buf, "[%02d:%02d] ", marker_start_bg_coord, coords.data_start);
+            sprintf(c_buf, "[%02d:", marker_start_bg_coord);
         }
         text_out += c_buf;
+        if(coords.areValid()==false)
+        {
+            text_out += "NA] ";
+        }
+        else
+        {
+            sprintf(c_buf, "%02d] ", coords.data_start);
+            text_out += c_buf;
+        }
         text_out += "["+dumpWordsString()+"] E";
         if(hasStopMarker()==false)
         {
@@ -881,13 +872,22 @@ std::string STC007Line::dumpContentString()
         {
             text_out += "+";
         }
-        if((isDataBySkip()!=false)&&(hasStopMarker()!=false))
+        if(coords.areValid()==false)
         {
-            sprintf(c_buf, "[%04d|%04d] ", coords.data_stop, marker_stop_ed_coord);
+            text_out += "[ N/A";
         }
         else
         {
-            sprintf(c_buf, "[%04d:%04d] ", coords.data_stop, marker_stop_ed_coord);
+            sprintf(c_buf, "[%04d", coords.data_stop);
+            text_out += c_buf;
+        }
+        if((isDataBySkip()!=false)&&(hasStopMarker()!=false))
+        {
+            sprintf(c_buf, "|%04d] ", marker_stop_ed_coord);
+        }
+        else
+        {
+            sprintf(c_buf, ":%04d] ", marker_stop_ed_coord);
         }
         text_out += c_buf;
 

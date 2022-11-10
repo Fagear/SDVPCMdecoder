@@ -42,7 +42,7 @@ void STC007DataStitcher::setInputPointers(std::deque<STC007Line> *in_pcmline, QM
 {
     if((in_pcmline==NULL)||(mtx_pcmline==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty input pointer provided in [STC007DataStitcher::setInputPointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty input pointer provided, unable to apply!";
     }
     else
     {
@@ -56,7 +56,7 @@ void STC007DataStitcher::setOutputPointers(std::deque<PCMSamplePair> *out_pcmsam
 {
     if((out_pcmsamples==NULL)||(mtx_pcmsamples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty output pointer provided in [STC007DataStitcher::setOutputPointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty output pointer provided, unable to apply!";
     }
     else
     {
@@ -247,7 +247,7 @@ void STC007DataStitcher::fillUntilTwoFrames()
         }
         else
         {
-            qWarning()<<DBG_ANCHOR<<"[L2B-007] Line buffer index out of bound in [STC007DataStitcher::fillUntilTwoFrames()]! Logic error! Line skipped!";
+            qWarning()<<DBG_ANCHOR<<"[L2B-007] Line buffer index out of bound! Logic error! Line skipped!";
             qWarning()<<DBG_ANCHOR<<"[L2B-007] Max lines:"<<BUF_SIZE_TRIM;
         }
         // Go to the next line in the input.
@@ -354,6 +354,21 @@ void STC007DataStitcher::findFramesTrim()
                 // Line contains Service line with "File end" tag.
                 file_end = true;
             }
+            else if(trim_buf[line_ind].isServCtrlBlk()!=false)
+            {
+                // Line contains Service line with STC-007 Control Block data.
+                // Check if this line is at the top of the field
+                // and not somewhere in the middle due to broken frame sync.
+                if((f1e_good==0)&&(f1o_good==0))
+                {
+                    // Copy addresss data into frame descriptor.
+                    frasm_f1.ctrl_index = trim_buf[line_ind].getCtrlIndex();
+                    frasm_f1.ctrl_hour = trim_buf[line_ind].getCtrlHour();
+                    frasm_f1.ctrl_minute = trim_buf[line_ind].getCtrlMinute();
+                    frasm_f1.ctrl_second = trim_buf[line_ind].getCtrlSecond();
+                    frasm_f1.ctrl_field = trim_buf[line_ind].getCtrlFieldCode();
+                }
+            }
         }
         else if(trim_buf[line_ind].frame_number==frasm_f2.frame_number)
         {
@@ -388,6 +403,21 @@ void STC007DataStitcher::findFramesTrim()
             {
                 // Line contains Service line with "File end" tag.
                 file_end = true;
+            }
+            else if(trim_buf[line_ind].isServCtrlBlk()!=false)
+            {
+                // Line contains Service line with STC-007 Control Block data.
+                // Check if this line is at the top of the field
+                // and not somewhere in the middle due to broken frame sync.
+                if((f2e_good==0)&&(f2o_good==0))
+                {
+                    // Copy addresss data into frame descriptor.
+                    frasm_f2.ctrl_index = trim_buf[line_ind].getCtrlIndex();
+                    frasm_f2.ctrl_hour = trim_buf[line_ind].getCtrlHour();
+                    frasm_f2.ctrl_minute = trim_buf[line_ind].getCtrlMinute();
+                    frasm_f2.ctrl_second = trim_buf[line_ind].getCtrlSecond();
+                    frasm_f2.ctrl_field = trim_buf[line_ind].getCtrlFieldCode();
+                }
             }
         }
         // Go to next line.
@@ -835,11 +865,12 @@ void STC007DataStitcher::splitFramesToFields()
                                 ref_lvl_even += trim_buf[line_ind].ref_level;
                             }
                         }
+#ifdef DI_LOG_NOLINE_SKIP_VERBOSE
                         else
                         {
-                            qWarning()<<DBG_ANCHOR<<"[L2B-007] Frame A even field index out of bound in [STC007DataStitcher::splitFramesToFields()]! Logic error! Line skipped!";
-                            qWarning()<<DBG_ANCHOR<<"[L2B-007] Max field line count:"<<BUF_SIZE_FIELD;
+                            qInfo()<<"[L2B-007] Frame A even field index out of bound! Line skipped!"<<line_num;
                         }
+#endif
                     }
                 }
 #ifdef DI_LOG_NOLINE_SKIP_VERBOSE
@@ -873,11 +904,12 @@ void STC007DataStitcher::splitFramesToFields()
                             ref_lvl_odd += trim_buf[line_ind].ref_level;
                         }
                     }
+#ifdef DI_LOG_NOLINE_SKIP_VERBOSE
                     else
                     {
-                        qWarning()<<DBG_ANCHOR<<"[L2B-007] Frame A odd field index out of bound in [STC007DataStitcher::splitFramesToFields()]! Logic error! Line skipped!";
-                        qWarning()<<DBG_ANCHOR<<"[L2B-007] Max field line count:"<<BUF_SIZE_FIELD;
+                        qInfo()<<"[L2B-007] Frame A odd field index out of bound! Line skipped!"<<line_num;
                     }
+#endif
                 }
             }
         }
@@ -910,11 +942,12 @@ void STC007DataStitcher::splitFramesToFields()
                                 frasm_f2.even_valid_lines++;
                             }
                         }
+#ifdef DI_LOG_NOLINE_SKIP_VERBOSE
                         else
                         {
-                            qWarning()<<DBG_ANCHOR<<"[L2B-007] Frame B even field index out of bound in [STC007DataStitcher::splitFramesToFields()]! Logic error! Line skipped!";
-                            qWarning()<<DBG_ANCHOR<<"[L2B-007] Max field line count:"<<BUF_SIZE_FIELD;
+                            qInfo()<<"[L2B-007] Frame B even field index out of bound! Line skipped!"<<line_num;
                         }
+#endif
                     }
                 }
 #ifdef DI_LOG_NOLINE_SKIP_VERBOSE
@@ -944,11 +977,12 @@ void STC007DataStitcher::splitFramesToFields()
                             frasm_f2.odd_valid_lines++;
                         }
                     }
+#ifdef DI_LOG_NOLINE_SKIP_VERBOSE
                     else
                     {
-                        qWarning()<<DBG_ANCHOR<<"[L2B-007] Frame B odd field index out of bound in [STC007DataStitcher::splitFramesToFields()]! Logic error! Line skipped!";
-                        qWarning()<<DBG_ANCHOR<<"[L2B-007] Max field line count:"<<BUF_SIZE_FIELD;
+                        qInfo()<<"[L2B-007] Frame B odd field index out of bound! Line skipped!"<<line_num;
                     }
+#endif
                 }
             }
         }
@@ -1049,9 +1083,9 @@ uint8_t STC007DataStitcher::getFieldResolution(std::vector<STC007Line> *field, u
     }
 
     // Check if provided size exceeds data size in the container.
-    if(field->size()<=f_size)
+    if(field->size()<f_size)
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Array index out-of-bound in [STC007DataStitcher::findFieldResolution()]!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Array index out-of-bound!"<<field->size()<<f_size;
         return SAMPLE_RES_UNKNOWN;
     }
 
@@ -1062,7 +1096,7 @@ uint8_t STC007DataStitcher::getFieldResolution(std::vector<STC007Line> *field, u
     }
     else
     {
-        //qWarning()<<DBG_ANCHOR<<"[L2B-007] Not enough data ("<<f_size<<") in [STC007DataStitcher::findFieldResolution()]!";
+        //qWarning()<<DBG_ANCHOR<<"[L2B-007] Not enough data ("<<f_size<<")!";
         return SAMPLE_RES_UNKNOWN;
     }
 
@@ -1301,7 +1335,7 @@ uint8_t STC007DataStitcher::getDataBlockResolution(std::deque<STC007Line> *in_li
 
     if(in_line_buffer->size()<=(size_t)(line_sh+STC007DataBlock::MIN_DEINT_DATA))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Buffer index out-of-bound, exiting...";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Buffer index out-of-bound, exiting..."<<in_line_buffer->size()<<(line_sh+STC007DataBlock::MIN_DEINT_DATA);
         return STC007Deinterleaver::RES_MODE_14BIT_AUTO;
     }
 
@@ -1439,6 +1473,7 @@ uint8_t STC007DataStitcher::tryPadding(std::vector<STC007Line> *field1, uint16_t
 {
     bool suppress_log, run_lock;
     uint8_t ext_di_log_lvl;
+    uint8_t unchecked_lim;
     uint16_t line_count, line_num;
     uint16_t valid_burst_count, silence_burst_count, uncheck_burst_count, broken_count;
     uint16_t valid_burst_max, silence_burst_max, uncheck_burst_max, brk_burst_max;
@@ -1457,13 +1492,13 @@ uint8_t STC007DataStitcher::tryPadding(std::vector<STC007Line> *field1, uint16_t
 #endif
     if((field1==NULL)||(field2==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Null pointer for buffer provided in [STC007DataStitcher::tryPadding()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Null pointer for buffer provided, exiting...";
         return DS_RET_NO_DATA;
     }
 
-    if((field1->size()<=f1_size)||(field2->size()<=f2_size))
+    if((field1->size()<f1_size)||(field2->size()<f2_size))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Buffer index out-of-bound in [STC007DataStitcher::tryPadding()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Buffer index out-of-bound, exiting..."<<field1->size()<<f1_size<<field2->size()<<f2_size;
         return DS_RET_NO_DATA;
     }
 
@@ -1538,6 +1573,12 @@ uint8_t STC007DataStitcher::tryPadding(std::vector<STC007Line> *field1, uint16_t
 
     valid_burst_count = silence_burst_count = uncheck_burst_count = broken_count = 0;
     valid_burst_max = silence_burst_max = uncheck_burst_max = brk_burst_max = 0;
+
+    unchecked_lim = max_unchecked_14b_blocks;
+    if(enable_Q_code==false)
+    {
+        unchecked_lim = max_unchecked_16b_blocks;
+    }
 
     // Set parameters for test conversion.
     ext_di_log_lvl = 0;
@@ -1636,23 +1677,7 @@ uint8_t STC007DataStitcher::tryPadding(std::vector<STC007Line> *field1, uint16_t
             // Block can not be checked for validity.
             uncheck_burst_count++;
             // Choose limit according to resolution.
-            /*if(padding_block.isData16bit()==false)
-            {
-                // 14-bit data.
-                if(uncheck_burst_count>=max_unchecked_14b_blocks)
-                {
-                    valid_burst_count = 0;
-                }
-            }
-            else
-            {
-                // 16-bit data.
-                if(uncheck_burst_count>=max_unchecked_16b_blocks)
-                {
-                    valid_burst_count = 0;
-                }
-            }*/
-            if(uncheck_burst_count>=0x38)
+            if(uncheck_burst_count>=unchecked_lim)
             {
                 valid_burst_count = 0;
             }
@@ -1744,7 +1769,7 @@ uint8_t STC007DataStitcher::tryPadding(std::vector<STC007Line> *field1, uint16_t
         // Too much silence.
         return DS_RET_SILENCE;
     }
-    if(uncheck_burst_max>0x38)
+    if(uncheck_burst_max>unchecked_lim)
     {
         // Too many unchecked.
         return DS_RET_NO_PAD;
@@ -1766,27 +1791,43 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
 {
     bool suppress_log;
     uint16_t pad, max_padding, min_broken;
-    uint8_t stitch_res;
+    uint8_t unchecked_lim, no_brk_idx, stitch_res;
 
     stitch_res = DS_RET_NO_PAD;
     suppress_log = !(((log_level&LOG_PADDING)!=0)&&((log_level&LOG_PROCESS)!=0));
 
     if((field1==NULL)||(field2==NULL)||(padding==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Null pointer provided in [STC007DataStitcher::findPadding()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Null pointer provided, exiting...";
         return stitch_res;
     }
 
-    // Assume default padding according to PAL/NTSC standards.
     pad = f1_size;
-
+    // Assume default padding according to PAL/NTSC standards.
     if(in_std==FrameAsmDescriptor::VID_PAL)
     {
-        (*padding) = LINES_PF_PAL - pad;
+        // There can be more that standard count of total lines per field
+        // while much less valid lines after trimming,
+        // check for limits to avoid underrun.
+        if(pad>LINES_PF_PAL)
+        {
+            (*padding) = 0;
+        }
+        else
+        {
+            (*padding) = LINES_PF_PAL - pad;
+        }
     }
     else if(in_std==FrameAsmDescriptor::VID_NTSC)
     {
-        (*padding) = LINES_PF_NTSC - pad;
+        if(pad>LINES_PF_NTSC)
+        {
+            (*padding) = 0;
+        }
+        else
+        {
+            (*padding) = LINES_PF_NTSC - pad;
+        }
     }
     else
     {
@@ -1800,11 +1841,13 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
 #endif
 
     max_padding = MAX_PADDING_14BIT;
+    unchecked_lim = max_unchecked_14b_blocks;
     // Check Q-code availability to set maximum padding distance.
     if((in_resolution==STC007DataBlock::RES_16BIT)||(enable_Q_code==false))
     {
         // Without Q-code maximum padding is half of that of PQ mode.
         max_padding = MAX_PADDING_16BIT;
+        unchecked_lim = max_unchecked_16b_blocks;
     }
 #ifdef DI_EN_DBG_OUT
     if(suppress_log==false)
@@ -1820,39 +1863,35 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
         // Initialize stats data.
         std::vector<FieldStitchStats> stitch_data;
         stitch_data.resize(max_padding);
+        min_broken = 0xFFFF;
+        no_brk_idx = 0;
 
         // Padding cycle, collect stats data.
         for(pad=0;pad<max_padding;pad++)
         {
             // Try to stitch fields with set padding.
             tryPadding(field1, f1_size, field2, f2_size, pad, &stitch_data[pad]);
-        }
-
-#ifdef DI_EN_DBG_OUT
-        /*if(suppress_log==false)
-        {
-            QString index_line, valid_line, silence_line, unchecked_line, broken_line, tmp;
-            for(pad=0;pad<max_padding;pad++)
+            // Find minimum broken blocks within all passes.
+            if(min_broken>stitch_data[pad].broken)
             {
-                tmp.sprintf("%02u", stitch_data[pad].index);
-                index_line += "|"+tmp;
-                tmp.sprintf("%02x", stitch_data[pad].broken);
-                broken_line += "|"+tmp;
-                tmp.sprintf("%02x", stitch_data[pad].valid);
-                valid_line += "|"+tmp;
-                tmp.sprintf("%02x", stitch_data[pad].unchecked);
-                unchecked_line += "|"+tmp;
-                tmp.sprintf("%02x", stitch_data[pad].silent);
-                silence_line += "|"+tmp;
+                // Min minimum.
+                min_broken = stitch_data[pad].broken;
+                if(min_broken==0)
+                {
+                    no_brk_idx = pad;
+                }
             }
-            qInfo()<<"[L2B-007] Padding sweep stats:";
-            qInfo()<<"[L2B-007] Padding:  "<<index_line;
-            qInfo()<<"[L2B-007] Broken:   "<<broken_line;
-            qInfo()<<"[L2B-007] Valid:    "<<valid_line;
-            qInfo()<<"[L2B-007] Unchecked:"<<unchecked_line;
-            qInfo()<<"[L2B-007] Silent:   "<<silence_line;
-        }*/
-#endif
+            else if(min_broken==0)
+            {
+                // Padding with no broken blocks already found.
+                if((stitch_data[no_brk_idx].valid>0)&&(stitch_data[no_brk_idx].unchecked<unchecked_lim)&&(stitch_data[pad].broken>0))
+                {
+                    // Padding with no broken blocks passes checks for number of valid and unchecked blocks.
+                    // Current one has more broken blocks, no need to check further.
+                    break;
+                }
+            }
+        }
 
         // Search for minimum number of broken blocks.
         // Sort by number of valid blocks from max to min.
@@ -1861,8 +1900,6 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
         // If its unchecked blocks count is less than allowed - set as detected padding.
         std::sort(stitch_data.begin(), stitch_data.end());
 
-        // Find minimum broken blocks within all passes.
-        min_broken = stitch_data[0].broken;
 #ifdef DI_EN_DBG_OUT
         if(suppress_log==false)
         {
@@ -1895,10 +1932,10 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
         if(stitch_data[0].silent<MAX_BURST_SILENCE)
         {
             // Not so many silent blocks.
-            if(stitch_data[0].unchecked<0x38)
+            if(stitch_data[0].unchecked<unchecked_lim)
             {
                 // Not too many unchecked blocks.
-                if((stitch_data[0].broken<4)&&(stitch_data[0].broken<stitch_data[1].broken))
+                if((stitch_data[0].broken<2)&&(stitch_data[0].broken<stitch_data[1].broken))
                 {
                     // After sorting first padding has less BROKEN blocks.
                     stitch_res = DS_RET_OK;
@@ -1910,7 +1947,7 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
                     }
 #endif
                 }
-                else if(((int16_t)stitch_data[0].valid-(int16_t)stitch_data[1].valid)>MAX_BURST_UNCH)
+                else if((((int16_t)stitch_data[0].valid-(int16_t)stitch_data[1].valid)>MAX_BURST_UNCH_DELTA)&&(stitch_data[0].broken==0))
                 {
                     stitch_res = DS_RET_OK;
                     (*padding) = stitch_data[0].index;
@@ -1921,7 +1958,7 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
                     }
 #endif
                 }
-                else if(((int16_t)stitch_data[1].unchecked-(int16_t)stitch_data[0].unchecked)>MAX_BURST_UNCH)
+                /*else if((((int16_t)stitch_data[1].unchecked-(int16_t)stitch_data[0].unchecked)>MAX_BURST_UNCH_DELTA)&&(stitch_data[0].broken==0))
                 {
                     stitch_res = DS_RET_OK;
                     (*padding) = stitch_data[0].index;
@@ -1931,7 +1968,7 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
                         qInfo()<<"[L2B-007] Detected valid (but suspicious) padding of"<<stitch_data[0].index<<"by least unchecked blocks";
                     }
 #endif
-                }
+                }*/
 #ifdef DI_EN_DBG_OUT
                 else
                 {
@@ -1958,7 +1995,7 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
                 for(pad=0;pad<max_padding;pad++)
                 {
                     stitch_data[pad].broken = min_broken;
-                    if(stitch_data[pad].unchecked>=0x38)
+                    if(stitch_data[pad].unchecked>=unchecked_lim)
                     {
                         stitch_data[pad].broken = 0xFF;
                     }
@@ -1988,10 +2025,10 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
                     qInfo()<<"[L2B-007] Silent:   "<<silence_line;
                 }
 #endif
-                if(stitch_data[0].unchecked<0x38)
+                if(stitch_data[0].unchecked<unchecked_lim)
                 {
                     // Not too many unchecked blocks.
-                    if(((int16_t)stitch_data[0].valid-(int16_t)stitch_data[1].valid)>MAX_BURST_UNCH)
+                    if(((int16_t)stitch_data[0].valid-(int16_t)stitch_data[1].valid)>MAX_BURST_UNCH_DELTA)
                     {
                         stitch_res = DS_RET_OK;
                         (*padding) = stitch_data[0].index;
@@ -2002,7 +2039,7 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
                         }
 #endif
                     }
-                    else if(((int16_t)stitch_data[1].unchecked-(int16_t)stitch_data[0].unchecked)>MAX_BURST_UNCH)
+                    /*else if(((int16_t)stitch_data[1].unchecked-(int16_t)stitch_data[0].unchecked)>MAX_BURST_UNCH_DELTA)
                     {
                         stitch_res = DS_RET_OK;
                         (*padding) = stitch_data[0].index;
@@ -2012,7 +2049,7 @@ uint8_t STC007DataStitcher::findPadding(std::vector<STC007Line> *field1, uint16_
                             qInfo()<<"[L2B-007] Detected valid (but suspicious) padding of"<<stitch_data[0].index<<"by least unchecked blocks";
                         }
 #endif
-                    }
+                    }*/
 #ifdef DI_EN_DBG_OUT
                     else
                     {
@@ -2914,21 +2951,11 @@ uint8_t STC007DataStitcher::findFieldStitching()
     // Try to detect audio resolution in the fields.
     detectAudioResolution();
 
-    // Try to detect video standard (number of PCM lines in the frame).
+    // Try to detect video standard (number of PCM lines in the frame) and set field order.
     detectVideoStandard();
 
     // Set first stage.
     proc_state = STG_TRY_PREVIOUS;
-    /*if(frasm_f1.isOrderPreset()!=false)
-    {
-        // Field order is preset, go with stitching.
-        proc_state = STG_A_PREPARE;
-    }
-    else
-    {
-        // No field order preset, try to apply previous stitching.
-        proc_state = STG_TRY_PREVIOUS;
-    }*/
 
     dbg_timer.start();
 
@@ -2955,13 +2982,12 @@ uint8_t STC007DataStitcher::findFieldStitching()
         {
             // Preset "go full processing" state.
             proc_state = STG_A_PREPARE;
-            // Check trim data.
+            // Check trim data (previous frame has the same line count per frame and valid padding).
             if((frasm_f0.odd_data_lines==frasm_f1.odd_data_lines)&&(frasm_f0.even_data_lines==frasm_f1.even_data_lines)
                 &&(frasm_f0.inner_padding_ok!=false)&&(frasm_f0.outer_padding_ok!=false))
             {
                 // Check if Frame A field order is preset externally in [detectVideoStandard()]
                 // and if preset order is the same as for previous frame with valid padding.
-                //if((frasm_f1.isOrderPreset()!=false)&&(frasm_f0.field_order!=frasm_f1.field_order))
                 if((frasm_f1.isOrderPreset()==false)||(frasm_f0.field_order==frasm_f1.field_order))
                 {
                     // Reset frame trim data.
@@ -3088,7 +3114,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
 #ifdef DI_EN_DBG_OUT
             else
             {
-                // Frame trim data is different, skip easy stitching (mode is preset above).
+                // Frame trim data mismatch, skip easy stitching (mode is preset above).
                 if(suppress_anylog==false)
                 {
                     qInfo()<<"[L2B-007](EASY) Previous frame trimming is invalid for easy-mode, going hard-mode stitching...";
@@ -3096,6 +3122,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
             }
 #endif
         }
+//------------------------ EASY stitching on inter-frame padding is done, try to EASY stitch frame A to B (TFF).
         else if(proc_state==STG_TRY_TFF_TO_TFF)
         {
             // Preset "bad" result.
@@ -3148,10 +3175,11 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 }
 #endif
                 proc_state = STG_AB_TFF_TO_TFF;
-                // Deny switching to another combination.
+                // Deny switching to another field combination.
                 en_sw_order = false;
             }
         }
+//------------------------ EASY stitching on inter-frame padding is done, try to EASY stitch frame A to B (BFF).
         else if(proc_state==STG_TRY_BFF_TO_BFF)
         {
             // Preset "bad" result.
@@ -3208,7 +3236,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 en_sw_order = false;
             }
         }
-//------------------------ Processing Frame A padding.
+//------------------------ Prepare normal (full) Frame A padding.
         else if(proc_state==STG_A_PREPARE)
         {
             frasm_f1.inner_padding_ok = frasm_f1.outer_padding_ok = false;
@@ -3219,7 +3247,10 @@ uint8_t STC007DataStitcher::findFieldStitching()
             {
                 // Not enough usefull lines, it will be impossible to compile data blocks.
                 // Unable to detect Frame A field padding and A-B padding.
-                frasm_f1.setOrderUnknown();
+                if(frasm_f1.isOrderPreset()==false)
+                {
+                    frasm_f1.setOrderUnknown();
+                }
 #ifdef DI_EN_DBG_OUT
                 if(suppress_anylog==false)
                 {
@@ -3313,7 +3344,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
 #endif
                     // Try to detect Frame A field padding, with BFF order.
                     proc_state = STG_A_PAD_BFF;
-                    // Deny switching to another combination.
+                    // Deny switching to another field combination.
                     en_sw_order = false;
                 }
                 else if(frasm_f1.isOrderTFF()!=false)
@@ -3326,7 +3357,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
 #endif
                     // Try to detect Frame A field padding, with TFF order.
                     proc_state = STG_A_PAD_TFF;
-                    // Deny switching to another combination.
+                    // Deny switching to another field combination.
                     en_sw_order = false;
                 }
                 else
@@ -3364,11 +3395,12 @@ uint8_t STC007DataStitcher::findFieldStitching()
 #endif
                         proc_state = STG_A_PAD_TFF;
                     }
-                    // Allow switching to another combination.
+                    // Allow switching to another field combination.
                     en_sw_order = true;
                 }
             }
         }
+//------------------------ Process Frame A padding (TFF).
         else if(proc_state==STG_A_PAD_TFF)
         {
             // Try to detect Frame A field padding, assuming TFF order.
@@ -3460,6 +3492,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 }
             }
         }
+//------------------------ Process Frame A padding (BFF).
         else if(proc_state==STG_A_PAD_BFF)
         {
             // Try to detect Frame A field padding, assuming BFF order.
@@ -3551,6 +3584,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 }
             }
         }
+//------------------------ No valid inter-frame Frame A stitching, try A-B stitching.
         else if(proc_state==STG_AB_UNK_PREPARE)
         {
             // Frame A padding is not detected, still try to detect A-B padding.
@@ -3599,7 +3633,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 en_sw_order = true;
             }
         }
-//------------------------ Processing A-B padding.
+//------------------------ Processing A-B padding (TFF to TFF).
         else if(proc_state==STG_AB_TFF_TO_TFF)
         {
             // Check if Frame B has enough usefull lines to stitch.
@@ -3609,7 +3643,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 // Unable to detect Frame B field padding and A-B padding.
                 frasm_f1.outer_padding = 0;
                 frasm_f1.outer_padding_ok = false;
-                //frasm_f2.setOrderUnknown();
                 frasm_f2.inner_padding_ok = false;
 #ifdef DI_EN_DBG_OUT
                 if(suppress_anylog==false)
@@ -3621,18 +3654,38 @@ uint8_t STC007DataStitcher::findFieldStitching()
             }
             else if(frasm_f2.odd_data_lines<MIN_FILL_LINES_PF)
             {
-                // Not enough usefull lines in odd field, try with other field.
-#ifdef DI_EN_DBG_OUT
-                if(suppress_anylog==false)
+                // Not enough usefull lines in odd field.
+                if(frasm_f1.isOrderPreset()==false)
                 {
-                    qInfo()<<"[L2B-007] Not enough usefull lines in odd field of Frame B, try to detect A-B TFF-BFF...";
-                }
+                    // Field order for Frame A and B are not preset.
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_anylog==false)
+                    {
+                        qInfo()<<"[L2B-007] Not enough usefull lines in odd field of Frame B, try to detect A-B TFF-BFF...";
+                    }
 #endif
-                proc_state = STG_AB_TFF_TO_BFF;
+                    // Try with another field of Frame B.
+                    proc_state = STG_AB_TFF_TO_BFF;
+                }
+                else
+                {
+                    // Frame A (and Frame B should be as well) order is preset to TFF,
+                    // impossible to stitch with BFF order.
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_anylog==false)
+                    {
+                        qInfo()<<"[L2B-007] Not enough usefull lines in odd field of Frame B, field order preset to TFF, padding unknown.";
+                    }
+#endif
+                    frasm_f1.outer_padding = 0;
+                    frasm_f1.outer_padding_ok = false;
+                    frasm_f2.inner_padding_ok = false;
+                    proc_state = STG_PAD_NO_GOOD;
+                }
             }
             else
             {
-                // Enough usefull lines in odd field of frame B.
+                // Enough usefull lines in odd field of Frame B.
 #ifdef DI_EN_DBG_OUT
                 if(suppress_anylog==false)
                 {
@@ -3650,8 +3703,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                     // Padding detected successfully.
                     frasm_f1.outer_padding_ok = true;
                     frasm_f2.setOrderTFF();
-                    // Save video mode.
-                    //updateVideoStandard(guess_vid);
                     // Work is done.
                     proc_state = STG_PAD_OK;
                     if(frasm_f1.isOrderSet()==false)
@@ -3703,7 +3754,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                         // Not enough usefull lines in even field, impossible to detect padding.
                         frasm_f1.outer_padding = 0;
                         frasm_f1.outer_padding_ok = false;
-                        //frasm_f2.setOrderUnknown();
                         frasm_f2.inner_padding_ok = false;
 #ifdef DI_EN_DBG_OUT
                         if(suppress_anylog==false)
@@ -3716,18 +3766,37 @@ uint8_t STC007DataStitcher::findFieldStitching()
                     else
                     {
                         // Enough usefull lines in even field of frame B.
-#ifdef DI_EN_DBG_OUT
-                        if(suppress_anylog==false)
+                        if(frasm_f1.isOrderPreset()==false)
                         {
-                            qInfo()<<"[L2B-007] A-B TFF-TFF didn't work. Switching to TFF-BFF...";
-                        }
+                            // Field order for Frame A and B are not preset.
+#ifdef DI_EN_DBG_OUT
+                            if(suppress_anylog==false)
+                            {
+                                qInfo()<<"[L2B-007] A-B TFF-TFF didn't work. Switching to TFF-BFF...";
+                            }
 #endif
-                        // Try TFF - BFF.
-                        proc_state = STG_AB_TFF_TO_BFF;
+                            // Try TFF - BFF.
+                            proc_state = STG_AB_TFF_TO_BFF;
+                        }
+                        else
+                        {
+                            // Frame A (and Frame B should be as well) order is preset to TFF,
+                            // impossible to stitch with BFF order.
+#ifdef DI_EN_DBG_OUT
+                            if(suppress_anylog==false)
+                            {
+                                qInfo()<<"[L2B-007] A-B TFF-TFF didn't work. Field order preset to TFF, padding unknown.";
+                            }
+#endif
+                            frasm_f1.outer_padding = 0;
+                            frasm_f1.outer_padding_ok = false;
+                            proc_state = STG_PAD_NO_GOOD;
+                        }
                     }
                 }
             }
         }
+//------------------------ Processing A-B padding (BFF to BFF).
         else if(proc_state==STG_AB_BFF_TO_BFF)
         {
             // Check if Frame B has enough usefull lines to stitch.
@@ -3737,7 +3806,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 // Unable to detect Frame B field padding and A-B padding.
                 frasm_f1.outer_padding = 0;
                 frasm_f1.outer_padding_ok = false;
-                //frasm_f2.setOrderUnknown();
                 frasm_f2.inner_padding_ok = false;
 #ifdef DI_EN_DBG_OUT
                 if(suppress_anylog==false)
@@ -3749,14 +3817,34 @@ uint8_t STC007DataStitcher::findFieldStitching()
             }
             else if(frasm_f2.even_data_lines<MIN_FILL_LINES_PF)
             {
-                // Not enough usefull lines in even field, try with other field.
-#ifdef DI_EN_DBG_OUT
-                if(suppress_anylog==false)
+                // Not enough usefull lines in even field.
+                if(frasm_f1.isOrderPreset()==false)
                 {
-                    qInfo()<<"[L2B-007] Not enough usefull lines in even field of Frame B, try to detect A-B BFF-TFF...";
-                }
+                    // Field order for Frame A and B are not preset.
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_anylog==false)
+                    {
+                        qInfo()<<"[L2B-007] Not enough usefull lines in even field of Frame B, try to detect A-B BFF-TFF...";
+                    }
 #endif
-                proc_state = STG_AB_BFF_TO_TFF;
+                    // Try with another field of Frame B.
+                    proc_state = STG_AB_BFF_TO_TFF;
+                }
+                else
+                {
+                    // Frame A (and Frame B should be as well) order is preset to BFF,
+                    // impossible to stitch with TFF order.
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_anylog==false)
+                    {
+                        qInfo()<<"[L2B-007] Not enough usefull lines in even field of Frame B, field order preset to BFF, padding unknown.";
+                    }
+#endif
+                    frasm_f1.outer_padding = 0;
+                    frasm_f1.outer_padding_ok = false;
+                    frasm_f2.inner_padding_ok = false;
+                    proc_state = STG_PAD_NO_GOOD;
+                }
             }
             else
             {
@@ -3778,8 +3866,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                     // Padding detected successfully.
                     frasm_f1.outer_padding_ok = true;
                     frasm_f2.setOrderBFF();
-                    // Save video mode.
-                    //updateVideoStandard(guess_vid);
                     // Work is done.
                     proc_state = STG_PAD_OK;
                     if(frasm_f1.isOrderSet()==false)
@@ -3797,7 +3883,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                     {
                         // If Frame A field is set to opposite setting - invalidate A-B padding.
                         frasm_f1.outer_padding_ok = false;
-                        //frasm_f2.setOrderUnknown();
 #ifdef DI_EN_DBG_OUT
                         if(suppress_anylog==false)
                         {
@@ -3831,7 +3916,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                         // Not enough usefull lines in odd field, impossible to detect padding.
                         frasm_f1.outer_padding = 0;
                         frasm_f1.outer_padding_ok = false;
-                        //frasm_f2.setOrderUnknown();
                         frasm_f2.inner_padding_ok = false;
 #ifdef DI_EN_DBG_OUT
                         if(suppress_anylog==false)
@@ -3844,18 +3928,37 @@ uint8_t STC007DataStitcher::findFieldStitching()
                     else
                     {
                         // Enough usefull lines in odd field of frame B.
-#ifdef DI_EN_DBG_OUT
-                        if(suppress_anylog==false)
+                        if(frasm_f1.isOrderPreset()==false)
                         {
-                            qInfo()<<"[L2B-007] A-B BFF-BFF didn't work. Switching to BFF-TFF...";
-                        }
+                            // Field order for Frame A and B are not preset.
+#ifdef DI_EN_DBG_OUT
+                            if(suppress_anylog==false)
+                            {
+                                qInfo()<<"[L2B-007] A-B BFF-BFF didn't work. Switching to BFF-TFF...";
+                            }
 #endif
-                        // Try BFF - TFF.
-                        proc_state = STG_AB_BFF_TO_TFF;
+                            // Try BFF - TFF.
+                            proc_state = STG_AB_BFF_TO_TFF;
+                        }
+                        else
+                        {
+                            // Frame A (and Frame B should be as well) order is preset to BFF,
+                            // impossible to stitch with TFF order.
+#ifdef DI_EN_DBG_OUT
+                            if(suppress_anylog==false)
+                            {
+                                qInfo()<<"[L2B-007] A-B BFF-BFF didn't work. Field order preset to BFF, padding unknown.";
+                            }
+#endif
+                            frasm_f1.outer_padding = 0;
+                            frasm_f1.outer_padding_ok = false;
+                            proc_state = STG_PAD_NO_GOOD;
+                        }
                     }
                 }
             }
         }
+//------------------------ Processing A-B padding (TFF to BFF).
         else if(proc_state==STG_AB_TFF_TO_BFF)
         {
 #ifdef DI_EN_DBG_OUT
@@ -3875,8 +3978,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 // Padding detected successfully.
                 frasm_f1.outer_padding_ok = true;
                 frasm_f2.setOrderBFF();
-                // Save video mode.
-                //updateVideoStandard(guess_vid);
                 // Work is done.
                 proc_state = STG_PAD_OK;
                 if(frasm_f1.isOrderSet()==false)
@@ -3911,7 +4012,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 frasm_f1.outer_silence = true;
                 frasm_f1.outer_padding = 0;
                 frasm_f1.outer_padding_ok = false;
-                //frasm_f2.setOrderUnknown();
                 frasm_f2.inner_padding_ok = false;
 #ifdef DI_EN_DBG_OUT
                 if(suppress_anylog==false)
@@ -3926,10 +4026,8 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 // Did not find padding between frames.
                 frasm_f1.outer_padding = 0;
                 frasm_f1.outer_padding_ok = false;
-                //frasm_f2.setOrderUnknown();
                 frasm_f2.inner_padding_ok = false;
                 // Check if Frame A is preset to be TFF.
-                //if((frasm_f1.isOrderTFF()==false)&&(f1o_index>=DI_FIELD_MIN_LINES))
                 if((en_sw_order!=false)&&(frasm_f1.even_data_lines>=MIN_FILL_LINES_PF))
                 {
 #ifdef DI_EN_DBG_OUT
@@ -3949,6 +4047,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 }
             }
         }
+//------------------------ Processing A-B padding (BFF to TFF).
         else if(proc_state==STG_AB_BFF_TO_TFF)
         {
 #ifdef DI_EN_DBG_OUT
@@ -3968,8 +4067,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 // Padding detected successfully.
                 frasm_f1.outer_padding_ok = true;
                 frasm_f2.setOrderTFF();
-                // Save video mode.
-                //updateVideoStandard(guess_vid);
                 // Work is done.
                 proc_state = STG_PAD_OK;
                 if(frasm_f1.isOrderSet()==false)
@@ -4004,7 +4101,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 frasm_f1.outer_silence = true;
                 frasm_f1.outer_padding = 0;
                 frasm_f1.outer_padding_ok = false;
-                //frasm_f2.setOrderUnknown();
                 frasm_f2.inner_padding_ok = false;
 #ifdef DI_EN_DBG_OUT
                 if(suppress_anylog==false)
@@ -4019,10 +4115,8 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 // Did not find padding between frames.
                 frasm_f1.outer_padding = 0;
                 frasm_f1.outer_padding_ok = false;
-                //frasm_f2.setOrderUnknown();
                 frasm_f2.inner_padding_ok = false;
                 // Check if Frame A is preset to be BFF.
-                //if((frasm_f1.isOrderBFF()==false)&&(f1e_index>=DI_FIELD_MIN_LINES))
                 if((en_sw_order!=false)&&(frasm_f1.even_data_lines>=MIN_FILL_LINES_PF))
                 {
 #ifdef DI_EN_DBG_OUT
@@ -4043,6 +4137,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
             }
         }
 //------------------------ General states.
+//------------------------ Padding is done successfully.
         else if(proc_state==STG_PAD_OK)
         {
             // Field order and paddings are found successfully.
@@ -4052,10 +4147,10 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 qInfo()<<"[L2B-007] Frame padding detected successfully.";
             }
 #endif
-            //qDebug()<<"[DI] Stage"<<stage_count<<"time:"<<dbg_timer.nsecsElapsed();
             // Exit stage cycle.
             break;
         }
+//------------------------ Unable to detect padding due to silence.
         else if(proc_state==STG_PAD_SILENCE)
         {
             // Padding can not be found on silence.
@@ -4065,10 +4160,10 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 qInfo()<<"[L2B-007] Unable to detect frame padding due to silence!";
             }
 #endif
-            //qDebug()<<"[DI] Stage"<<stage_count<<"time:"<<dbg_timer.nsecsElapsed();
             // Exit stage cycle.
             break;
         }
+//------------------------ Failed to detect padding.
         else if(proc_state==STG_PAD_NO_GOOD)
         {
             // Padding was not found.
@@ -4078,7 +4173,6 @@ uint8_t STC007DataStitcher::findFieldStitching()
                 qInfo()<<"[L2B-007] Unable to detect valid frame padding!";
             }
 #endif
-            //qDebug()<<"[DI] Stage"<<stage_count<<"time:"<<dbg_timer.nsecsElapsed();
             // Exit stage cycle.
             break;
         }
@@ -4088,7 +4182,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
         if(stage_count>STG_PAD_MAX)
         {
 #ifdef DI_EN_DBG_OUT
-            qWarning()<<DBG_ANCHOR<<"[L2B-007] Inf. loop detected in [STC007DataStitcher::findFieldStitching()], breaking...";
+            qWarning()<<DBG_ANCHOR<<"[L2B-007] Inf. loop detected, breaking...";
 #endif
             return DS_RET_NO_PAD;
         }
@@ -4281,7 +4375,7 @@ uint16_t STC007DataStitcher::addLinesFromField(std::vector<STC007Line> *field_bu
     }
     else
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Array access out of bounds in [STC007DataStitcher::addLinesFromField]! Total:"<<field_buf->size()<<", start index:"<<ind_start<<", stop index:"<<(ind_start+count);
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Array access out of bounds! Total:"<<field_buf->size()<<", start index:"<<ind_start<<", stop index:"<<(ind_start+count);
     }
     return lines_cnt;
 }
@@ -4560,7 +4654,7 @@ void STC007DataStitcher::fillFrameForOutput()
     }
 
     // Get target line count by video standard.
-    uint16_t target_lines_per_field;
+    int16_t target_lines_per_field;
     if(frasm_f1.video_standard==FrameAsmDescriptor::VID_PAL)
     {
         target_lines_per_field = LINES_PF_PAL;
@@ -4569,16 +4663,23 @@ void STC007DataStitcher::fillFrameForOutput()
     {
         target_lines_per_field = LINES_PF_NTSC;
     }
-    else if(frasm_f1.video_standard==FrameAsmDescriptor::VID_UNKNOWN)
+    else
     {
         // Pick default standard.
         target_lines_per_field = LINES_PF_DEFAULT;
     }
-    else
+
+#ifdef QT_VERSION
+    if(field_1_cnt>target_lines_per_field)
     {
-        // Ignore video standard line count, assemble fields as is.
-        target_lines_per_field = 0;
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Field 1 size over the target!"<<frasm_f1.frame_number<<field_1_cnt<<target_lines_per_field;
     }
+    if(field_2_cnt>target_lines_per_field)
+    {
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Field 2 size over the target!"<<frasm_f1.frame_number<<field_2_cnt<<target_lines_per_field;
+    }
+#endif
+
 
     // Determine if there is a need to enable top-line insertion due to uneven line count.
     bool insert_top_line = false;
@@ -4641,19 +4742,21 @@ void STC007DataStitcher::fillFrameForOutput()
             {
                 // Anchor A and anchor B and anchor C are present.
                 // ABC
-                if(target_lines_per_field==0)
+                // Calculate total number of lines for frame assembly.
+                lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.inner_padding+frasm_f1.outer_padding;
+                // Check line count according to video standard.
+                if((target_lines_per_field*2)==lines_to_fill)
                 {
-                    // Do not care about frame limits, assemble as is.
 #ifdef DI_EN_DBG_OUT
                     if(suppress_anylog==false)
                     {
-                        qInfo()<<"[L2B-007] Data anchors: ABC, path: no limits";
+                        qInfo()<<"[L2B-007] Data anchors: ABC, path: frame size is correct";
                     }
 #endif
                     // Reset line number.
                     last_line = getFirstFieldLineNum(cur_field_order);
                     // Add lines from first field (full field).
-                    added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                    added_lines_cnt += addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
                     // Add field-to-field padding.
                     added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
                     added_lines_cnt += added_inner;
@@ -4665,151 +4768,20 @@ void STC007DataStitcher::fillFrameForOutput()
                     added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
                     added_lines_cnt += added_outer;
                 }
-                else
+                else if((target_lines_per_field*2)>lines_to_fill)
                 {
-                    // Calculate total number of lines for frame assembly.
-                    lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.inner_padding+frasm_f1.outer_padding;
-                    // Check line count according to video standard.
-                    if((target_lines_per_field*2)==lines_to_fill)
-                    {
-#ifdef DI_EN_DBG_OUT
-                        if(suppress_anylog==false)
-                        {
-                            qInfo()<<"[L2B-007] Data anchors: ABC, path: frame size is correct";
-                        }
-#endif
-                        // Reset line number.
-                        last_line = getFirstFieldLineNum(cur_field_order);
-                        // Add lines from first field (full field).
-                        added_lines_cnt += addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                        // Add field-to-field padding.
-                        added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
-                        added_lines_cnt += added_inner;
-                        // Reset line number.
-                        last_line = getSecondFieldLineNum(cur_field_order);
-                        // Add lines from second field (full field).
-                        added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                        // Add frame-to-frame padding.
-                        added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
-                        added_lines_cnt += added_outer;
-                    }
-                    else if((target_lines_per_field*2)>lines_to_fill)
-                    {
-#ifdef DI_EN_DBG_OUT
-                        if(suppress_anylog==false)
-                        {
-                            qInfo()<<"[L2B-007] Data anchors: ABC, path: not enough lines";
-                        }
-#endif
-                        // Calculate number of padding lines to fill full frame.
-                        lines_to_fill = (target_lines_per_field*2)-lines_to_fill;
-                        // Reset line number.
-                        last_line = getFirstFieldLineNum(cur_field_order);
-                        // Add lines from first field (full field).
-                        added_lines_cnt += addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                        // Add field-to-field padding.
-                        added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
-                        added_lines_cnt += added_inner;
-                        // Reset line number.
-                        last_line = getSecondFieldLineNum(cur_field_order);
-                        // Add lines from second field (full field).
-                        added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                        // Add frame-to-frame padding.
-                        added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
-                        // Add padding up to frame standard.
-                        added_outer += addFieldPadding(frasm_f1.frame_number, lines_to_fill, &last_line);
-                        added_lines_cnt += added_outer;
-                        // Need to invalidate bottom seam.
-                        frasm_f1.outer_padding_ok = false;
-                        frasm_f2.setOrderUnknown();
-#ifdef DI_EN_DBG_OUT
-                        if(suppress_anylog==false)
-                        {
-                            qInfo()<<"[L2B-007] Frames A-B ("<<frasm_f1.frame_number<<"-"<<frasm_f2.frame_number<<") seam invalidated!";
-                        }
-#endif
-                    }
-                    else
-                    {
-                        // Re-calculate total number of lines for frame assembly (drop outer padding).
-                        lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.inner_padding;
-                        if((target_lines_per_field*2)>=lines_to_fill)
-                        {
-#ifdef DI_EN_DBG_OUT
-                            if(suppress_anylog==false)
-                            {
-                                qInfo()<<"[L2B-007] Data anchors: ABC, path: too many lines, cutting padding";
-                            }
-#endif
-                            // Calculate number of padding lines to fill full frame.
-                            lines_to_fill = (target_lines_per_field*2)-lines_to_fill;
-                            // Reset line number.
-                            last_line = getFirstFieldLineNum(cur_field_order);
-                            // Add lines from first field (full field).
-                            added_lines_cnt += addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                            // Add field-to-field padding.
-                            added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
-                            added_lines_cnt += added_inner;
-                            // Reset line number.
-                            last_line = getSecondFieldLineNum(cur_field_order);
-                            // Add lines from second field (full field).
-                            added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                            // Add padding up to frame standard.
-                            added_outer = addFieldPadding(frasm_f1.frame_number, lines_to_fill, &last_line);
-                            added_lines_cnt += added_outer;
-                        }
-                        else
-                        {
-#ifdef DI_EN_DBG_OUT
-                            if(suppress_anylog==false)
-                            {
-                                qInfo()<<"[L2B-007] Data anchors: ABC, path: too many lines, cutting second field";
-                            }
-#endif
-                            // Calculate number of excess lines that should be cut.
-                            lines_to_fill = lines_to_fill-(target_lines_per_field*2);
-                            // Reset line number.
-                            last_line = getFirstFieldLineNum(cur_field_order);
-                            // Add lines from first field (full field).
-                            added_lines_cnt += addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                            // Add field-to-field padding.
-                            added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
-                            added_lines_cnt += added_inner;
-                            // Reset line number.
-                            last_line = getSecondFieldLineNum(cur_field_order);
-                            // Add lines from second field (cut data from the end).
-                            added_lines_cnt += addLinesFromField(p_field_2, 0, (field_2_cnt-lines_to_fill), &last_line);
-                        }
-                        // Need to invalidate bottom seam.
-                        frasm_f1.outer_padding_ok = false;
-                        frasm_f2.setOrderUnknown();
-#ifdef DI_EN_DBG_OUT
-                        if(suppress_anylog==false)
-                        {
-                            qInfo()<<"[L2B-007] Frames A-B ("<<frasm_f1.frame_number<<"-"<<frasm_f2.frame_number<<") seam invalidated!";
-                        }
-#endif
-                    }
-                }
-            }
-            else
-            {
-                // Anchor A and anchor B present.
-                // No anchor C.
-                // AB
-                if(target_lines_per_field==0)
-                {
-                    // Do not care about frame limits, assemble as is.
 #ifdef DI_EN_DBG_OUT
                     if(suppress_anylog==false)
                     {
-                        qInfo()<<"[L2B-007] Data anchors: AB, path: no limits";
+                        qInfo()<<"[L2B-007] Data anchors: ABC, path: not enough lines";
                     }
 #endif
+                    // Calculate number of padding lines to fill full frame.
+                    lines_to_fill = (target_lines_per_field*2)-lines_to_fill;
                     // Reset line number.
                     last_line = getFirstFieldLineNum(cur_field_order);
                     // Add lines from first field (full field).
-                    added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                    added_lines_cnt += addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
                     // Add field-to-field padding.
                     added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
                     added_lines_cnt += added_inner;
@@ -4817,18 +4789,31 @@ void STC007DataStitcher::fillFrameForOutput()
                     last_line = getSecondFieldLineNum(cur_field_order);
                     // Add lines from second field (full field).
                     added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
+                    // Add frame-to-frame padding.
+                    added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
+                    // Add padding up to frame standard.
+                    added_outer += addFieldPadding(frasm_f1.frame_number, lines_to_fill, &last_line);
+                    added_lines_cnt += added_outer;
+                    // Need to invalidate bottom seam.
+                    frasm_f1.outer_padding_ok = false;
+                    frasm_f2.setOrderUnknown();
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_anylog==false)
+                    {
+                        qInfo()<<"[L2B-007] Frames A-B ("<<frasm_f1.frame_number<<"-"<<frasm_f2.frame_number<<") seam invalidated!";
+                    }
+#endif
                 }
                 else
                 {
-                    // Calculate total number of lines for frame assembly.
+                    // Re-calculate total number of lines for frame assembly (drop outer padding).
                     lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.inner_padding;
-                    // Check line count according to video standard.
                     if((target_lines_per_field*2)>=lines_to_fill)
                     {
 #ifdef DI_EN_DBG_OUT
                         if(suppress_anylog==false)
                         {
-                            qInfo()<<"[L2B-007] Data anchors: AB, path: adding padding";
+                            qInfo()<<"[L2B-007] Data anchors: ABC, path: too many lines, cutting padding";
                         }
 #endif
                         // Calculate number of padding lines to fill full frame.
@@ -4836,7 +4821,7 @@ void STC007DataStitcher::fillFrameForOutput()
                         // Reset line number.
                         last_line = getFirstFieldLineNum(cur_field_order);
                         // Add lines from first field (full field).
-                        added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                        added_lines_cnt += addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
                         // Add field-to-field padding.
                         added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
                         added_lines_cnt += added_inner;
@@ -4853,7 +4838,7 @@ void STC007DataStitcher::fillFrameForOutput()
 #ifdef DI_EN_DBG_OUT
                         if(suppress_anylog==false)
                         {
-                            qInfo()<<"[L2B-007] Data anchors: AB, path: too many lines, cutting second field";
+                            qInfo()<<"[L2B-007] Data anchors: ABC, path: too many lines, cutting second field";
                         }
 #endif
                         // Calculate number of excess lines that should be cut.
@@ -4861,7 +4846,7 @@ void STC007DataStitcher::fillFrameForOutput()
                         // Reset line number.
                         last_line = getFirstFieldLineNum(cur_field_order);
                         // Add lines from first field (full field).
-                        added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                        added_lines_cnt += addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
                         // Add field-to-field padding.
                         added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
                         added_lines_cnt += added_inner;
@@ -4870,289 +4855,22 @@ void STC007DataStitcher::fillFrameForOutput()
                         // Add lines from second field (cut data from the end).
                         added_lines_cnt += addLinesFromField(p_field_2, 0, (field_2_cnt-lines_to_fill), &last_line);
                     }
-                }
-            }
-        }
-        else if(frasm_f1.outer_padding_ok!=false)
-        {
-            // Anchor A and anchor C present.
-            // No anchor B.
-            // AC
-            if(target_lines_per_field==0)
-            {
-                // Do not care about frame limits, assemble as is.
+                    // Need to invalidate bottom seam.
+                    frasm_f1.outer_padding_ok = false;
+                    frasm_f2.setOrderUnknown();
 #ifdef DI_EN_DBG_OUT
-                if(suppress_anylog==false)
-                {
-                    qInfo()<<"[L2B-007] Data anchors: AC, path: no limits";
-                }
+                    if(suppress_anylog==false)
+                    {
+                        qInfo()<<"[L2B-007] Frames A-B ("<<frasm_f1.frame_number<<"-"<<frasm_f2.frame_number<<") seam invalidated!";
+                    }
 #endif
-                // Reset line number.
-                last_line = getFirstFieldLineNum(cur_field_order);
-                // Add lines from first field (full field).
-                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                // Reset line number.
-                last_line = getSecondFieldLineNum(cur_field_order);
-                // Add lines from second field (full field).
-                added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                // Add frame-to-frame padding.
-                added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
-                added_lines_cnt += added_outer;
+                }
             }
             else
             {
-                // Calculate total number of lines for frame assembly.
-                lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.outer_padding;
-                // Check line count according to video standard.
-                if((target_lines_per_field*2)>=lines_to_fill)
-                {
-#ifdef DI_EN_DBG_OUT
-                    if(suppress_anylog==false)
-                    {
-                        qInfo()<<"[L2B-007] Data anchors: AC, path: adding padding";
-                    }
-#endif
-                    // Calculate number of padding lines to fill full frame.
-                    lines_to_fill = (target_lines_per_field*2)-lines_to_fill;
-                    // Reset line number.
-                    last_line = getFirstFieldLineNum(cur_field_order);
-                    // Add lines from first field (full field).
-                    added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                    // Add padding up to frame standard.
-                    added_inner = addFieldPadding(frasm_f1.frame_number, lines_to_fill, &last_line);
-                    added_lines_cnt += added_inner;
-                    // Reset line number.
-                    last_line = getSecondFieldLineNum(cur_field_order);
-                    // Add lines from second field (full field).
-                    added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                    // Add frame-to-frame padding.
-                    added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
-                    added_lines_cnt += added_outer;
-                }
-                else
-                {
-#ifdef DI_EN_DBG_OUT
-                    if(suppress_anylog==false)
-                    {
-                        qInfo()<<"[L2B-007] Data anchors: AC, path: too many lines, cutting second field";
-                    }
-#endif
-                    // Calculate number of excess lines that should be cut.
-                    lines_to_fill = lines_to_fill-(target_lines_per_field*2);
-                    // Reset line number.
-                    last_line = getFirstFieldLineNum(cur_field_order);
-                    // Add lines from first field (full field).
-                    added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                    // Reset line number.
-                    last_line = getSecondFieldLineNum(cur_field_order);
-                    // Add lines from second field (cut data from the start).
-                    added_lines_cnt += addLinesFromField(p_field_2, lines_to_fill, (field_2_cnt-lines_to_fill), &last_line);
-                    // Add frame-to-frame padding.
-                    added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
-                    added_lines_cnt += added_outer;
-                }
-            }
-        }
-        else
-        {
-            // Anchor A present.
-            // No anchor B and anchor C.
-            // A
-            if(target_lines_per_field==0)
-            {
-                // Do not care about frame limits, assemble as is.
-#ifdef DI_EN_DBG_OUT
-                if(suppress_anylog==false)
-                {
-                    qInfo()<<"[L2B-007] Data anchors: A, path: no limits";
-                }
-#endif
-                // Reset line number.
-                last_line = getFirstFieldLineNum(cur_field_order);
-                // Add lines from first field (full field).
-                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                // Reset line number.
-                last_line = getSecondFieldLineNum(cur_field_order);
-                // Add lines from second field (full field).
-                added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-            }
-            else
-            {
-                // Calculate total number of lines for frame assembly.
-                lines_to_fill = field_1_cnt+field_2_cnt;
-                // Check line count according to video standard.
-                if((target_lines_per_field*2)>=lines_to_fill)
-                {
-#ifdef DI_EN_DBG_OUT
-                    if(suppress_anylog==false)
-                    {
-                        qInfo()<<"[L2B-007] Data anchors: A, path: adding padding";
-                    }
-#endif
-                    // Reset line number.
-                    last_line = getFirstFieldLineNum(cur_field_order);
-                    // Add lines from first field (full field).
-                    added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                    // Add padding up to field standard.
-                    added_inner = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_1_cnt), &last_line);
-                    added_lines_cnt += added_inner;
-                    // Reset line number.
-                    last_line = getSecondFieldLineNum(cur_field_order);
-                    // Add lines from second field (full field).
-                    added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                    // Add padding up to field standard.
-                    added_outer = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_2_cnt), &last_line);
-                    added_lines_cnt += added_outer;
-                }
-                else
-                {
-#ifdef DI_EN_DBG_OUT
-                    if(suppress_anylog==false)
-                    {
-                        qInfo()<<"[L2B-007] Data anchors: A, path: too many lines, cutting second field";
-                    }
-#endif
-                    // Calculate number of excess lines that should be cut.
-                    lines_to_fill = lines_to_fill-(target_lines_per_field*2);
-                    // Reset line number.
-                    last_line = getFirstFieldLineNum(cur_field_order);
-                    // Add lines from first field (full field).
-                    added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                    // Reset line number.
-                    last_line = getSecondFieldLineNum(cur_field_order);
-                    // Add lines from second field (cut data from the end).
-                    added_lines_cnt += addLinesFromField(p_field_2, 0, (field_2_cnt-lines_to_fill), &last_line);
-                }
-            }
-        }
-    }
-    // No anchor A.
-    else if(frasm_f1.inner_padding_ok!=false)
-    {
-        // Anchor B is present.
-        if(frasm_f1.outer_padding_ok!=false)
-        {
-            // Anchor B and anchor C are present.
-            // No anchor A.
-            // BC
-            if(target_lines_per_field==0)
-            {
-                // Do not care about frame limits, assemble as is.
-#ifdef DI_EN_DBG_OUT
-                if(suppress_anylog==false)
-                {
-                    qInfo()<<"[L2B-007] Data anchors: BC, path: no limits";
-                }
-#endif
-                // Reset line number.
-                last_line = getFirstFieldLineNum(cur_field_order);
-                // Add lines from first field (full field).
-                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                // Add field-to-field padding.
-                added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
-                added_lines_cnt += added_inner;
-                // Reset line number.
-                last_line = getSecondFieldLineNum(cur_field_order);
-                // Add lines from second field (full field).
-                added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                // Add frame-to-frame padding.
-                added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
-                added_lines_cnt += added_outer;
-            }
-            else
-            {
-                // Calculate total number of lines for frame assembly.
-                lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.inner_padding+frasm_f1.outer_padding;
-                // Check line count according to video standard.
-                if((target_lines_per_field*2)>=lines_to_fill)
-                {
-#ifdef DI_EN_DBG_OUT
-                    if(suppress_anylog==false)
-                    {
-                        if((target_lines_per_field*2)==lines_to_fill)
-                        {
-                            qInfo()<<"[L2B-007] Data anchors: BC, path: frame size is correct";
-                        }
-                        else
-                        {
-                            qInfo()<<"[L2B-007] Data anchors: BC, path: adding padding";
-                        }
-                    }
-#endif
-                    // Calculate number of padding lines to fill full frame.
-                    lines_to_fill = (target_lines_per_field*2)-lines_to_fill;
-                    // Reset line number.
-                    last_line = getFirstFieldLineNum(cur_field_order);
-                    // Add padding up to frame standard.
-                    added_inner = addFieldPadding(frasm_f1.frame_number, lines_to_fill, &last_line);
-                    // Add lines from first field (full field).
-                    added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                    // Add field-to-field padding.
-                    added_inner += addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
-                    added_lines_cnt += added_inner;
-                    // Reset line number.
-                    last_line = getSecondFieldLineNum(cur_field_order);
-                    // Add lines from second field (full field).
-                    added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                    // Add frame-to-frame padding.
-                    added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
-                    added_lines_cnt += added_outer;
-                }
-                else
-                {
-#ifdef DI_EN_DBG_OUT
-                    if(suppress_anylog==false)
-                    {
-                        qInfo()<<"[L2B-007] Data anchors: BC, path: too many lines, cutting first field";
-                    }
-#endif
-                    // Calculate number of excess lines that should be cut.
-                    lines_to_fill = lines_to_fill-(target_lines_per_field*2);
-                    // Reset line number.
-                    last_line = getFirstFieldLineNum(cur_field_order);
-                    // Add lines from first field (cut data from the start).
-                    added_lines_cnt += addLinesFromField(p_field_1, lines_to_fill, (field_1_cnt-lines_to_fill), &last_line);
-                    // Add field-to-field padding.
-                    added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
-                    added_lines_cnt += added_inner;
-                    // Reset line number.
-                    last_line = getSecondFieldLineNum(cur_field_order);
-                    // Add lines from second field (full field).
-                    added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                    // Add frame-to-frame padding.
-                    added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
-                    added_lines_cnt += added_outer;
-                }
-            }
-        }
-        else
-        {
-            // Anchor B present.
-            // No anchor A and anchor C.
-            // B
-            if(target_lines_per_field==0)
-            {
-                // Do not care about frame limits, assemble as is.
-#ifdef DI_EN_DBG_OUT
-                if(suppress_anylog==false)
-                {
-                    qInfo()<<"[L2B-007] Data anchors: B, path: no limits";
-                }
-#endif
-                // Reset line number.
-                last_line = getFirstFieldLineNum(cur_field_order);
-                // Add lines from first field (full field).
-                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                // Add field-to-field padding.
-                added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
-                added_lines_cnt += added_inner;
-                // Reset line number.
-                last_line = getSecondFieldLineNum(cur_field_order);
-                // Add lines from second field (full field).
-                added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-            }
-            else
-            {
+                // Anchor A and anchor B present.
+                // No anchor C.
+                // AB
                 // Calculate total number of lines for frame assembly.
                 lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.inner_padding;
                 // Check line count according to video standard.
@@ -5161,7 +4879,7 @@ void STC007DataStitcher::fillFrameForOutput()
 #ifdef DI_EN_DBG_OUT
                     if(suppress_anylog==false)
                     {
-                        qInfo()<<"[L2B-007] Data anchors: B, path: adding padding";
+                        qInfo()<<"[L2B-007] Data anchors: AB, path: adding padding";
                     }
 #endif
                     // Calculate number of padding lines to fill full frame.
@@ -5186,7 +4904,7 @@ void STC007DataStitcher::fillFrameForOutput()
 #ifdef DI_EN_DBG_OUT
                     if(suppress_anylog==false)
                     {
-                        qInfo()<<"[L2B-007] Data anchors: B, path: too many lines, cutting second field";
+                        qInfo()<<"[L2B-007] Data anchors: AB, path: too many lines, cutting second field";
                     }
 #endif
                     // Calculate number of excess lines that should be cut.
@@ -5205,35 +4923,11 @@ void STC007DataStitcher::fillFrameForOutput()
                 }
             }
         }
-    }
-    else if(frasm_f1.outer_padding_ok!=false)
-    {
-        // Anchor C present.
-        // No anchor A and anchor B.
-        // C
-        if(target_lines_per_field==0)
+        else if(frasm_f1.outer_padding_ok!=false)
         {
-            // Do not care about frame limits, assemble as is.
-#ifdef DI_EN_DBG_OUT
-            if(suppress_anylog==false)
-            {
-                qInfo()<<"[L2B-007] Data anchors: C, path: no limits";
-            }
-#endif
-            // Reset line number.
-            last_line = getFirstFieldLineNum(cur_field_order);
-            // Add lines from first field (full field).
-            added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-            // Reset line number.
-            last_line = getSecondFieldLineNum(cur_field_order);
-            // Add lines from second field (full field).
-            added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-            // Add frame-to-frame padding.
-            added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
-            added_lines_cnt += added_outer;
-        }
-        else
-        {
+            // Anchor A and anchor C present.
+            // No anchor B.
+            // AC
             // Calculate total number of lines for frame assembly.
             lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.outer_padding;
             // Check line count according to video standard.
@@ -5242,7 +4936,7 @@ void STC007DataStitcher::fillFrameForOutput()
 #ifdef DI_EN_DBG_OUT
                 if(suppress_anylog==false)
                 {
-                    qInfo()<<"[L2B-007] Data anchors: C, path: adding padding";
+                    qInfo()<<"[L2B-007] Data anchors: AC, path: adding padding";
                 }
 #endif
                 // Calculate number of padding lines to fill full frame.
@@ -5267,15 +4961,139 @@ void STC007DataStitcher::fillFrameForOutput()
 #ifdef DI_EN_DBG_OUT
                 if(suppress_anylog==false)
                 {
-                    qInfo()<<"[L2B-007] Data anchors: C, path: too many lines, cutting first field";
+                    qInfo()<<"[L2B-007] Data anchors: AC, path: too many lines, cutting second field";
                 }
 #endif
                 // Calculate number of excess lines that should be cut.
                 lines_to_fill = lines_to_fill-(target_lines_per_field*2);
                 // Reset line number.
                 last_line = getFirstFieldLineNum(cur_field_order);
-                // Add lines from first field (cut data from the end).
-                added_lines_cnt = addLinesFromField(p_field_1, 0, (field_1_cnt-lines_to_fill), &last_line);
+                // Add lines from first field (full field).
+                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                // Reset line number.
+                last_line = getSecondFieldLineNum(cur_field_order);
+                // Add lines from second field (cut data from the start).
+                added_lines_cnt += addLinesFromField(p_field_2, lines_to_fill, (field_2_cnt-lines_to_fill), &last_line);
+                // Add frame-to-frame padding.
+                added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
+                added_lines_cnt += added_outer;
+            }
+        }
+        else
+        {
+            // Anchor A present.
+            // No anchor B and anchor C.
+            // A
+            // Calculate total number of lines for frame assembly.
+            lines_to_fill = field_1_cnt+field_2_cnt;
+            // Check line count according to video standard.
+            if((target_lines_per_field*2)>=lines_to_fill)
+            {
+#ifdef DI_EN_DBG_OUT
+                if(suppress_anylog==false)
+                {
+                    qInfo()<<"[L2B-007] Data anchors: A, path: adding padding";
+                }
+#endif
+                // Reset line number.
+                last_line = getFirstFieldLineNum(cur_field_order);
+                // Add lines from first field (full field).
+                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                // Add padding up to field standard.
+                added_inner = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_1_cnt), &last_line);
+                added_lines_cnt += added_inner;
+                // Reset line number.
+                last_line = getSecondFieldLineNum(cur_field_order);
+                // Add lines from second field (full field).
+                added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
+                // Add padding up to field standard.
+                added_outer = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_2_cnt), &last_line);
+                added_lines_cnt += added_outer;
+            }
+            else
+            {
+#ifdef DI_EN_DBG_OUT
+                if(suppress_anylog==false)
+                {
+                    qInfo()<<"[L2B-007] Data anchors: A, path: too many lines, cutting second field";
+                }
+#endif
+                // Calculate number of excess lines that should be cut.
+                lines_to_fill = lines_to_fill-(target_lines_per_field*2);
+                // Reset line number.
+                last_line = getFirstFieldLineNum(cur_field_order);
+                // Add lines from first field (full field).
+                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                // Reset line number.
+                last_line = getSecondFieldLineNum(cur_field_order);
+                // Add lines from second field (cut data from the end).
+                added_lines_cnt += addLinesFromField(p_field_2, 0, (field_2_cnt-lines_to_fill), &last_line);
+            }
+        }
+    }
+    // No anchor A.
+    else if(frasm_f1.inner_padding_ok!=false)
+    {
+        // Anchor B is present.
+        if(frasm_f1.outer_padding_ok!=false)
+        {
+            // Anchor B and anchor C are present.
+            // No anchor A.
+            // BC
+            // Calculate total number of lines for frame assembly.
+            lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.inner_padding+frasm_f1.outer_padding;
+            // Check line count according to video standard.
+            if((target_lines_per_field*2)>=lines_to_fill)
+            {
+#ifdef DI_EN_DBG_OUT
+                if(suppress_anylog==false)
+                {
+                    if((target_lines_per_field*2)==lines_to_fill)
+                    {
+                        qInfo()<<"[L2B-007] Data anchors: BC, path: frame size is correct";
+                    }
+                    else
+                    {
+                        qInfo()<<"[L2B-007] Data anchors: BC, path: adding padding";
+                    }
+                }
+#endif
+                // Calculate number of padding lines to fill full frame.
+                lines_to_fill = (target_lines_per_field*2)-lines_to_fill;
+                // Reset line number.
+                last_line = getFirstFieldLineNum(cur_field_order);
+                // Add padding up to frame standard.
+                added_inner = addFieldPadding(frasm_f1.frame_number, lines_to_fill, &last_line);
+                // Add lines from first field (full field).
+                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                // Add field-to-field padding.
+                added_inner += addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
+                added_lines_cnt += added_inner;
+                // Reset line number.
+                last_line = getSecondFieldLineNum(cur_field_order);
+                // Add lines from second field (full field).
+                added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
+                // Add frame-to-frame padding.
+                added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
+                added_lines_cnt += added_outer;
+            }
+            else
+            {
+#ifdef DI_EN_DBG_OUT
+                if(suppress_anylog==false)
+                {
+                    qInfo()<<"[L2B-007] Data anchors: BC, path: too many lines, cutting first field";
+                }
+#endif
+                // Calculate number of excess lines that should be cut.
+                lines_to_fill = lines_to_fill-(target_lines_per_field*2);
+                // Reset line number.
+                last_line = getFirstFieldLineNum(cur_field_order);
+                // Add lines from first field (cut data from the start).
+                added_lines_cnt += addLinesFromField(p_field_1, lines_to_fill, (field_1_cnt-lines_to_fill), &last_line);
+                // Add field-to-field padding.
+                added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
+                added_lines_cnt += added_inner;
                 // Reset line number.
                 last_line = getSecondFieldLineNum(cur_field_order);
                 // Add lines from second field (full field).
@@ -5285,95 +5103,154 @@ void STC007DataStitcher::fillFrameForOutput()
                 added_lines_cnt += added_outer;
             }
         }
-    }
-    else
-    {
-        // No data anchors.
-        if(target_lines_per_field==0)
-        {
-            // Do not care about frame limits, assemble as is.
-#ifdef DI_EN_DBG_OUT
-            if(suppress_anylog==false)
-            {
-                qInfo()<<"[L2B-007] Data anchors: NONE, path: no limits";
-            }
-#endif
-            // Reset line number.
-            last_line = getFirstFieldLineNum(cur_field_order);
-            // Add lines from first field (full field).
-            added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-            // Reset line number.
-            last_line = getSecondFieldLineNum(cur_field_order);
-            // Add lines from second field (full field).
-            added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-        }
         else
         {
+            // Anchor B present.
+            // No anchor A and anchor C.
+            // B
             // Calculate total number of lines for frame assembly.
-            lines_to_fill = field_1_cnt+field_2_cnt;
+            lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.inner_padding;
             // Check line count according to video standard.
             if((target_lines_per_field*2)>=lines_to_fill)
             {
 #ifdef DI_EN_DBG_OUT
                 if(suppress_anylog==false)
                 {
-                    qInfo()<<"[L2B-007] Data anchors: NONE, path: adding padding";
+                    qInfo()<<"[L2B-007] Data anchors: B, path: adding padding";
                 }
 #endif
+                // Calculate number of padding lines to fill full frame.
+                lines_to_fill = (target_lines_per_field*2)-lines_to_fill;
                 // Reset line number.
                 last_line = getFirstFieldLineNum(cur_field_order);
-                if((insert_top_line!=false)&&(field_1_cnt>0)&&(field_2_cnt>0))
-                {
+                // Add lines from first field (full field).
+                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                // Add field-to-field padding.
+                added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
+                added_lines_cnt += added_inner;
+                // Reset line number.
+                last_line = getSecondFieldLineNum(cur_field_order);
+                // Add lines from second field (full field).
+                added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
+                // Add padding up to frame standard.
+                added_outer = addFieldPadding(frasm_f1.frame_number, lines_to_fill, &last_line);
+                added_lines_cnt += added_outer;
+            }
+            else
+            {
 #ifdef DI_EN_DBG_OUT
-                    if(suppress_log==false)
-                    {
-                        if(insert_top_line!=false)
-                        {
-                            qInfo()<<"[L2B-007] One line shitfer enabled";
-                        }
-                    }
+                if(suppress_anylog==false)
+                {
+                    qInfo()<<"[L2B-007] Data anchors: B, path: too many lines, cutting second field";
+                }
 #endif
-                    // Need to add line above one field to fix noise.
-                    if(cur_field_order==FrameAsmDescriptor::ORDER_BFF)
+                // Calculate number of excess lines that should be cut.
+                lines_to_fill = lines_to_fill-(target_lines_per_field*2);
+                // Reset line number.
+                last_line = getFirstFieldLineNum(cur_field_order);
+                // Add lines from first field (full field).
+                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                // Add field-to-field padding.
+                added_inner = addFieldPadding(frasm_f1.frame_number, frasm_f1.inner_padding, &last_line);
+                added_lines_cnt += added_inner;
+                // Reset line number.
+                last_line = getSecondFieldLineNum(cur_field_order);
+                // Add lines from second field (cut data from the end).
+                added_lines_cnt += addLinesFromField(p_field_2, 0, (field_2_cnt-lines_to_fill), &last_line);
+            }
+        }
+    }
+    else if(frasm_f1.outer_padding_ok!=false)
+    {
+        // Anchor C present.
+        // No anchor A and anchor B.
+        // C
+        // Calculate total number of lines for frame assembly.
+        lines_to_fill = field_1_cnt+field_2_cnt+frasm_f1.outer_padding;
+        // Check line count according to video standard.
+        if((target_lines_per_field*2)>=lines_to_fill)
+        {
+#ifdef DI_EN_DBG_OUT
+            if(suppress_anylog==false)
+            {
+                qInfo()<<"[L2B-007] Data anchors: C, path: adding padding";
+            }
+#endif
+            // Calculate number of padding lines to fill full frame.
+            lines_to_fill = (target_lines_per_field*2)-lines_to_fill;
+            // Reset line number.
+            last_line = getFirstFieldLineNum(cur_field_order);
+            // Add lines from first field (full field).
+            added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+            // Add padding up to frame standard.
+            added_inner = addFieldPadding(frasm_f1.frame_number, lines_to_fill, &last_line);
+            added_lines_cnt += added_inner;
+            // Reset line number.
+            last_line = getSecondFieldLineNum(cur_field_order);
+            // Add lines from second field (full field).
+            added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
+            // Add frame-to-frame padding.
+            added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
+            added_lines_cnt += added_outer;
+        }
+        else
+        {
+#ifdef DI_EN_DBG_OUT
+            if(suppress_anylog==false)
+            {
+                qInfo()<<"[L2B-007] Data anchors: C, path: too many lines, cutting first field";
+            }
+#endif
+            // Calculate number of excess lines that should be cut.
+            lines_to_fill = lines_to_fill-(target_lines_per_field*2);
+            // Reset line number.
+            last_line = getFirstFieldLineNum(cur_field_order);
+            // Add lines from first field (cut data from the end).
+            added_lines_cnt = addLinesFromField(p_field_1, 0, (field_1_cnt-lines_to_fill), &last_line);
+            // Reset line number.
+            last_line = getSecondFieldLineNum(cur_field_order);
+            // Add lines from second field (full field).
+            added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
+            // Add frame-to-frame padding.
+            added_outer = addFieldPadding(frasm_f1.frame_number, frasm_f1.outer_padding, &last_line);
+            added_lines_cnt += added_outer;
+        }
+    }
+    else
+    {
+        // No data anchors.
+        // Calculate total number of lines for frame assembly.
+        lines_to_fill = field_1_cnt+field_2_cnt;
+        // Check line count according to video standard.
+        if((target_lines_per_field*2)>=lines_to_fill)
+        {
+#ifdef DI_EN_DBG_OUT
+            if(suppress_anylog==false)
+            {
+                qInfo()<<"[L2B-007] Data anchors: NONE, path: adding padding";
+            }
+#endif
+            // Reset line number.
+            last_line = getFirstFieldLineNum(cur_field_order);
+            if((insert_top_line!=false)&&(field_1_cnt>0)&&(field_2_cnt>0))
+            {
+#ifdef DI_EN_DBG_OUT
+                if(suppress_log==false)
+                {
+                    if(insert_top_line!=false)
                     {
-                        added_outer = addFieldPadding(frasm_f1.frame_number, 1, &last_line);
-                        // Add lines from first field (full field).
-                        added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                        // Make next padding calculation one line less.
-                        field_1_cnt++;
-                        // Add padding up to field standard.
-                        added_inner = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_1_cnt), &last_line);
-                        added_lines_cnt += added_inner;
-                        // Reset line number.
-                        last_line = getSecondFieldLineNum(cur_field_order);
-                        // Add lines from second field (full field).
-                        added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                        // Add padding up to field standard.
-                        added_outer += addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_2_cnt), &last_line);
-                        added_lines_cnt += added_outer;
-                    }
-                    else
-                    {
-                        // Add lines from first field (full field).
-                        added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                        // Add padding up to field standard (plus one line into next field to move next field data one line down).
-                        added_inner = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_1_cnt+1), &last_line);
-                        added_lines_cnt += added_inner;
-                        // Reset line number.
-                        last_line = getSecondFieldLineNum(cur_field_order);
-                        // Add lines from second field (full field).
-                        added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                        // Make next padding calculation one line less.
-                        field_2_cnt++;
-                        // Add padding up to field standard.
-                        added_outer = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_2_cnt), &last_line);
-                        added_lines_cnt += added_outer;
+                        qInfo()<<"[L2B-007] One line shitfer enabled";
                     }
                 }
-                else
+#endif
+                // Need to add line above one field to fix noise.
+                if(cur_field_order==FrameAsmDescriptor::ORDER_BFF)
                 {
+                    added_outer = addFieldPadding(frasm_f1.frame_number, 1, &last_line);
                     // Add lines from first field (full field).
                     added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                    // Make next padding calculation one line less.
+                    field_1_cnt++;
                     // Add padding up to field standard.
                     added_inner = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_1_cnt), &last_line);
                     added_lines_cnt += added_inner;
@@ -5382,49 +5259,81 @@ void STC007DataStitcher::fillFrameForOutput()
                     // Add lines from second field (full field).
                     added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
                     // Add padding up to field standard.
+                    added_outer += addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_2_cnt), &last_line);
+                    added_lines_cnt += added_outer;
+                }
+                else
+                {
+                    // Add lines from first field (full field).
+                    added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                    // Add padding up to field standard (plus one line into next field to move next field data one line down).
+                    added_inner = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_1_cnt+1), &last_line);
+                    added_lines_cnt += added_inner;
+                    // Reset line number.
+                    last_line = getSecondFieldLineNum(cur_field_order);
+                    // Add lines from second field (full field).
+                    added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
+                    // Make next padding calculation one line less.
+                    field_2_cnt++;
+                    // Add padding up to field standard.
                     added_outer = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_2_cnt), &last_line);
                     added_lines_cnt += added_outer;
                 }
             }
             else
             {
-#ifdef DI_EN_DBG_OUT
-                if(suppress_anylog==false)
-                {
-                    qInfo()<<"[L2B-007] Data anchors: NONE, path: too many lines";
-                }
-#endif
-                // Reset line number.
-                last_line = getFirstFieldLineNum(cur_field_order);
-                // Check if current frame field fits within standard limits.
-                if(field_1_cnt<target_lines_per_field)
-                {
-                    // Add lines from first field (full field).
-                    added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
-                    // Add padding up to field standard.
-                    added_inner = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_1_cnt), &last_line);
-                    added_lines_cnt += added_inner;
-                }
-                else
-                {
-                    // Add lines from first field (cut data from the end up to standard).
-                    added_lines_cnt = addLinesFromField(p_field_1, 0, target_lines_per_field, &last_line);
-                }
+                // Add lines from first field (full field).
+                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                // Add padding up to field standard.
+                added_inner = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_1_cnt), &last_line);
+                added_lines_cnt += added_inner;
                 // Reset line number.
                 last_line = getSecondFieldLineNum(cur_field_order);
-                if(field_2_cnt<target_lines_per_field)
-                {
-                    // Add lines from second field (full field).
-                    added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
-                    // Add padding up to field standard.
-                    added_outer = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_2_cnt), &last_line);
-                    added_lines_cnt += added_outer;
-                }
-                else
-                {
-                    // Add lines from second field (cut data from the end up to standard).
-                    added_lines_cnt += addLinesFromField(p_field_2, 0, target_lines_per_field, &last_line);
-                }
+                // Add lines from second field (full field).
+                added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
+                // Add padding up to field standard.
+                added_outer = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_2_cnt), &last_line);
+                added_lines_cnt += added_outer;
+            }
+        }
+        else
+        {
+#ifdef DI_EN_DBG_OUT
+            if(suppress_anylog==false)
+            {
+                qInfo()<<"[L2B-007] Data anchors: NONE, path: too many lines";
+            }
+#endif
+            // Reset line number.
+            last_line = getFirstFieldLineNum(cur_field_order);
+            // Check if current frame field fits within standard limits.
+            if(field_1_cnt<target_lines_per_field)
+            {
+                // Add lines from first field (full field).
+                added_lines_cnt = addLinesFromField(p_field_1, 0, field_1_cnt, &last_line);
+                // Add padding up to field standard.
+                added_inner = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_1_cnt), &last_line);
+                added_lines_cnt += added_inner;
+            }
+            else
+            {
+                // Add lines from first field (cut data from the end up to standard).
+                added_lines_cnt = addLinesFromField(p_field_1, 0, target_lines_per_field, &last_line);
+            }
+            // Reset line number.
+            last_line = getSecondFieldLineNum(cur_field_order);
+            if(field_2_cnt<target_lines_per_field)
+            {
+                // Add lines from second field (full field).
+                added_lines_cnt += addLinesFromField(p_field_2, 0, field_2_cnt, &last_line);
+                // Add padding up to field standard.
+                added_outer = addFieldPadding(frasm_f1.frame_number, (target_lines_per_field-field_2_cnt), &last_line);
+                added_lines_cnt += added_outer;
+            }
+            else
+            {
+                // Add lines from second field (cut data from the end up to standard).
+                added_lines_cnt += addLinesFromField(p_field_2, 0, target_lines_per_field, &last_line);
             }
         }
     }
@@ -5946,7 +5855,8 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
 {
     bool suppress_log;
     uint8_t max_fixable;
-    uint16_t buf_size, buf_ofs, line_ofs, old_word, old_bitword, old_crc, word_patch_cnt, line_fix_cnt;
+    uint16_t buf_size, buf_ofs, line_ofs, line_fix_cnt;
+    uint16_t old_word, old_bitword, old_src_crc, old_clc_crc, word_patch_cnt;
     STC007DataBlock pcm_block;
 
     //return;
@@ -5957,6 +5867,7 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
     // Set parameters for converter.
     lines_to_block.setInput(in_queue);
     lines_to_block.setOutput(&pcm_block);
+    //lines_to_block.setLogLevel(STC007Deinterleaver::LOG_PROCESS|STC007Deinterleaver::LOG_ERROR_CORR);
     lines_to_block.setIgnoreCRC(ignore_CRC);
     lines_to_block.setForceParity(!ignore_CRC);
     lines_to_block.setPCorrection(enable_P_code);
@@ -5976,6 +5887,7 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
         // Fill up data block, performing de-interleaving, convert lines to data blocks.
         if(lines_to_block.processBlock(buf_ofs)!=STC007Deinterleaver::DI_RET_OK)
         {
+            // Exit cycle when not enough data left.
             break;
         }
 
@@ -5991,8 +5903,9 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
         }
 
         // Check if data block is valid and samples were fixed.
-        if((pcm_block.isBlockValid()!=false)&&((pcm_block.isDataFixedByP()!=false)||(pcm_block.isDataFixedByQ()!=false)))
+        if((pcm_block.isBlockValid()!=false)&&(pcm_block.isDataFixed()!=false))
         {
+
             //qInfo()<<QString::fromStdString(pcm_block.dumpContentString());
             // Cycle through all fixable words.
             for(uint8_t word_idx=STC007DataBlock::WORD_L0;word_idx<=max_fixable;word_idx++)
@@ -6006,7 +5919,7 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
                     if(suppress_log==false)
                     {
                         QString log_line;
-                        log_line.sprintf("[L2B-007] Block [%03u-%03u...%03u-%03u] has fixed sample #%u from line [%03u-%03u]",
+                        log_line.sprintf("[L2B-007] Block [%03u-%03u...%03u-%03u] has fixed sample #[%u] from line [%03u-%03u]",
                                          pcm_block.getStartFrame(),
                                          pcm_block.getStartLine(),
                                          pcm_block.getStopFrame(),
@@ -6018,181 +5931,298 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
                     }
 #endif
                     // Check if source PCM line is not a filler one and has an invalid CRC in the first place.
-                    if(((*in_queue)[line_ofs].isCRCValidIgnoreForced()==false)&&((*in_queue)[line_ofs].getSourceCRC()!=(0xFFFF&(~STC007Line::CRC_SILENT))))
+                    //if(((*in_queue)[line_ofs].isCRCValidIgnoreForced()==false)&&((*in_queue)[line_ofs].getSourceCRC()!=(0xFFFF&(~STC007Line::CRC_SILENT))))
+                    if(((*in_queue)[line_ofs].isCRCValidIgnoreForced()==false)
+                       &&((*in_queue)[line_ofs].coords.areValid()!=false)
+                       &&((*in_queue)[line_ofs].isForcedBad()==false)
+                       &&((*in_queue)[line_ofs].frame_number!=frasm_f2.frame_number))
                     {
-                        // Check if PCM line should not be fixed.
-                        if((*in_queue)[line_ofs].isForcedBad()==false)
+                        // Check audio sample resolution.
+                        if(pcm_block.getResolution()==STC007DataBlock::RES_14BIT)
                         {
-                            // Check audio sample resolution.
-                            if(pcm_block.getResolution()==STC007DataBlock::RES_14BIT)
+                            // Propagate back corrections for 14-bit mode.
+                            // Save old word content and old CRC for comparison.
+                            old_word = (*in_queue)[line_ofs].getWord(word_idx);
+                            old_src_crc = (*in_queue)[line_ofs].getSourceCRC();
+                            old_clc_crc = (*in_queue)[line_ofs].getCalculatedCRC();
+                            // Dump PCM line before patching.
+                            //qInfo()<<QString::fromStdString((*in_queue)[line_ofs].dumpContentString());
+                            // Check if "fixed" word differs from the old value.
+                            if(old_word!=pcm_block.getWord(word_idx))
                             {
-                                // Propagate back corrections for 14-bit mode.
-                                // Save old word content and old CRC for comparison.
-                                old_word = (*in_queue)[line_ofs].getWord(word_idx);
-                                old_crc = (*in_queue)[line_ofs].getSourceCRC();
-                                // Check if "fixed" word differs from the old value.
-                                if(old_word!=pcm_block.getWord(word_idx))
+                                // Put fixed word back into the PCM line in the queue.
+                                (*in_queue)[line_ofs].setWord(word_idx, pcm_block.getWord(word_idx), (*in_queue)[line_ofs].isWordCRCOk(word_idx));
+                                // Re-calculate line CRC.
+                                (*in_queue)[line_ofs].calcCRC();
+                                // Set word as fixed.
+                                (*in_queue)[line_ofs].setFixed(word_idx);
+                                // Count number of words that were fixed.
+                                word_patch_cnt++;
+                                // Check if PCM line CRC stayed invalid.
+                                if((*in_queue)[line_ofs].isCRCValidIgnoreForced()!=false)
                                 {
-                                    //qInfo()<<QString::fromStdString((*in_queue)[line_ofs].dumpWordsString());
-                                    // Put fixed word back into the PCM line in the queue.
-                                    (*in_queue)[line_ofs].setWord(word_idx, pcm_block.getWord(word_idx), (*in_queue)[line_ofs].isWordCRCOk(word_idx));
-                                    // Re-calculate line CRC.
-                                    (*in_queue)[line_ofs].calcCRC();
-                                    // Set word as fixed.
-                                    (*in_queue)[line_ofs].setFixed(word_idx);
-                                    // Count number of words that were fixed.
-                                    word_patch_cnt++;
-                                    // Check if PCM line CRC stayed invalid.
-                                    if((*in_queue)[line_ofs].isCRCValidIgnoreForced()!=false)
+                                    // CRC became valid!
+                                    for(uint8_t word=STC007Line::WORD_L_SH0;word<=STC007Line::WORD_CRCC_SH0;word++)
                                     {
-                                        // CRC became valid!
-                                        for(uint8_t word=STC007Line::WORD_L_SH0;word<=STC007Line::WORD_CRCC_SH0;word++)
-                                        {
-                                            // Set all of the word CRC flags in the line as valid.
-                                            (*in_queue)[line_ofs].setFixed(word);
-                                        }
-                                        // Count number of fixed PCM lines.
-                                        line_fix_cnt++;
-#ifdef DI_EN_DBG_OUT
-                                        if(suppress_log==false)
-                                        {
-                                            QString log_line;
-                                            log_line.sprintf("[L2B-007] Replaced #%u word 0x%04x with 0x%04x in PCM line, PCM line [%03u-%03u] now has valid CRC 0x%04x (was 0x%04x)!!!",
-                                                             word_idx,
-                                                             old_word,
-                                                             pcm_block.getWord(word_idx),
-                                                             (*in_queue)[line_ofs].frame_number,
-                                                             (*in_queue)[line_ofs].line_number,
-                                                             (*in_queue)[line_ofs].getCalculatedCRC(),
-                                                             old_crc);
-                                            qInfo()<<log_line;
-                                        }
-#endif
+                                        // Set all of the word CRC flags in the line as valid.
+                                        (*in_queue)[line_ofs].setFixed(word);
                                     }
-                                    else
+                                    // Count number of fixed PCM lines.
+                                    line_fix_cnt++;
+#ifdef DI_EN_DBG_OUT
+                                    if(suppress_log==false)
                                     {
-                                        // CRC stayed invalid.
-                                        bool all_fixed;
-                                        all_fixed = true;
-                                        // Check if all words are already fixed but CRC is still bad.
-                                        for(uint8_t word=STC007Line::WORD_L_SH0;word<=STC007Line::WORD_Q_SH336;word++)
-                                        {
-                                            if((*in_queue)[line_ofs].isWordValid(word)==false)
-                                            {
-                                                // There are still invalid words.
-                                                all_fixed = false;
-                                                break;
-                                            }
-                                        }
-                                        if(all_fixed!=false)
-                                        {
-                                            // All words are fixed, but CRC is still invalid.
-                                            // This must be dropout on the CRC word itself.
-                                            // Replace CRC with fixed re-calculated one.
-                                            (*in_queue)[line_ofs].setSourceCRC((*in_queue)[line_ofs].getCalculatedCRC());
-                                            (*in_queue)[line_ofs].setFixed(STC007Line::WORD_CRCC_SH0);
-                                            // Count number of fixed PCM lines.
-                                            line_fix_cnt++;
-#ifdef DI_EN_DBG_OUT
-                                            if(suppress_log==false)
-                                            {
-                                                QString log_line;
-                                                log_line.sprintf("[L2B-007] Replaced CRC word in PCM line, PCM line [%03u-%03u] now has valid CRC 0x%04x (was 0x%04x)!!!",
-                                                                 (*in_queue)[line_ofs].frame_number,
-                                                                 (*in_queue)[line_ofs].line_number,
-                                                                 (*in_queue)[line_ofs].getCalculatedCRC(),
-                                                                 old_crc);
-                                                qInfo()<<log_line;
-                                            }
+                                        QString log_line;
+                                        log_line.sprintf("[L2B-007] Replaced #[%u] word [0x%04x] with [0x%04x] in PCM line, PCM line [%03u-%03u] now has valid CRC [0x%04x] (was [0x%04x])!!!",
+                                                         word_idx,
+                                                         old_word,
+                                                         pcm_block.getWord(word_idx),
+                                                         (*in_queue)[line_ofs].frame_number,
+                                                         (*in_queue)[line_ofs].line_number,
+                                                         (*in_queue)[line_ofs].getCalculatedCRC(),
+                                                         old_clc_crc);
+                                        qInfo()<<log_line;
+                                    }
 #endif
-                                        }
+                                }
 #ifdef DI_EN_DBG_OUT
-                                        else
-                                        {
-                                            if(suppress_log==false)
-                                            {
-                                                QString log_line;
-                                                log_line.sprintf("[L2B-007] Replaced #%u word 0x%04x with 0x%04x in PCM line, bad CRC 0x%04x remained bad as 0x%04x",
-                                                                 word_idx,
-                                                                 old_word,
-                                                                 pcm_block.getWord(word_idx),
-                                                                 old_crc,
-                                                                 (*in_queue)[line_ofs].getCalculatedCRC());
-                                                qInfo()<<log_line;
-                                            }
-                                        }
-#endif
+                                else
+                                {
+                                    // Not all words in the line are fixed yet.
+                                    if(suppress_log==false)
+                                    {
+                                        QString log_line;
+                                        log_line.sprintf("[L2B-007] Replaced #[%u] word [0x%04x] with [0x%04x] in PCM line, bad CRC [0x%04x] remained bad as [0x%04x]",
+                                                         word_idx,
+                                                         old_word,
+                                                         pcm_block.getWord(word_idx),
+                                                         old_clc_crc,
+                                                         (*in_queue)[line_ofs].getCalculatedCRC());
+                                        qInfo()<<log_line;
                                     }
                                 }
+#endif
                             }
                             else
                             {
-                                // Propagate back corrections for 16-bit mode.
-                                uint16_t new_word, new_bitword;
-                                // Save old word content and old CRC for comparison.
-                                old_word = (*in_queue)[line_ofs].getWord(word_idx);
-                                old_bitword = (*in_queue)[line_ofs].getWord(STC007DataBlock::WORD_Q0);
-                                old_crc = (*in_queue)[line_ofs].getSourceCRC();
-                                // Split 16-bit word from data block into 14+2 bit parts.
-                                new_word = pcm_block.getWord(word_idx);
-                                new_bitword = new_word&STC007DataBlock::F1_S_MASK;      // 2-bit LSB part for S-word in place of Q-word.
-                                new_word = (new_word>>STC007DataBlock::F1_WORD_OFS);    // 14-bit MSB part.
-                                // Move LSB bits.
-                                if(word_idx==STC007DataBlock::WORD_P0)
-                                {
-                                    new_bitword = (new_bitword<<STC007DataBlock::F1_S_P0_OFS);
-                                    old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_P0_OFS);
-                                }
-                                else if(word_idx==STC007DataBlock::WORD_R2)
-                                {
-                                    new_bitword = (new_bitword<<STC007DataBlock::F1_S_R2_OFS);
-                                    old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R2_OFS);
-                                }
-                                else if(word_idx==STC007DataBlock::WORD_L2)
-                                {
-                                    new_bitword = (new_bitword<<STC007DataBlock::F1_S_L2_OFS);
-                                    old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L2_OFS);
-                                }
-                                else if(word_idx==STC007DataBlock::WORD_R1)
-                                {
-                                    new_bitword = (new_bitword<<STC007DataBlock::F1_S_R1_OFS);
-                                    old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R1_OFS);
-                                }
-                                else if(word_idx==STC007DataBlock::WORD_L1)
-                                {
-                                    new_bitword = (new_bitword<<STC007DataBlock::F1_S_L1_OFS);
-                                    old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L1_OFS);
-                                }
-                                else if(word_idx==STC007DataBlock::WORD_R0)
-                                {
-                                    new_bitword = (new_bitword<<STC007DataBlock::F1_S_R0_OFS);
-                                    old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R0_OFS);
-                                }
-                                else if(word_idx==STC007DataBlock::WORD_L0)
-                                {
-                                    new_bitword = (new_bitword<<STC007DataBlock::F1_S_L0_OFS);
-                                    old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L0_OFS);
-                                }
+                                // Word stayed the same (was the same from the source).
+                                // Set word as fixed.
+                                (*in_queue)[line_ofs].setFixed(word_idx);
+                                // Count number of words that were fixed.
+                                word_patch_cnt++;
 #ifdef DI_EN_DBG_OUT
                                 if(suppress_log==false)
                                 {
                                     QString log_line;
-                                    log_line.sprintf("[L2B-007] Old word 0x%04x+0x%04x, new word 0x%04x+0x%04x",
-                                                     old_word, old_bitword, new_word, new_bitword);
+                                    log_line.sprintf("[L2B-007] Updated #[%u] word [0x%04x] in PCM line [%03u-%03u] to be valid",
+                                                     word_idx,
+                                                     old_word,
+                                                     (*in_queue)[line_ofs].frame_number,
+                                                     (*in_queue)[line_ofs].line_number);
                                     qInfo()<<log_line;
                                 }
 #endif
-                                // Check if "fixed" word differs from the old value.
-                                if(old_word!=new_word)
+                            }
+                            // Re-check line CRC.
+                            if((*in_queue)[line_ofs].isCRCValidIgnoreForced()==false)
+                            {
+                                // CRC stayed invalid.
+                                bool all_fixed;
+                                all_fixed = true;
+                                // Check if all words are already fixed but CRC is still bad.
+                                for(uint8_t word=STC007Line::WORD_L_SH0;word<=STC007Line::WORD_Q_SH336;word++)
                                 {
-                                    // Put fixed word back into the PCM line.
-                                    (*in_queue)[line_ofs].setWord(word_idx, new_word, (*in_queue)[line_ofs].isWordCRCOk(word_idx));
+                                    if((*in_queue)[line_ofs].isWordValid(word)==false)
+                                    {
+                                        // There are still invalid words.
+                                        all_fixed = false;
+                                        break;
+                                    }
+                                }
+                                if(all_fixed!=false)
+                                {
+                                    // All words are fixed, but CRC is still invalid.
+                                    // This must be dropout on the CRC word itself.
                                     // Re-calculate line CRC.
                                     (*in_queue)[line_ofs].calcCRC();
-                                    // Set word as fixed.
-                                    (*in_queue)[line_ofs].setFixed(word_idx);
-                                    // Count number of words that were fixed.
-                                    word_patch_cnt++;
+                                    // Replace CRC with fixed re-calculated one.
+                                    (*in_queue)[line_ofs].setSourceCRC((*in_queue)[line_ofs].getCalculatedCRC());
+                                    (*in_queue)[line_ofs].setFixed(STC007Line::WORD_CRCC_SH0);
+                                    // Count number of fixed PCM lines.
+                                    line_fix_cnt++;
+#ifdef DI_EN_DBG_OUT
+                                    if(suppress_log==false)
+                                    {
+                                        QString log_line;
+                                        log_line.sprintf("[L2B-007] Replaced CRC word in PCM line, PCM line [%03u-%03u] now has valid CRC [0x%04x] (was [0x%04x])!!!",
+                                                         (*in_queue)[line_ofs].frame_number,
+                                                         (*in_queue)[line_ofs].line_number,
+                                                         (*in_queue)[line_ofs].getSourceCRC(),
+                                                         old_src_crc);
+                                        qInfo()<<log_line;
+                                    }
+#endif
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Propagate back corrections for 16-bit mode.
+                            uint16_t new_word, new_bitword;
+                            // Save old word content and old CRC for comparison.
+                            old_word = (*in_queue)[line_ofs].getWord(word_idx);
+                            old_bitword = (*in_queue)[line_ofs].getWord(STC007DataBlock::WORD_Q0);
+                            old_src_crc = (*in_queue)[line_ofs].getSourceCRC();
+                            old_clc_crc = (*in_queue)[line_ofs].getCalculatedCRC();
+                            // Split 16-bit word from data block into 14+2 bit parts.
+                            new_word = pcm_block.getWord(word_idx);
+                            new_bitword = new_word&STC007DataBlock::F1_S_MASK;      // 2-bit LSB part for S-word in place of Q-word.
+                            new_word = (new_word>>STC007DataBlock::F1_WORD_OFS);    // 14-bit MSB part.
+                            // Move LSB bits.
+                            if(word_idx==STC007DataBlock::WORD_P0)
+                            {
+                                new_bitword = (new_bitword<<STC007DataBlock::F1_S_P0_OFS);
+                                old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_P0_OFS);
+                            }
+                            else if(word_idx==STC007DataBlock::WORD_R2)
+                            {
+                                new_bitword = (new_bitword<<STC007DataBlock::F1_S_R2_OFS);
+                                old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R2_OFS);
+                            }
+                            else if(word_idx==STC007DataBlock::WORD_L2)
+                            {
+                                new_bitword = (new_bitword<<STC007DataBlock::F1_S_L2_OFS);
+                                old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L2_OFS);
+                            }
+                            else if(word_idx==STC007DataBlock::WORD_R1)
+                            {
+                                new_bitword = (new_bitword<<STC007DataBlock::F1_S_R1_OFS);
+                                old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R1_OFS);
+                            }
+                            else if(word_idx==STC007DataBlock::WORD_L1)
+                            {
+                                new_bitword = (new_bitword<<STC007DataBlock::F1_S_L1_OFS);
+                                old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L1_OFS);
+                            }
+                            else if(word_idx==STC007DataBlock::WORD_R0)
+                            {
+                                new_bitword = (new_bitword<<STC007DataBlock::F1_S_R0_OFS);
+                                old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R0_OFS);
+                            }
+                            else if(word_idx==STC007DataBlock::WORD_L0)
+                            {
+                                new_bitword = (new_bitword<<STC007DataBlock::F1_S_L0_OFS);
+                                old_bitword = old_bitword&(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L0_OFS);
+                            }
+#ifdef DI_EN_DBG_OUT
+                            if(suppress_log==false)
+                            {
+                                QString log_line;
+                                log_line.sprintf("[L2B-007] Old word [0x%04x]+[0x%04x], new word [0x%04x]+[0x%04x]",
+                                                 old_word, old_bitword, new_word, new_bitword);
+                                qInfo()<<log_line;
+                            }
+#endif
+                            // Check if "fixed" word differs from the old value.
+                            if(old_word!=new_word)
+                            {
+                                // Put fixed word back into the PCM line.
+                                (*in_queue)[line_ofs].setWord(word_idx, new_word, (*in_queue)[line_ofs].isWordCRCOk(word_idx));
+                                // Re-calculate line CRC.
+                                (*in_queue)[line_ofs].calcCRC();
+                                // Set word as fixed.
+                                (*in_queue)[line_ofs].setFixed(word_idx);
+                                // Count number of words that were fixed.
+                                word_patch_cnt++;
+                                // Check if PCM line CRC stayed invalid.
+                                if((*in_queue)[line_ofs].isCRCValidIgnoreForced()!=false)
+                                {
+                                    // CRC became valid!
+                                    for(uint8_t word=STC007Line::WORD_L_SH0;word<=STC007Line::WORD_CRCC_SH0;word++)
+                                    {
+                                        // Set all of the word CRC flags in the line as valid.
+                                        (*in_queue)[line_ofs].setFixed(word);
+                                    }
+                                    // Count number of fixed PCM lines.
+                                    line_fix_cnt++;
+#ifdef DI_EN_DBG_OUT
+                                    if(suppress_log==false)
+                                    {
+                                        QString log_line;
+                                        log_line.sprintf("[L2B-007] Replaced #[%u] word [0x%04x] with [0x%04x] in PCM line, PCM line [%03u-%03u] now has valid CRC [0x%04x] (was [0x%04x])!!!",
+                                                         word_idx,
+                                                         old_word,
+                                                         new_word,
+                                                         (*in_queue)[line_ofs].frame_number,
+                                                         (*in_queue)[line_ofs].line_number,
+                                                         (*in_queue)[line_ofs].getCalculatedCRC(),
+                                                         old_clc_crc);
+                                        qInfo()<<log_line;
+                                    }
+#endif
+                                }
+#ifdef DI_EN_DBG_OUT
+                                else
+                                {
+                                    // CRC stayed invalid.
+                                    if(suppress_log==false)
+                                    {
+                                        QString log_line;
+                                        log_line.sprintf("[L2B-007] Replaced #[%u] word [0x%04x] with [0x%04x] in PCM line, bad CRC [0x%04x] remained bad as [0x%04x]",
+                                                         word_idx,
+                                                         old_word,
+                                                         new_word,
+                                                         old_src_crc,
+                                                         (*in_queue)[line_ofs].getCalculatedCRC());
+                                        qInfo()<<log_line;
+                                    }
+                                }
+#endif
+                            }
+                            // Check if previous correction was successfull.
+                            if((*in_queue)[line_ofs].isCRCValidIgnoreForced()==false)
+                            {
+                                // Line is still invalid.
+                                // Update "old CRC".
+                                old_src_crc = (*in_queue)[line_ofs].getSourceCRC();
+                                // Check if "fixed" S-word differs from the old value.
+                                if(old_bitword!=new_bitword)
+                                {
+                                    // Get old state of S-word.
+                                    old_word = old_bitword = (*in_queue)[line_ofs].getWord(STC007DataBlock::WORD_Q0);
+                                    // Mask affected bits.
+                                    if(word_idx==STC007DataBlock::WORD_P0)
+                                    {
+                                        old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_P0_OFS));
+                                    }
+                                    else if(word_idx==STC007DataBlock::WORD_R2)
+                                    {
+                                        old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R2_OFS));
+                                    }
+                                    else if(word_idx==STC007DataBlock::WORD_L2)
+                                    {
+                                        old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L2_OFS));
+                                    }
+                                    else if(word_idx==STC007DataBlock::WORD_R1)
+                                    {
+                                        old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R1_OFS));
+                                    }
+                                    else if(word_idx==STC007DataBlock::WORD_L1)
+                                    {
+                                        old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L1_OFS));
+                                    }
+                                    else if(word_idx==STC007DataBlock::WORD_R0)
+                                    {
+                                        old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R0_OFS));
+                                    }
+                                    else if(word_idx==STC007DataBlock::WORD_L0)
+                                    {
+                                        old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L0_OFS));
+                                    }
+                                    // Put fixed word back into the PCM line.
+                                    (*in_queue)[line_ofs].setWord(STC007DataBlock::WORD_Q0, (old_bitword|new_bitword), (*in_queue)[line_ofs].isWordCRCOk(STC007DataBlock::WORD_Q0));
+                                    // Re-calculate line CRC.
+                                    (*in_queue)[line_ofs].calcCRC();
                                     // Check if PCM line CRC stayed invalid.
                                     if((*in_queue)[line_ofs].isCRCValidIgnoreForced()!=false)
                                     {
@@ -6208,14 +6238,14 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
                                         if(suppress_log==false)
                                         {
                                             QString log_line;
-                                            log_line.sprintf("[L2B-007] Replaced #%u word 0x%04x with 0x%04x in PCM line, PCM line [%03u-%03u] now has valid CRC 0x%04x (was 0x%04x)!!!",
-                                                             word_idx,
+                                            log_line.sprintf("[L2B-007] Replaced #[%u] word [0x%04x] with [0x%04x] in PCM line, PCM line [%03u-%03u] now has valid CRC [0x%04x] (was [0x%04x])!!!",
+                                                             STC007DataBlock::WORD_Q0,
                                                              old_word,
-                                                             new_word,
+                                                             (*in_queue)[line_ofs].getWord(STC007DataBlock::WORD_Q0),
                                                              (*in_queue)[line_ofs].frame_number,
                                                              (*in_queue)[line_ofs].line_number,
                                                              (*in_queue)[line_ofs].getCalculatedCRC(),
-                                                             old_crc);
+                                                             old_src_crc);
                                             qInfo()<<log_line;
                                         }
 #endif
@@ -6227,122 +6257,47 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
                                         if(suppress_log==false)
                                         {
                                             QString log_line;
-                                            log_line.sprintf("[L2B-007] Replaced #%u word 0x%04x with 0x%04x in PCM line, bad CRC 0x%04x remained bad as 0x%04x",
-                                                             word_idx,
+                                            log_line.sprintf("[L2B-007] Replaced #[%u] word [0x%04x] with [0x%04x] in PCM line, bad CRC [0x%04x] remained bad as [0x%04x]",
+                                                             STC007DataBlock::WORD_Q0,
                                                              old_word,
-                                                             new_word,
-                                                             old_crc,
+                                                             (*in_queue)[line_ofs].getWord(STC007DataBlock::WORD_Q0),
+                                                             old_src_crc,
                                                              (*in_queue)[line_ofs].getCalculatedCRC());
                                             qInfo()<<log_line;
                                         }
                                     }
 #endif
                                 }
-                                // Check if previous correction was successfull.
-                                if((*in_queue)[line_ofs].isCRCValidIgnoreForced()==false)
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if((*in_queue)[line_ofs].isCRCValid()!=false)
+                        {
+                            if(pcm_block.getResolution()==STC007DataBlock::RES_14BIT)
+                            {
+                                old_word = (*in_queue)[line_ofs].getWord(word_idx);
+                                if(old_word!=pcm_block.getWord(word_idx))
                                 {
-                                    // Line is still invalid.
-                                    // Update "old CRC".
-                                    old_crc = (*in_queue)[line_ofs].getSourceCRC();
-                                    // Check if "fixed" S-word differs from the old value.
-                                    if(old_bitword!=new_bitword)
+                                    (*in_queue)[line_ofs].setForcedBad();
+#ifdef DI_EN_DBG_OUT
+                                    if(suppress_log==false)
                                     {
-                                        // Get old state of S-word.
-                                        old_word = old_bitword = (*in_queue)[line_ofs].getWord(STC007DataBlock::WORD_Q0);
-                                        // Mask affected bits.
-                                        if(word_idx==STC007DataBlock::WORD_P0)
-                                        {
-                                            old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_P0_OFS));
-                                        }
-                                        else if(word_idx==STC007DataBlock::WORD_R2)
-                                        {
-                                            old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R2_OFS));
-                                        }
-                                        else if(word_idx==STC007DataBlock::WORD_L2)
-                                        {
-                                            old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L2_OFS));
-                                        }
-                                        else if(word_idx==STC007DataBlock::WORD_R1)
-                                        {
-                                            old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R1_OFS));
-                                        }
-                                        else if(word_idx==STC007DataBlock::WORD_L1)
-                                        {
-                                            old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L1_OFS));
-                                        }
-                                        else if(word_idx==STC007DataBlock::WORD_R0)
-                                        {
-                                            old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_R0_OFS));
-                                        }
-                                        else if(word_idx==STC007DataBlock::WORD_L0)
-                                        {
-                                            old_bitword = old_bitword&(~(STC007DataBlock::F1_S_MASK<<STC007DataBlock::F1_S_L0_OFS));
-                                        }
-                                        // Put fixed word back into the PCM line.
-                                        (*in_queue)[line_ofs].setWord(STC007DataBlock::WORD_Q0, (old_bitword|new_bitword), (*in_queue)[line_ofs].isWordCRCOk(STC007DataBlock::WORD_Q0));
-                                        // Re-calculate line CRC.
-                                        (*in_queue)[line_ofs].calcCRC();
-                                        // Check if PCM line CRC stayed invalid.
-                                        if((*in_queue)[line_ofs].isCRCValidIgnoreForced()!=false)
-                                        {
-                                            // CRC became valid!
-                                            for(uint8_t word=STC007Line::WORD_L_SH0;word<=STC007Line::WORD_CRCC_SH0;word++)
-                                            {
-                                                // Set all of the word CRC flags in the line as valid.
-                                                (*in_queue)[line_ofs].setFixed(word);
-                                            }
-                                            // Count number of fixed PCM lines.
-                                            line_fix_cnt++;
-#ifdef DI_EN_DBG_OUT
-                                            if(suppress_log==false)
-                                            {
-                                                QString log_line;
-                                                log_line.sprintf("[L2B-007] Replaced #%u word 0x%04x with 0x%04x in PCM line, PCM line [%03u-%03u] now has valid CRC 0x%04x (was 0x%04x)!!!",
-                                                                 STC007DataBlock::WORD_Q0,
-                                                                 old_word,
-                                                                 (*in_queue)[line_ofs].getWord(STC007DataBlock::WORD_Q0),
-                                                                 (*in_queue)[line_ofs].frame_number,
-                                                                 (*in_queue)[line_ofs].line_number,
-                                                                 (*in_queue)[line_ofs].getCalculatedCRC(),
-                                                                 old_crc);
-                                                qInfo()<<log_line;
-                                            }
-#endif
-                                        }
-#ifdef DI_EN_DBG_OUT
-                                        else
-                                        {
-                                            // CRC stayed invalid.
-                                            if(suppress_log==false)
-                                            {
-                                                QString log_line;
-                                                log_line.sprintf("[L2B-007] Replaced #%u word 0x%04x with 0x%04x in PCM line, bad CRC 0x%04x remained bad as 0x%04x",
-                                                                 STC007DataBlock::WORD_Q0,
-                                                                 old_word,
-                                                                 (*in_queue)[line_ofs].getWord(STC007DataBlock::WORD_Q0),
-                                                                 old_crc,
-                                                                 (*in_queue)[line_ofs].getCalculatedCRC());
-                                                qInfo()<<log_line;
-                                            }
-                                        }
-#endif
+                                        QString log_line;
+                                        log_line.sprintf("[L2B-007] Valid word mismatch [0x%04x]<>[0x%04x] in PCM line [%04u:%03u]!",
+                                                         old_word,
+                                                         (*in_queue)[line_ofs].getWord(word_idx),
+                                                         (*in_queue)[line_ofs].frame_number,
+                                                         (*in_queue)[line_ofs].line_number);
+                                        qInfo()<<log_line;
                                     }
+#endif
+                                    //qWarning()<<DBG_ANCHOR<<"[L2B-007] CWD propagation valid word mismatch!";
                                 }
                             }
                         }
 #ifdef DI_EN_DBG_OUT
-                        else
-                        {
-                            if(suppress_log==false)
-                            {
-                                qInfo()<<"[L2B-007] PCM line is forced BAD and should stay that way";
-                            }
-                        }
-#endif
-                    }
-#ifdef DI_EN_DBG_OUT
-                    else
-                    {
                         if(suppress_log==false)
                         {
                             if((*in_queue)[line_ofs].isForcedBad()!=false)
@@ -6353,14 +6308,20 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
                             {
                                 qInfo()<<"[L2B-007] PCM line has good CRC and doesn't need to be fixed";
                             }
+                            else if((*in_queue)[line_ofs].frame_number==frasm_f2.frame_number)
+                            {
+                                qInfo()<<"[L2B-007] PCM line is from the next frame, that line will be re-filled, skipping";
+                            }
                             else
                             {
                                 qInfo()<<"[L2B-007] PCM line is filler, that should not be fixed";
                             }
                         }
-                    }
 #endif
-                    //qInfo()<<QString::fromStdString((*in_queue)[line_ofs].dumpWordsString());
+                    }
+                    // Dump PCM line after patching.
+                    //qInfo()<<QString::fromStdString((*in_queue)[line_ofs].dumpContentString());
+                    //qInfo()<<"-----------------------------------------------";
                 }
             }
         }
@@ -6473,7 +6434,7 @@ void STC007DataStitcher::outputFileStart()
     size_t queue_size;
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty pointer provided in [STC007DataStitcher::outputFileStart()], service tag discarded!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty pointer provided, service tag discarded!";
     }
     else
     {
@@ -6515,11 +6476,12 @@ void STC007DataStitcher::outputDataBlock(STC007DataBlock *in_block)
     size_lock = false;
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty pointer provided in [STC007DataStitcher::outputDataBlock()], result discarded!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty pointer provided, result discarded!";
     }
     else
     {
         bool block_state, word_left_state, word_right_state;
+        bool word_left_fixed, word_right_fixed;
         PCMSamplePair sample_pair;
         while(1)
         {
@@ -6537,6 +6499,15 @@ void STC007DataStitcher::outputDataBlock(STC007DataBlock *in_block)
                 {
                     // Set validity of the whole block and the samples.
                     block_state = in_block->isBlockValid();
+                    if(block_state==false)
+                    {
+                        word_left_fixed = word_right_fixed = false;
+                    }
+                    else
+                    {
+                        word_left_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_L0);
+                        word_right_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_R0);
+                    }
                     word_left_state = in_block->isWordValid(STC007DataBlock::WORD_L0);
                     word_right_state = in_block->isWordValid(STC007DataBlock::WORD_R0);
                 }
@@ -6545,16 +6516,28 @@ void STC007DataStitcher::outputDataBlock(STC007DataBlock *in_block)
                     // Data block deemed to be "broken", no data can be taken as valid.
                     block_state = false;
                     word_left_state = word_right_state = false;
+                    word_left_fixed = word_right_fixed = false;
                 }
                 // Set data to [PCMSamplePair] object.
                 sample_pair.setSamplePair(in_block->getSample(STC007DataBlock::WORD_L0), in_block->getSample(STC007DataBlock::WORD_R0),
-                                          block_state, block_state, word_left_state, word_right_state);
+                                          block_state, block_state,
+                                          word_left_state, word_right_state,
+                                          word_left_fixed, word_right_fixed);
                 // Put sample pair in the output queue.
                 out_samples->push_back(sample_pair);
                 // Output L1+R1 samples.
                 if(in_block->isDataBroken()==false)
                 {
                     block_state = in_block->isBlockValid();
+                    if(block_state==false)
+                    {
+                        word_left_fixed = word_right_fixed = false;
+                    }
+                    else
+                    {
+                        word_left_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_L1);
+                        word_right_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_R1);
+                    }
                     word_left_state = in_block->isWordValid(STC007DataBlock::WORD_L1);
                     word_right_state = in_block->isWordValid(STC007DataBlock::WORD_R1);
                 }
@@ -6562,14 +6545,26 @@ void STC007DataStitcher::outputDataBlock(STC007DataBlock *in_block)
                 {
                     block_state = false;
                     word_left_state = word_right_state = false;
+                    word_left_fixed = word_right_fixed = false;
                 }
                 sample_pair.setSamplePair(in_block->getSample(STC007DataBlock::WORD_L1), in_block->getSample(STC007DataBlock::WORD_R1),
-                                          block_state, block_state, word_left_state, word_right_state);
+                                          block_state, block_state,
+                                          word_left_state, word_right_state,
+                                          word_left_fixed, word_right_fixed);
                 out_samples->push_back(sample_pair);
                 // Output L2+R2 samples.
                 if(in_block->isDataBroken()==false)
                 {
                     block_state = in_block->isBlockValid();
+                    if(block_state==false)
+                    {
+                        word_left_fixed = word_right_fixed = false;
+                    }
+                    else
+                    {
+                        word_left_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_L2);
+                        word_right_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_R2);
+                    }
                     word_left_state = in_block->isWordValid(STC007DataBlock::WORD_L2);
                     word_right_state = in_block->isWordValid(STC007DataBlock::WORD_R2);
                 }
@@ -6577,9 +6572,12 @@ void STC007DataStitcher::outputDataBlock(STC007DataBlock *in_block)
                 {
                     block_state = false;
                     word_left_state = word_right_state = false;
+                    word_left_fixed = word_right_fixed = false;
                 }
                 sample_pair.setSamplePair(in_block->getSample(STC007DataBlock::WORD_L2), in_block->getSample(STC007DataBlock::WORD_R2),
-                                          block_state, block_state, word_left_state, word_right_state);
+                                          block_state, block_state,
+                                          word_left_state, word_right_state,
+                                          word_left_fixed, word_right_fixed);
                 out_samples->push_back(sample_pair);
                 mtx_samples->unlock();
 
@@ -6622,7 +6620,7 @@ void STC007DataStitcher::outputFileStop()
     size_t queue_size;
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty pointer provided in [STC007DataStitcher::outputFileStop()], service tag discarded!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty pointer provided, service tag discarded!";
     }
     else
     {
@@ -7225,7 +7223,7 @@ void STC007DataStitcher::doFrameReassemble()
     // Check working pointers.
     if((in_lines==NULL)||(mtx_lines==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty input pointer provided in [STC007DataStitcher::doFrameReassemble()], unable to continue!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty input pointer provided, unable to continue!";
         emit finished();
         return;
     }
@@ -7385,6 +7383,7 @@ void STC007DataStitcher::doFrameReassemble()
                 // Pre-scan frame buffer, perform false-positive PCM line detection and CWD.
                 prescanFrame();
 
+                lines_to_block.setLogLevel(ext_di_log_lvl);
                 // Perform deinterleaving on one frame.
                 performDeinterleave();
 

@@ -76,7 +76,7 @@ public:
     enum
     {
         BUF_SIZE_TRIM = (MAX_VLINE_QUEUE_SIZE*3),   // Maximum number of lines to store in [trim_buf] buffer (must contain at least two full frames).
-        BUF_SIZE_FIELD = (BUF_SIZE_TRIM/4),         // Maximum number of lines to store in per-field buffers.
+        BUF_SIZE_FIELD = LINES_PER_PAL_FIELD,       // Maximum number of lines to store in per-field buffers.
         MIN_GOOD_LINES_PF = (LINES_PF_DEFAULT-(STC007DataBlock::INTERLEAVE_OFS)/2), // Minimum number of lines with good CRC per field to enable aggresive trimming.
         MIN_FILL_LINES_PF = (STC007DataBlock::MIN_DEINT_DATA/2),                    // Minimum number of lines in per-field buffers to perform padding detection.
     };
@@ -88,9 +88,9 @@ public:
         MAX_PADDING_16BIT = (STC007DataBlock::INTERLEAVE_OFS),      // Maximum available line padding (for 16-bit mode) before two errors per block will be introduced.
         MAX_BURST_SILENCE = (STC007DataBlock::INTERLEAVE_OFS/2),    // Maximum number of consequtive silenced data blocks before field stitching aborts.
         MAX_BURST_BROKEN = 1,                                       // Maximum number of consequtive BROKEN data blocks before field stitching aborts.
-        MAX_BURST_UNCH = 8,
-        MAX_BURST_UNCH_14BIT = 14,                                  // Default maximum number of consequtive unchecked/Q-corrected 14-bit data blocks before field stitching aborts.
-        MAX_BURST_UNCH_16BIT = 16,                                  // Default maximum number of consequtive unchecked 16-bit data blocks before field stitching aborts.
+        MAX_BURST_UNCH_DELTA = 8,
+        MAX_BURST_UNCH_14BIT = 0x40,                                // Default maximum number of consequtive unchecked/Q-corrected 14-bit data blocks before field stitching aborts.
+        MAX_BURST_UNCH_16BIT = 0x20,                                // Default maximum number of consequtive unchecked 16-bit data blocks before field stitching aborts.
         UNCH_MASK_DURATION = (STC007DataBlock::INTERLEAVE_OFS*STC007DataBlock::WORD_CNT),   // Default duration (in lines) of masking uncheckable and false-corrected blocks after BROKEN one.
         STATS_DEPTH = 65                                            // History depth for stats.
     };

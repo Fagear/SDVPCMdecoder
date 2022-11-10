@@ -109,6 +109,14 @@ bool FFMPEGWrapper::getNextPacket()
             {
                 emit sigVideoError(FFMERR_UNKNOWN);
             }
+#ifdef FFWR_EN_DBG_OUT
+            if((av_res<0)&&(av_res!=AVERROR_EOF))
+            {
+                char err_str[256];
+                av_strerror(av_res, err_str, 256);
+                qWarning()<<DBG_ANCHOR<<"[FFWR] Failed to read a frame:"<<err_str;
+            }
+#endif
             slotCloseInput();
             return false;
         }
@@ -153,6 +161,14 @@ bool FFMPEGWrapper::getNextPacket()
         {
             emit sigVideoError(FFMERR_UNKNOWN);
         }
+#ifdef FFWR_EN_DBG_OUT
+        if((av_res<0)&&(av_res!=AVERROR_EOF))
+        {
+            char err_str[256];
+            av_strerror(av_res, err_str, 256);
+            qWarning()<<DBG_ANCHOR<<"[FFWR] Failed to decode a packet:"<<err_str;
+        }
+#endif
         slotCloseInput();
         return false;
     }
@@ -619,7 +635,12 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     if(av_res<0)
     {
 #ifdef FFWR_EN_DBG_OUT
-        qWarning()<<"[FFWR] Unable to open source!"<<av_res;
+        if(av_res!=AVERROR_EOF)
+        {
+            char err_str[256];
+            av_strerror(av_res, err_str, 256);
+            qWarning()<<DBG_ANCHOR<<"[FFWR] Unable to open source:"<<err_str;
+        }
 #endif
         emit sigVideoError(FFMERR_NO_SRC);
         slotCloseInput();
@@ -876,6 +897,7 @@ void FFMPEGWrapper::slotGetNextFrame()
                     // Limit maximum number of dropped frames.
                     if(missed_frames>DUMMY_CNT_MAX)
                     {
+                        qWarning()<<DBG_ANCHOR<<"[FFWR] Maximum number of dropped frames exceeded!"<<missed_frames<<DUMMY_CNT_MAX;
                         missed_frames = DUMMY_CNT_MAX;
                     }
                     // Report missed frames.
@@ -918,7 +940,6 @@ void FFMPEGWrapper::slotGetNextFrame()
                              av_res,                            // Height of the output slice.
                              video_dst_linesize[PLANE_Y],
                              QImage::Format_Grayscale8);
-                //qDebug()<<conv_image.width()<<"x"<<conv_image.height();
                 // Send QImage for displaying.
                 emit newImage(conv_image.copy(), last_double);
             }

@@ -248,7 +248,7 @@
          <number>5</number>
         </property>
         <property name="maximum">
-         <number>16</number>
+         <number>32</number>
         </property>
        </widget>
       </item>
@@ -282,7 +282,7 @@
          <number>5</number>
         </property>
         <property name="maximum">
-         <number>32</number>
+         <number>64</number>
         </property>
        </widget>
       </item>

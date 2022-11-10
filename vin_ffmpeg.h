@@ -112,6 +112,7 @@ private:
     QThread *ffmpeg_thread;     // Thread for FFMPEG wrapper.
     FFMPEGWrapper *ffmpeg_src;  // FFMPEG Qt-wrapper.
     bool new_file;              // Is this the first frame of a new source?
+    bool src_open;              // Is source open and ready?
     bool step_play;             // Enable or disable auto-pause after each frame.
     bool detect_frame_drop;     // Detect dropouts via PTS or not?
     bool finish_work;           // Flag to break executing loop.

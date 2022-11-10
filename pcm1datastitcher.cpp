@@ -16,10 +16,12 @@ PCM1DataStitcher::PCM1DataStitcher(QObject *parent) : QObject(parent)
     file_name.clear();
 
     preset_field_order = FrameAsmDescriptor::ORDER_TFF;
+    preset_odd_offset = preset_even_offset = 0;
 
     log_level = 0;
     trim_fill = 0;
 
+    auto_offset = true;
     file_start = file_end = false;
     finish_work = false;
 
@@ -34,7 +36,7 @@ void PCM1DataStitcher::setInputPointers(std::deque<PCM1Line> *in_pcmline, QMutex
 {
     if((in_pcmline==NULL)||(mtx_pcmline==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty input pointer provided in [PCM1DataStitcher::setInputPointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty input pointer provided, unable to apply!";
     }
     else
     {
@@ -48,7 +50,7 @@ void PCM1DataStitcher::setOutputPointers(std::deque<PCMSamplePair> *out_pcmsampl
 {
     if((out_pcmsamples==NULL)||(mtx_pcmsamples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty output pointer provided in [PCM1DataStitcher::setOutputPointers()], unable to apply!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty output pointer provided, unable to apply!";
     }
     else
     {
@@ -181,7 +183,7 @@ void PCM1DataStitcher::fillUntilFullFrame()
             }
             else
             {
-                qWarning()<<DBG_ANCHOR<<"[L2B-1] Line buffer index out of bound in [PCM1DataStitcher::fillUntilFullFrame()]! Logic error! Line skipped!";
+                qWarning()<<DBG_ANCHOR<<"[L2B-1] Line buffer index out of bound! Logic error! Line skipped!";
                 qWarning()<<DBG_ANCHOR<<"[L2B-1] Max lines:"<<BUF_SIZE_TRIM;
             }
         }
@@ -209,7 +211,6 @@ void PCM1DataStitcher::findFrameTrim()
     f1o_skip_bad = f1e_skip_bad = false;
     f1o_good = f1e_good = 0;
 
-    // TODO: try to detect source frame line offset, get stats and anchor data
 #ifdef DI_EN_DBG_OUT
     if(((log_level&LOG_TRIM)!=0)||((log_level&LOG_PROCESS)!=0))
     {
@@ -399,6 +400,30 @@ void PCM1DataStitcher::findFrameTrim()
     }
 #endif
 
+    if(auto_offset==false)
+    {
+        // Set top data offset to preset one.
+        f1o_top = f1e_top = true;
+        // Odd field offset.
+        if(preset_odd_offset>0)
+        {
+            frasm_f1.odd_top_data = 2*preset_odd_offset+1;
+        }
+        else
+        {
+            frasm_f1.odd_top_data = 1;
+        }
+        // Even field offset.
+        if(preset_even_offset>0)
+        {
+            frasm_f1.even_top_data = 2*preset_even_offset+2;
+        }
+        else
+        {
+            frasm_f1.even_top_data = 2;
+        }
+    }
+
     // Cycle through the whole buffer.
     // (assuming that buffer starts on the first line of the frame)
     line_ind = 0;
@@ -585,6 +610,7 @@ void PCM1DataStitcher::splitFrameToFields()
 {
     uint16_t line_ind, line_num;
     uint32_t ref_lvl_odd, ref_lvl_even, ref_lvl_odd_bad, ref_lvl_even_bad;
+    PCM1Line current_line;
     PCM1SubLine sub_temp;
 
 #ifdef DI_EN_DBG_OUT
@@ -602,10 +628,11 @@ void PCM1DataStitcher::splitFrameToFields()
     // Cycle splitting frame buffer into 2 field buffers.
     while(line_ind<trim_fill)
     {
+        current_line = trim_buf[line_ind];
         // Save current line number.
-        line_num = trim_buf[line_ind].line_number;
+        line_num = current_line.line_number;
         // Pick lines for the frame.
-        if(trim_buf[line_ind].frame_number==frasm_f1.frame_number)
+        if(current_line.frame_number==frasm_f1.frame_number)
         {
             // Update maximum line number.
             if(f1_max_line<line_num)
@@ -621,23 +648,30 @@ void PCM1DataStitcher::splitFrameToFields()
                     // Check frame trimming.
                     if((line_num>=frasm_f1.even_top_data)&&(line_num<=frasm_f1.even_bottom_data))
                     {
+                        // Check for stray header inside the data.
+                        if(current_line.isServiceLine()!=false)
+                        {
+                            // Make this line invalid.
+                            current_line.clear();
+                        }
+                        // Cycle through sub-lines in one line.
                         for(uint8_t sub=0;sub<PCM1SubLine::PART_MAX;sub++)
                         {
                             // Check array index bounds.
                             if(frasm_f1.even_data_lines<BUF_SIZE_FIELD)
                             {
                                 // Fill up even field.
-                                splitLineToSubline(&trim_buf[line_ind], &sub_temp, sub);
+                                splitLineToSubline(&current_line, &sub_temp, sub);
                                 frame1_even[frasm_f1.even_data_lines] = sub_temp;
                                 frasm_f1.even_data_lines++;
                                 // Pre-calculate average reference level for all lines.
-                                ref_lvl_even_bad += trim_buf[line_ind].ref_level;
-                                if(trim_buf[line_ind].isCRCValid()!=false)
+                                ref_lvl_even_bad += current_line.ref_level;
+                                if(current_line.isCRCValid()!=false)
                                 {
                                     // Calculate number of sub-lines with valid CRC in the field.
                                     frasm_f1.even_valid_lines++;
                                     // Pre-calculate average reference level for valid lines.
-                                    ref_lvl_even += trim_buf[line_ind].ref_level;
+                                    ref_lvl_even += current_line.ref_level;
                                 }
                             }
 #ifdef DI_EN_DBG_OUT
@@ -647,8 +681,8 @@ void PCM1DataStitcher::splitFrameToFields()
                                 {
                                     QString log_line;
                                     log_line.sprintf("[L2B-1] Even field buffer is full, line %u-%u is skipped!",
-                                                     trim_buf[line_ind].frame_number,
-                                                     trim_buf[line_ind].line_number);
+                                                     current_line.frame_number,
+                                                     current_line.line_number);
                                     qInfo()<<log_line;
                                 }
                             }
@@ -671,23 +705,30 @@ void PCM1DataStitcher::splitFrameToFields()
                 // Check frame trimming.
                 if((line_num>=frasm_f1.odd_top_data)&&(line_num<=frasm_f1.odd_bottom_data))
                 {
+                    // Check for stray header inside the data.
+                    if(current_line.isServiceLine()!=false)
+                    {
+                        // Make this line invalid.
+                        current_line.clear();
+                    }
+                    // Cycle through sub-lines in one line.
                     for(uint8_t sub=0;sub<PCM1SubLine::PART_MAX;sub++)
                     {
                         // Check array index bounds.
                         if(frasm_f1.odd_data_lines<BUF_SIZE_FIELD)
                         {
                             // Fill up odd field.
-                            splitLineToSubline(&trim_buf[line_ind], &sub_temp, sub);
+                            splitLineToSubline(&current_line, &sub_temp, sub);
                             frame1_odd[frasm_f1.odd_data_lines] = sub_temp;
                             frasm_f1.odd_data_lines++;
                             // Pre-calculate average reference level for all lines.
-                            ref_lvl_odd_bad += trim_buf[line_ind].ref_level;
-                            if(trim_buf[line_ind].isCRCValid()!=false)
+                            ref_lvl_odd_bad += current_line.ref_level;
+                            if(current_line.isCRCValid()!=false)
                             {
                                 // Calculate number of sub-lines with valid CRC in the field.
                                 frasm_f1.odd_valid_lines++;
                                 // Pre-calculate average reference level for valid lines.
-                                ref_lvl_odd += trim_buf[line_ind].ref_level;
+                                ref_lvl_odd += current_line.ref_level;
                             }
                         }
 #ifdef DI_EN_DBG_OUT
@@ -697,8 +738,8 @@ void PCM1DataStitcher::splitFrameToFields()
                             {
                                 QString log_line;
                                 log_line.sprintf("[L2B-1] Odd field buffer is full, line %u-%u is skipped!",
-                                                 trim_buf[line_ind].frame_number,
-                                                 trim_buf[line_ind].line_number);
+                                                 current_line.frame_number,
+                                                 current_line.line_number);
                                 qInfo()<<log_line;
                             }
                         }
@@ -769,27 +810,84 @@ void PCM1DataStitcher::findFramePadding()
         qInfo()<<"[L2B-1] -------------------- Padding detection starting...";
     }
 #endif
-    // Check if data starts with Header.
-    if(header_present==false)
+    if(auto_offset!=false)
     {
-        // No Header, assume top part of the frame is cut.
-        // Stick data to the bottom of the field.
-        frasm_f1.odd_bottom_padding = 0;
-        frasm_f1.even_bottom_padding = 0;
-        // Calculate top padding to NTSC standard.
-        frasm_f1.odd_top_padding = (SUBLINES_PF-frasm_f1.odd_data_lines)/PCM1Line::SUBLINES_PER_LINE;
-        frasm_f1.even_top_padding = (SUBLINES_PF-frasm_f1.even_data_lines)/PCM1Line::SUBLINES_PER_LINE;
+        // Check if data starts with Header.
+        if(header_present==false)
+        {
+            // No Header, assume top part of the frame is cut.
+            // Stick trimmed data to the bottom of the field.
+            frasm_f1.odd_bottom_padding = 0;
+            frasm_f1.even_bottom_padding = 0;
+            // Calculate top padding to NTSC standard.
+            frasm_f1.odd_top_padding = (SUBLINES_PF-frasm_f1.odd_data_lines)/PCM1Line::SUBLINES_PER_LINE;
+            frasm_f1.even_top_padding = (SUBLINES_PF-frasm_f1.even_data_lines)/PCM1Line::SUBLINES_PER_LINE;
+        }
+        else
+        {
+            // Header is detected in the frame.
+            // Stick data to the top of the field.
+            frasm_f1.odd_top_padding = 0;
+            frasm_f1.even_top_padding = 0;
+            // Calculate top padding to NTSC standard.
+            frasm_f1.odd_bottom_padding = (SUBLINES_PF-frasm_f1.odd_data_lines)/PCM1Line::SUBLINES_PER_LINE;
+            frasm_f1.even_bottom_padding = (SUBLINES_PF-frasm_f1.even_data_lines)/PCM1Line::SUBLINES_PER_LINE;
+        }
     }
     else
     {
-        // Header is detected in the frame.
-        // Stick data to the top of the field.
-        frasm_f1.odd_top_padding = 0;
-        frasm_f1.even_top_padding = 0;
-        // Calculate top padding to NTSC standard.
-        frasm_f1.odd_bottom_padding = (SUBLINES_PF-frasm_f1.odd_data_lines)/PCM1Line::SUBLINES_PER_LINE;
-        frasm_f1.even_bottom_padding = (SUBLINES_PF-frasm_f1.even_data_lines)/PCM1Line::SUBLINES_PER_LINE;
+        // Calculate odd field top padding.
+        if(preset_odd_offset>0)
+        {
+            // Data if shifted upwards, no need for top padding.
+            frasm_f1.odd_top_padding = 0;
+        }
+        else
+        {
+            // Data if shifted downwards, convert preset offset to top padding,
+            // assuming top of the data not trimmed, but set by frame line number in [findFrameTrim()].
+            frasm_f1.odd_top_padding = 0-preset_odd_offset;
+        }
+        // Calculate even field top padding.
+        if(preset_even_offset>0)
+        {
+            // Data if shifted upwards, no need for top padding.
+            frasm_f1.even_top_padding = 0;
+        }
+        else
+        {
+            // Data if shifted downwards, convert preset offset to top padding,
+            // assuming top of the data not trimmed, but set by frame line number in [findFrameTrim()].
+            frasm_f1.even_top_padding = 0-preset_even_offset;
+        }
+        // Re-calculate bottom data trim to fit within standard number of lines per field.
+        frasm_f1.odd_bottom_padding = (frasm_f1.odd_bottom_data-frasm_f1.odd_top_data)/2+1;     // Number of data lines.
+        frasm_f1.odd_bottom_padding += frasm_f1.odd_top_padding;                                // Data lines + top padding.
+        if(frasm_f1.odd_bottom_padding>LINES_PF)
+        {
+            frasm_f1.odd_bottom_padding -= LINES_PF;                                        // Calculate how many excessive lines there are.
+            frasm_f1.odd_bottom_data -= (frasm_f1.odd_bottom_padding*2);                    // Trim bottom more (skipping every other line due to interlacing).
+            frasm_f1.odd_data_lines = (frasm_f1.odd_bottom_data-frasm_f1.odd_top_data)/2+1; // Re-calculate number of useful lines.
+            frasm_f1.odd_data_lines *= PCM1Line::SUBLINES_PER_LINE;                         // Convert number of lines to number of sublines.
+        }
+        // Re-calculate bottom data trim to fit within standard number of lines per field.
+        frasm_f1.even_bottom_padding = (frasm_f1.even_bottom_data-frasm_f1.even_top_data)/2+1;  // Number of data lines.
+        frasm_f1.even_bottom_padding += frasm_f1.even_top_padding;                              // Data lines + top padding.
+        if(frasm_f1.even_bottom_padding>LINES_PF)
+        {
+            frasm_f1.even_bottom_padding -= LINES_PF;                                       // Calculate how many excessive lines there are.
+            frasm_f1.even_bottom_data -= (frasm_f1.even_bottom_padding*2);                  // Trim bottom more (skipping every other line due to interlacing).
+            frasm_f1.even_data_lines = (frasm_f1.even_bottom_data-frasm_f1.even_top_data)/2+1;  // Re-calculate number of useful lines.
+            frasm_f1.even_data_lines *= PCM1Line::SUBLINES_PER_LINE;                        // Convert number of lines to number of sublines.
+        }
+        // Calculate bottom padding to NTSC standard.
+        frasm_f1.odd_bottom_padding = (SUBLINES_PF-frasm_f1.odd_data_lines)/PCM1Line::SUBLINES_PER_LINE-frasm_f1.odd_top_padding;
+        frasm_f1.even_bottom_padding = (SUBLINES_PF-frasm_f1.even_data_lines)/PCM1Line::SUBLINES_PER_LINE-frasm_f1.even_top_padding;
     }
+
+    //qDebug()<<"po"<<frasm_f1.odd_top_data<<frasm_f1.odd_bottom_data<<frasm_f1.odd_data_lines/PCM1Line::SUBLINES_PER_LINE<<frasm_f1.odd_top_padding<<frasm_f1.odd_bottom_padding;
+    //qDebug()<<"pe"<<frasm_f1.even_top_data<<frasm_f1.even_bottom_data<<frasm_f1.even_data_lines/PCM1Line::SUBLINES_PER_LINE<<frasm_f1.even_top_padding<<frasm_f1.even_bottom_padding;
+
     // Preset field order.
     if(preset_field_order==FrameAsmDescriptor::ORDER_BFF)
     {
@@ -908,7 +1006,7 @@ uint16_t PCM1DataStitcher::addLinesFromField(std::vector<PCM1SubLine> *field_buf
     }
     else
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-1] Array access out of bounds in [PCM1DataStitcher::addLinesFromField()]! Total:"<<field_buf->size()<<", start index:"<<ind_start<<", stop index:"<<(ind_start+count);
+        qWarning()<<DBG_ANCHOR<<"[L2B-1] Array access out of bounds! Total:"<<field_buf->size()<<", start index:"<<ind_start<<", stop index:"<<(ind_start+count);
     }
     return lines_cnt;
 }
@@ -1030,17 +1128,14 @@ void PCM1DataStitcher::fillFirstFieldForOutput()
     added_lines_cnt += addFieldPadding(frasm_f1.frame_number, field_1_bottom_pad, &last_line);
 
 #ifdef DI_EN_DBG_OUT
-    if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_FIELD_ASSEMBLY)!=0))
-    {
         if((target_lines_per_field!=0)&&(target_lines_per_field!=added_lines_cnt))
         {
-            qInfo()<<"[L2B-1] Addded"<<added_lines_cnt<<"sub-lines per field (WRONG COUNT, should be"<<target_lines_per_field<<")";
+            qWarning()<<"[L2B-1] Addded"<<added_lines_cnt<<"sub-lines per field (WRONG COUNT, should be"<<target_lines_per_field<<")";
         }
-        else
+        else if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_FIELD_ASSEMBLY)!=0))
         {
             qInfo()<<"[L2B-1] Addded"<<added_lines_cnt<<"sub-lines per field";
         }
-    }
 #endif
 }
 
@@ -1132,7 +1227,7 @@ void PCM1DataStitcher::outputFileStart()
     size_t queue_size;
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided in [PCM1DataStitcher::outputFileStart()], service tag discarded!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided, service tag discarded!";
     }
     else
     {
@@ -1175,7 +1270,7 @@ void PCM1DataStitcher::outputDataBlock(PCM1DataBlock *in_block)
 
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided in [PCM1DataStitcher::outputDataBlock()], result discarded!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided, result discarded!";
     }
     else
     {
@@ -1194,8 +1289,8 @@ void PCM1DataStitcher::outputDataBlock(PCM1DataBlock *in_block)
                     // Set sample rate.
                     sample_pair.setSampleRate(in_block->sample_rate);
                     // Output L+R samples.
-                    sample_pair.setSample(PCMSamplePair::CH_LEFT, in_block->getSample(wrd), in_block->isBlockValid(), in_block->isWordValid(wrd));
-                    sample_pair.setSample(PCMSamplePair::CH_RIGHT, in_block->getSample(wrd+1), in_block->isBlockValid(), in_block->isWordValid(wrd+1));
+                    sample_pair.setSample(PCMSamplePair::CH_LEFT, in_block->getSample(wrd), in_block->isBlockValid(), in_block->isWordValid(wrd), false);
+                    sample_pair.setSample(PCMSamplePair::CH_RIGHT, in_block->getSample(wrd+1), in_block->isBlockValid(), in_block->isWordValid(wrd+1), false);
                     // Put sample pair in the output queue.
                     out_samples->push_back(sample_pair);
                     mtx_samples->unlock();
@@ -1239,7 +1334,7 @@ void PCM1DataStitcher::outputFileStop()
     size_t queue_size;
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided in [PCM1DataStitcher::outputFileStop()], service tag discarded!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided, service tag discarded!";
     }
     else
     {
@@ -1378,6 +1473,58 @@ void PCM1DataStitcher::setFieldOrder(uint8_t in_order)
     }
 }
 
+//------------------------ Preset auto line offset.
+void PCM1DataStitcher::setAutoLineOffset(bool in_auto)
+{
+#ifdef DI_EN_DBG_OUT
+    if(auto_offset!=in_auto)
+    {
+        if((log_level&LOG_SETTINGS)!=0)
+        {
+            if(in_auto==false)
+            {
+                qInfo()<<"[L2B-1] Auto line offset preset to 'disabled'";
+            }
+            else
+            {
+                qInfo()<<"[L2B-1] Auto line offset preset to 'enabled'";
+            }
+        }
+    }
+#endif
+    auto_offset = in_auto;
+}
+
+//------------------------ Preset odd line offset from the top.
+void PCM1DataStitcher::setOddLineOffset(int8_t in_ofs)
+{
+#ifdef DI_EN_DBG_OUT
+    if(preset_odd_offset!=in_ofs)
+    {
+        if((log_level&LOG_SETTINGS)!=0)
+        {
+            qInfo()<<"[L2B-1] Off line offset preset to"<<in_ofs;
+        }
+    }
+#endif
+    preset_odd_offset = in_ofs;
+}
+
+//------------------------ Preset even line offset from the top.
+void PCM1DataStitcher::setEvenLineOffset(int8_t in_ofs)
+{
+#ifdef DI_EN_DBG_OUT
+    if(preset_even_offset!=in_ofs)
+    {
+        if((log_level&LOG_SETTINGS)!=0)
+        {
+            qInfo()<<"[L2B-1] Even line offset preset to"<<in_ofs;
+        }
+    }
+#endif
+    preset_even_offset = in_ofs;
+}
+
 //------------------------ Set fine settings: usage of ECC on CRC-marked words.
 void PCM1DataStitcher::setFineUseECC(bool in_set)
 {
@@ -1427,7 +1574,7 @@ void PCM1DataStitcher::doFrameReassemble()
     // Check working pointers.
     if((in_lines==NULL)||(mtx_lines==NULL))
     {
-        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided in [PCM1DataStitcher::doFrameReassemble()], unable to continue!";
+        qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided, unable to continue!";
         emit finished();
         return;
     }

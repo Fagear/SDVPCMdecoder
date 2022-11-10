@@ -17,6 +17,7 @@
 #include <QTimer>
 #include <QThread>
 #include <QtDebug>
+#include <QGLFormat>
 #include <QtWidgets>
 #include "config.h"
 #include "ui_frame_vis.h"
@@ -44,6 +45,7 @@ private:
 private:
     Ui::frame_vis *ui;
     QTimer pos_timer;
+    QElapsedTimer update_time;
     QGraphicsScene *scene;
     QGraphicsPixmapItem *pixels;
     QPixmap pix_data;
@@ -56,10 +58,14 @@ private:
 
 public slots:
     void setTitle(QString);
-    void drawFrame(QPixmap, uint32_t);
+    void drawFrame(QImage, uint32_t);
 
 private slots:
     void updateWindowPosition();
+    void redrawDone();
+
+signals:
+    void readyToDraw();
 };
 
 #endif // VISUALIZER_H

@@ -769,6 +769,11 @@ FrameAsmSTC007::FrameAsmSTC007(const FrameAsmSTC007 &in_object) : FrameAsmDescri
     blocks_fix_p = in_object.blocks_fix_p;
     blocks_fix_q = in_object.blocks_fix_q;
     blocks_fix_cwd = in_object.blocks_fix_cwd;
+    ctrl_index = in_object.ctrl_index;
+    ctrl_hour = in_object.ctrl_hour;
+    ctrl_minute = in_object.ctrl_minute;
+    ctrl_second = in_object.ctrl_second;
+    ctrl_field = in_object.ctrl_field;
 }
 
 FrameAsmSTC007& FrameAsmSTC007::operator= (const FrameAsmSTC007 &in_object)
@@ -797,6 +802,11 @@ FrameAsmSTC007& FrameAsmSTC007::operator= (const FrameAsmSTC007 &in_object)
     blocks_fix_p = in_object.blocks_fix_p;
     blocks_fix_q = in_object.blocks_fix_q;
     blocks_fix_cwd = in_object.blocks_fix_cwd;
+    ctrl_index = in_object.ctrl_index;
+    ctrl_hour = in_object.ctrl_hour;
+    ctrl_minute = in_object.ctrl_minute;
+    ctrl_second = in_object.ctrl_second;
+    ctrl_field = in_object.ctrl_field;
 
     return *this;
 }
@@ -824,6 +834,7 @@ void FrameAsmSTC007::clearMisc()
     inner_padding_ok = outer_padding_ok = false;
     inner_silence = outer_silence = true;
     vid_std_preset = vid_std_guessed = false;
+    ctrl_index = ctrl_hour = ctrl_minute = ctrl_second = ctrl_field = 0;
     this->clearAsmStats();
 }
 
@@ -846,4 +857,10 @@ void FrameAsmSTC007::updateVidStdSoft(uint8_t in_std)
             video_standard = in_std;
         }
     }
+}
+
+//------------------------ Is address data set from Control Block?
+bool FrameAsmSTC007::isAddressSet()
+{
+    return ((ctrl_index!=0)||(ctrl_hour!=0)||(ctrl_minute!=0)||(ctrl_second!=0)||(ctrl_field!=0));
 }

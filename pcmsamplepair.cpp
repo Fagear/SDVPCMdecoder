@@ -10,8 +10,9 @@ PCMSample::PCMSample(const PCMSample &in_object)
     audio_word = in_object.audio_word;
     index = in_object.index;
     data_block_ok = in_object.data_block_ok;
-    word_ok = in_object.word_ok;
-    word_processed = in_object.word_processed;
+    word_valid = in_object.word_valid;
+    word_fixed = in_object.word_fixed;
+    word_masked = in_object.word_masked;
 }
 
 PCMSample& PCMSample::operator= (const PCMSample &in_object)
@@ -21,8 +22,9 @@ PCMSample& PCMSample::operator= (const PCMSample &in_object)
     audio_word = in_object.audio_word;
     index = in_object.index;
     data_block_ok = in_object.data_block_ok;
-    word_ok = in_object.word_ok;
-    word_processed = in_object.word_processed;
+    word_valid = in_object.word_valid;
+    word_fixed = in_object.word_fixed;
+    word_masked = in_object.word_masked;
 
     return *this;
 }
@@ -32,7 +34,7 @@ void PCMSample::clear()
 {
     audio_word = 0;
     index = 0;
-    data_block_ok = word_ok = word_processed = false;
+    data_block_ok = word_valid = word_fixed = word_masked = false;
 }
 
 //------------------------ Set value of the sample.
@@ -50,25 +52,31 @@ void PCMSample::setIndex(uint64_t in_idx)
 //------------------------ Mark sample as invalid.
 void PCMSample::setInvalid()
 {
-    word_ok = false;
+    word_valid = false;
 }
 
-//------------------------ Mark sample as fixed.
+//------------------------ Mark sample as valid.
+void PCMSample::setValid()
+{
+    word_valid = true;
+}
+
+//------------------------ Mark sample as fixed by ECC.
 void PCMSample::setFixed()
 {
-    word_ok = true;
+    word_fixed = true;
 }
 
 //------------------------ Mark sample as processed.
-void PCMSample::setProcessed()
+void PCMSample::setMasked()
 {
-    word_processed = true;
+    word_masked = true;
 }
 
 //------------------------ Set (irreversably) word validity by data block validity.
 void PCMSample::setValidityByBlock()
 {
-    word_ok = data_block_ok;
+    word_valid = data_block_ok;
 }
 
 //------------------------ Get value of the sample.
@@ -109,13 +117,19 @@ bool PCMSample::isSilent()
 //------------------------ Is sample valid?
 bool PCMSample::isValid()
 {
-    return word_ok;
+    return word_valid;
+}
+
+//------------------------ Was sample fixed by ECC?
+bool PCMSample::isFixed()
+{
+    return word_fixed;
 }
 
 //------------------------ Is sample processed?
-bool PCMSample::isProcessed()
+bool PCMSample::isMasked()
 {
-    return word_processed;
+    return word_masked;
 }
 
 //------------------------ Convert PCM data to string for debug.
@@ -137,7 +151,7 @@ std::string PCMSample::dumpWordsString()
     do
     {
         bit_pos--;
-        if(word_ok==false)
+        if(word_valid==false)
         {
             if((audio_word&(1<<bit_pos))==0)
             {
@@ -175,8 +189,7 @@ std::string PCMSample::dumpWordsString()
 
 
 
-
-
+//------------------------ [PCMSample] pair container.
 PCMSamplePair::PCMSamplePair()
 {
     this->clear();
@@ -189,7 +202,6 @@ PCMSamplePair::PCMSamplePair(const PCMSamplePair &in_object)
         samples[idx] = in_object.samples[idx];
     }
     sample_rate = in_object.sample_rate;
-    index = in_object.index;
     emphasis = in_object.emphasis;
     service_type = in_object.service_type;
     file_path = in_object.file_path;
@@ -204,7 +216,6 @@ PCMSamplePair& PCMSamplePair::operator= (const PCMSamplePair &in_object)
         samples[idx] = in_object.samples[idx];
     }
     sample_rate = in_object.sample_rate;
-    index = in_object.index;
     emphasis = in_object.emphasis;
     service_type = in_object.service_type;
     file_path = in_object.file_path;
@@ -220,7 +231,6 @@ void PCMSamplePair::clear()
         samples[idx].clear();
     }
     sample_rate = SAMPLE_RATE_44056;
-    index = 0;
     emphasis = false;
     service_type = SRV_NO;
     file_path.clear();
@@ -245,7 +255,7 @@ void PCMSamplePair::setServEndFile()
 }
 
 //------------------------ Set sample for one channel.
-bool PCMSamplePair::setSample(uint8_t channel, int16_t sample, bool block_ok, bool word_ok)
+bool PCMSamplePair::setSample(uint8_t channel, int16_t sample, bool block_ok, bool word_ok, bool word_fixed)
 {
     if(channel>=CH_MAX)
     {
@@ -253,15 +263,19 @@ bool PCMSamplePair::setSample(uint8_t channel, int16_t sample, bool block_ok, bo
     }
     samples[channel].audio_word = sample;
     samples[channel].data_block_ok = block_ok;
-    samples[channel].word_ok = word_ok;
+    samples[channel].word_valid = word_ok;
+    samples[channel].word_fixed = word_fixed;
     return true;
 }
 
 //------------------------ Set sample pair.
-void PCMSamplePair::setSamplePair(int16_t ch1_sample, int16_t ch2_sample, bool ch1_block, bool ch2_block, bool ch1_word, bool ch2_word)
+void PCMSamplePair::setSamplePair(int16_t ch1_sample, int16_t ch2_sample,
+                                  bool ch1_block, bool ch2_block,
+                                  bool ch1_word, bool ch2_word,
+                                  bool ch1_fixed, bool ch2_fixed)
 {
-    setSample(CH_LEFT, ch1_sample, ch1_block, ch1_word);
-    setSample(CH_RIGHT, ch2_sample, ch2_block, ch2_word);
+    setSample(CH_LEFT, ch1_sample, ch1_block, ch1_word, ch1_fixed);
+    setSample(CH_RIGHT, ch2_sample, ch2_block, ch2_word, ch2_fixed);
 }
 
 //------------------------ Set (irreversably) samples validity by data block validity.
@@ -285,10 +299,10 @@ void PCMSamplePair::setSampleRate(uint16_t in_rate)
 //------------------------ Set index of the set.
 void PCMSamplePair::setIndex(uint64_t in_idx)
 {
-    index = in_idx;
+    // Set the same index for all underlying samples.
     for(uint8_t idx=0;idx<CH_MAX;idx++)
     {
-        samples[idx].setIndex(index);
+        samples[idx].setIndex(in_idx);
     }
 }
 
@@ -323,6 +337,18 @@ size_t PCMSamplePair::getSampleSize()
 //------------------------ Get index of the set;
 uint64_t PCMSamplePair::getIndex()
 {
+    uint64_t index;
+    // Assume that all underlying indexes are the same and pick first one.
+    index = samples[0].getIndex();
+#ifdef QT_VERSION
+    for(uint8_t idx=1;idx<CH_MAX;idx++)
+    {
+        if(samples[idx].getIndex()!=index)
+        {
+            qWarning()<<DBG_ANCHOR<<"Samples indexes mismatch!"<<index<<samples[idx].getIndex();
+        }
+    }
+#endif
     return index;
 }
 
@@ -333,7 +359,7 @@ bool PCMSamplePair::isSampleValid(uint8_t channel)
     {
         return false;
     }
-    return samples[channel].word_ok;
+    return samples[channel].word_valid;
 }
 
 //------------------------ Get state of source word.
@@ -371,10 +397,7 @@ bool PCMSamplePair::isServicePair()
     {
         return false;
     }
-    else
-    {
-        return true;
-    }
+    return true;
 }
 
 //------------------------ Check if it has service tag "new file opened".
@@ -384,10 +407,7 @@ bool PCMSamplePair::isServNewFile()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if is has service tag "file ended".
@@ -397,10 +417,7 @@ bool PCMSamplePair::isServEndFile()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Are samples ready for output (valid or processed)?
@@ -411,7 +428,7 @@ bool PCMSamplePair::isReadyForOutput()
     for(uint8_t idx=0;idx<CH_MAX;idx++)   // TODO: set to all channels
     //for(uint8_t idx=0;idx<CH_RIGHT;idx++)
     {
-        ready = ready&&(samples[idx].isValid()||samples[idx].isProcessed());
+        ready = ready&&(samples[idx].isValid()||samples[idx].isMasked());
         if(ready==false) break;
     }
     return ready;
@@ -450,15 +467,15 @@ std::string PCMSamplePair::dumpContentString()
     }
     else
     {
-        sprintf(c_buf, "I[%08u]", (uint32_t)index);
+        sprintf(c_buf, "I[%08u]", (uint32_t)getIndex());
         text_out = c_buf;
 
         text_out += dumpWordsString();
 
-        text_out += " P[";
+        text_out += " F[";
         for(uint8_t idx=0;idx<CH_MAX;idx++)
         {
-            if(samples[idx].word_processed==false)
+            if(samples[idx].isFixed()==false)
             {
                 text_out += " ";
             }
@@ -472,6 +489,25 @@ std::string PCMSamplePair::dumpContentString()
             }
         }
         text_out += "]";
+
+        text_out += " M[";
+        for(uint8_t idx=0;idx<CH_MAX;idx++)
+        {
+            if(samples[idx].isMasked()==false)
+            {
+                text_out += " ";
+            }
+            else
+            {
+                text_out += "+";
+            }
+            if(idx!=(CH_MAX-1))
+            {
+                text_out += "|";
+            }
+        }
+        text_out += "]";
+
         sprintf(c_buf, " S[%05u]", sample_rate);
         text_out += c_buf;
 

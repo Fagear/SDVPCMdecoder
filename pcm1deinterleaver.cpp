@@ -76,7 +76,7 @@ uint8_t PCM1Deinterleaver::processBlock(uint16_t itl_block_num, uint16_t line_sh
     if(out_data_block==NULL)
     {
 #ifdef DI_EN_DBG_OUT
-        qWarning()<<DBG_ANCHOR<<"[DI-1] Null input pointer for PCM-1 data block provided in [PCM1Deinterleaver::processBlock()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[DI-1] Null input pointer for PCM-1 data block provided, exiting...";
 #endif
         return DI_RET_NULL_BLOCK;
     }
@@ -85,7 +85,7 @@ uint8_t PCM1Deinterleaver::processBlock(uint16_t itl_block_num, uint16_t line_sh
         if(input_vector==NULL)
         {
 #ifdef DI_EN_DBG_OUT
-            qWarning()<<DBG_ANCHOR<<"[DI-1] Null output pointer for PCM-1 line buffer provided in [PCM1Deinterleaver::processBlock()], exiting...";
+            qWarning()<<DBG_ANCHOR<<"[DI-1] Null output pointer for PCM-1 line buffer provided, exiting...";
 #endif
             return DI_RET_NULL_LINES;
         }

@@ -294,7 +294,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
     if(out_data_block==NULL)
     {
 #ifdef DI_EN_DBG_OUT
-        qWarning()<<DBG_ANCHOR<<"[DI-007] Null input pointer for STC-007 data block provided in [STC007Deinterleaver::processBlock()], exiting...";
+        qWarning()<<DBG_ANCHOR<<"[DI-007] Null input pointer for STC-007 data block provided, exiting...";
 #endif
         return DI_RET_NULL_BLOCK;
     }
@@ -303,7 +303,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
         if(input_vector==NULL)
         {
 #ifdef DI_EN_DBG_OUT
-            qWarning()<<DBG_ANCHOR<<"[DI-007] Null output pointer for STC-007 line buffer provided in [STC007Deinterleaver::processBlock()], exiting...";
+            qWarning()<<DBG_ANCHOR<<"[DI-007] Null output pointer for STC-007 line buffer provided, exiting...";
 #endif
             return DI_RET_NULL_LINES;
         }
@@ -391,10 +391,10 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
 /*#ifdef DI_EN_DBG_OUT
         if((log_level&LOG_PROCESS)!=0)
         {
-            qInfo()<<"[DI-007]"<<QString::fromStdString(out_data_block->textDump());
+            qInfo()<<"[DI-007] Stage"<<proc_state<<QString::fromStdString(out_data_block->dumpContentString());
         }
-#endif
-*/
+#endif*/
+
         //qDebug()<<"[DI-007] State #"<<proc_state<<", stage"<<stage_count;
 
         // Select processing mode.
@@ -435,91 +435,46 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
             out_data_block->markAsOriginalData();
             // Count number of fills.
             fill_passes++;
+#ifdef DI_EN_DBG_OUT
+            if((log_level&LOG_PROCESS)!=0)
+            {
+                qInfo()<<"[DI-007] Fill:"<<QString::fromStdString(out_data_block->dumpContentString());
+            }
+#endif
             // Go check CRC.
             proc_state = STG_ERROR_CHECK;
         }
         else if(proc_state==STG_ERROR_CHECK)
         {
-            bool skip_processing;
-            uint16_t p_code, q_code;
-
-            skip_processing = false;
             // Preset "no index" value for error locators.
             first_bad = NO_ERR_INDEX;
             second_bad = NO_ERR_INDEX;
             // Reset "bad samples" counter.
             all_crc_errs = aud_crc_errs = 0;
-            if(run_audio_res==STC007DataBlock::RES_14BIT)
-            {
-                if(out_data_block->getErrorsTotalSource()==out_data_block->getErrorsAudioSource())
-                {
-                    // Both ECC words are intact (all errors in the audio part).
-                    // Calculate P-word from actual audio samples.
-                    p_code = calcPcode(out_data_block);
-                    // Calculate Q-word for 14-bit mode.
-                    q_code = calcQcode(out_data_block);
-                    // Check if P&Q codes are the same in the data block, indicating no damage.
-                    if((p_code==out_data_block->getWord(STC007DataBlock::WORD_P0))&&
-                       (q_code==out_data_block->getWord(STC007DataBlock::WORD_Q0))&&
-                       (out_data_block->getErrorsAudioSource()>2))
-                    {
-                        // No need to count and trace anything.
-                        skip_processing = true;
-                    }
-                }
-            }
-            /*else
-            {
-                // No Q-word for 16-bit mode.
-                if((p_code==out_data_block->getWord(STC007DataBlock::WORD_P0))&&
-                   (out_data_block->getErrorsTotalSource()>0))
-                {
-                    // No need to count and trace anything.
-                    skip_processing = true;
-                }
-            }*/
 
-            if(skip_processing==false)
+            // Search for audio samples with bad CRC.
+            for(uint8_t index=STC007DataBlock::WORD_L0;index<=STC007DataBlock::WORD_R2;index++)
             {
-                // Search for audio samples with bad CRC.
-                for(uint8_t index=STC007DataBlock::WORD_L0;index<=STC007DataBlock::WORD_R2;index++)
+                if(out_data_block->isWordLineCRCOk(index)==false)
                 {
-                    if(out_data_block->isWordLineCRCOk(index)==false)
+                    // Count number of errors in audio samples.
+                    if(first_bad==NO_ERR_INDEX)
                     {
-                        // Count number of errors in audio samples.
-                        if(first_bad==NO_ERR_INDEX)
-                        {
-                            // Save index of first error in audio data.
-                            first_bad = index;
-                        }
-                        else if(second_bad==NO_ERR_INDEX)
-                        {
-                            // Save index of second error in audio data.
-                            second_bad = index;
-                            break;
-                        }
+                        // Save index of first error in audio data.
+                        first_bad = index;
+                    }
+                    else if(second_bad==NO_ERR_INDEX)
+                    {
+                        // Save index of second error in audio data.
+                        second_bad = index;
+                        break;
                     }
                 }
-                // Get number of words with bad CRC.
-                aud_crc_errs = out_data_block->getErrorsAudioSource();
-                all_crc_errs = out_data_block->getErrorsTotalSource();
-                proc_state = STG_TASK_SELECTION;
             }
-            else
-            {
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[DI-007] All words match up and good while indicated"<<out_data_block->getErrorsTotalSource()<<"errors";
-                }
-#endif
-                // Mark all words as valid.
-                for(uint8_t index=STC007DataBlock::WORD_L0;index<=STC007DataBlock::WORD_Q0;index++)
-                {
-                    out_data_block->setValid(index);
-                }
-                proc_state = STG_DATA_OK;
-            }
+            // Get number of words with bad CRC.
+            aud_crc_errs = out_data_block->getErrorsAudioSource();
+            all_crc_errs = out_data_block->getErrorsTotalSource();
+            proc_state = STG_TASK_SELECTION;
         }
         else if(proc_state==STG_TASK_SELECTION)
         {
@@ -802,10 +757,11 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                     else if(fix_result==FIX_NOT_NEED)
                     {
                         // There was no actual error at the pointer.
-                        /*if(first_bad<STC007DataBlock::WORD_P0)
+                        if(first_bad<STC007DataBlock::WORD_P0)
                         {
+                            // Mark data block as fixed by P-code if it was not just forced check.
                             out_data_block->markAsFixedByP();
-                        }*/
+                        }
 #ifdef DI_EN_DBG_OUT
                         if(suppress_log==false)
                         {
@@ -854,17 +810,33 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                             // Q-code is damaged, fix it as well as soon as all other samples are fine.
                             uint16_t q_code;
                             q_code = calcQcode(out_data_block);
-#ifdef DI_EN_DBG_OUT
-                            if(suppress_log==false)
+                            if(out_data_block->getWord(STC007DataBlock::WORD_Q0)!=q_code)
                             {
-                                QString log_line;
-                                log_line.sprintf("[DI-007] Q-word is damaged, patching it: 0x%04u -> 0x%04u",
-                                                 out_data_block->getWord(STC007DataBlock::WORD_Q0), q_code);
-                                qInfo()<<log_line;
-                            }
+#ifdef DI_EN_DBG_OUT
+                                if(suppress_log==false)
+                                {
+                                    QString log_line;
+                                    log_line.sprintf("[DI-007] Q-word is damaged, patching it: [0x%04x]->[0x%04x]",
+                                                     out_data_block->getWord(STC007DataBlock::WORD_Q0), q_code);
+                                    qInfo()<<log_line;
+                                }
 #endif
-                            out_data_block->setWord(STC007DataBlock::WORD_Q0, q_code, out_data_block->isWordLineCRCOk(STC007DataBlock::WORD_Q0), false);
-                            out_data_block->setFixed(STC007DataBlock::WORD_Q0);
+                                // Store new Q-word.
+                                out_data_block->setWord(STC007DataBlock::WORD_Q0, q_code, out_data_block->isWordLineCRCOk(STC007DataBlock::WORD_Q0), false);
+                                // Mark Q-word as fixed.
+                                out_data_block->setFixed(STC007DataBlock::WORD_Q0);
+                            }
+                            else
+                            {
+                                // Mark Q-word as valid.
+                                out_data_block->setValid(STC007DataBlock::WORD_Q0);
+#ifdef DI_EN_DBG_OUT
+                                if(suppress_log==false)
+                                {
+                                    qInfo()<<"[DI-007] Q-word doesn't need fixing, updated to be valid";
+                                }
+#endif
+                            }
                         }
                     }
                 }
@@ -981,11 +953,11 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                     // Clear "fixed by CWD" flags if present.
                     out_data_block->clearWordFixedByCWD(first_bad);
                     out_data_block->clearWordFixedByCWD(second_bad);
-                    /*if(first_bad<STC007DataBlock::WORD_P0)
+                    if(first_bad<STC007DataBlock::WORD_P0)
                     {
                         // Mark data block as fixed by Q-code if it was not just forced check.
                         out_data_block->markAsFixedByQ();
-                    }*/
+                    }
 #ifdef DI_EN_DBG_OUT
                     if(suppress_log==false)
                     {
@@ -1109,7 +1081,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
         else
         {
 #ifdef QT_VERSION
-            qWarning()<<DBG_ANCHOR<<"[DI-007] Impossible state detected in [STC007Deinterleaver::processBlock()], breaking...";
+            qWarning()<<DBG_ANCHOR<<"[DI-007] Impossible state detected, breaking...";
 #endif
             // Exit stage cycle.
             break;
@@ -1119,13 +1091,20 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
         if(stage_count>(STG_CONVERT_MAX*MAX_PASSES))
         {
 #ifdef QT_VERSION
-            qWarning()<<DBG_ANCHOR<<"[DI-007] Inf. loop detected in [STC007Deinterleaver::processBlock()], breaking...";
+            qWarning()<<DBG_ANCHOR<<"[DI-007] Inf. loop detected, breaking...";
 #endif
             // Exit stage cycle.
             break;
         }
     }
     while(1);   // Stages cycle.
+
+#ifdef DI_EN_DBG_OUT
+    if((log_level&LOG_PROCESS)!=0)
+    {
+        qInfo()<<"[DI-007] After:"<<QString::fromStdString(out_data_block->dumpContentString());
+    }
+#endif
 
     // Store time that processing took.
     quint64 block_time;
@@ -1343,7 +1322,7 @@ void STC007Deinterleaver::recalcP(STC007DataBlock *data_block)
         if(suppress_log==false)
         {
             QString log_line;
-            log_line.sprintf("[DI-007] P-code updated 0x%04x -> 0x%04x and now valid", old_p, data_block->getWord(STC007DataBlock::WORD_P0));
+            log_line.sprintf("[DI-007] P-code updated [0x%04x]->[0x%04x] and now valid", old_p, data_block->getWord(STC007DataBlock::WORD_P0));
             qInfo()<<log_line;
         }
 #endif
@@ -1424,7 +1403,7 @@ uint8_t STC007Deinterleaver::fixByP(STC007DataBlock *data_block, uint8_t first_b
         if(suppress_log==false)
         {
             QString log_line;
-            log_line.sprintf("[DI-007] Parity check failed (0x%04x) while no CRC markers were set, broken block!", check);
+            log_line.sprintf("[DI-007] Parity check failed [0x%04x] while no CRC markers were set, broken block!", check);
             qInfo()<<log_line;
         }
 #endif
@@ -1439,7 +1418,7 @@ uint8_t STC007Deinterleaver::fixByP(STC007DataBlock *data_block, uint8_t first_b
         if(suppress_log==false)
         {
             QString log_line;
-            log_line.sprintf("[DI-007] Syndrome for P-code: 0x%04x, bad sample at [%01u], fix: 0x%04x -> 0x%04x",
+            log_line.sprintf("[DI-007] Syndrome for P-code: [0x%04x], bad sample at [%01u], fix: [0x%04x]->[0x%04x]",
                              check, first_bad, data_block->getWord(first_bad), fix_word);
             qInfo()<<log_line;
         }
@@ -1516,7 +1495,6 @@ uint8_t STC007Deinterleaver::fixByQ(STC007DataBlock *data_block, uint8_t first_b
             {
                 // Audio data is ok.
                 data_block->setValid(first_bad);
-                //data_block->setFixed(first_bad);
 #ifdef DI_EN_DBG_OUT
                 if(suppress_log==false)
                 {
@@ -1580,7 +1558,7 @@ uint8_t STC007Deinterleaver::fixByQ(STC007DataBlock *data_block, uint8_t first_b
         if(suppress_log==false)
         {
             QString log_line;
-            log_line.sprintf("[DI-007] ECC check failed (0x%04x, 0x%04x) while no CRC markers were set, broken block!", synd_p, synd_q);
+            log_line.sprintf("[DI-007] ECC check failed [0x%04x][0x%04x] while no CRC markers were set, broken block!", synd_p, synd_q);
             qInfo()<<log_line;
         }
 #endif
@@ -1606,7 +1584,7 @@ uint8_t STC007Deinterleaver::fixByQ(STC007DataBlock *data_block, uint8_t first_b
         if(suppress_log==false)
         {
             QString log_line;
-            log_line.sprintf("[DI-007] Syndromes for P-code and Q-code: 0x%04x, 0x%04x", synd_p, synd_q);
+            log_line.sprintf("[DI-007] Syndromes for P-code and Q-code: [0x%04x], [0x%04x]", synd_p, synd_q);
             qInfo()<<log_line;
         }
 #endif
@@ -2015,7 +1993,7 @@ uint8_t STC007Deinterleaver::fixByQ(STC007DataBlock *data_block, uint8_t first_b
                 if(suppress_log==false)
                 {
                     QString log_line;
-                    log_line.sprintf("[DI-007] Bad samples at [%01u] and [%01u], fix: 0x%04x^0x%04x -> 0x%04x, 0x%04x^0x%04x -> 0x%04x",
+                    log_line.sprintf("[DI-007] Bad samples at [%01u] and [%01u], fix: [0x%04x^0x%04x]->[0x%04x], [0x%04x^0x%04x]->[0x%04x]",
                                      first_bad, second_bad,
                                      old_word1, error_first, fix_word1,
                                      old_word2, error_second, fix_word2);
@@ -2029,7 +2007,7 @@ uint8_t STC007Deinterleaver::fixByQ(STC007DataBlock *data_block, uint8_t first_b
         {
             // Error locator was not found. Probably bad branching due to incorrect input.
 #ifdef QT_VERSION
-            qWarning()<<DBG_ANCHOR<<"[DI-007] Unexpected branch in [STC007Deinterleaver::fixByQ()]. Logic error, data block is broken!";
+            qWarning()<<DBG_ANCHOR<<"[DI-007] Unexpected branch. Logic error, data block is broken!";
 #endif
             // Data is broken.
             return FIX_BROKEN;

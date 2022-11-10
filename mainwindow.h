@@ -32,7 +32,6 @@
 #include "fine_vidin_set.h"
 #include "frame_vis.h"
 #include "frametrimset.h"
-#include "lookup.h"
 #include "pcm16x0datastitcher.h"
 #include "pcm16x0subline.h"
 #include "pcm1datastitcher.h"
@@ -232,10 +231,10 @@ private:
     PCM16X0DataStitcher *L2B_PCM16X0_worker;
     STC007DataStitcher *L2B_STC007_worker;
     AudioProcessor *AP_worker;
-    capt_sel *captureSelectDialog;
-    fine_vidin_set *vipFineSetDialog;
-    fine_bin_set *binFineSetDialog;
-    fine_deint_set *deintFineSetDialog;
+    //capt_sel *captureSelectDialog;
+    //fine_vidin_set *vipFineSetDialog;
+    //fine_bin_set *binFineSetDialog;
+    //fine_deint_set *deintFineSetDialog;
     frame_vis *visuSource;
     frame_vis *visuBin;
     frame_vis *visuAssembled;
@@ -270,7 +269,7 @@ private:
     uint8_t log_level;                      // Setting for debugging log level.
     uint8_t v_decoder_state;                // State of video decoder.
     uint8_t set_pcm_type;                   // PCM type set from UI.
-    uint16_t lines_per_video;
+    int pcm1_ofs_diff;
 
     FrameAsmPCM1 frame_asm_pcm1;            // PCM-1 frame assembling data for GUI.
     FrameAsmPCM16x0 frame_asm_pcm16x0;      // PCM-16x0 frame assembling data for GUI.
@@ -282,12 +281,6 @@ private:
     uint8_t stat_tracking_index;
     circarray<FrameBinDescriptor, TRACKING_BUF_LEN> stat_tracking_arr;
     FrameBinDescriptor stat_video_tracking;
-    uint64_t stat_vlines_time_per_frame;
-    uint32_t stat_min_vip_time;
-    uint32_t stat_max_vip_time;
-    uint64_t stat_lines_time_per_frame;
-    uint32_t stat_min_bin_time;
-    uint32_t stat_max_bin_time;
     uint16_t stat_lines_per_frame;
     uint64_t stat_blocks_time_per_frame;
     uint32_t stat_min_di_time;
@@ -307,7 +300,6 @@ private:
     uint32_t stat_broken_block_cnt;
     uint32_t stat_drop_block_cnt;
     uint32_t stat_drop_sample_cnt;
-    uint32_t stat_mute_cnt;
     uint32_t stat_mask_cnt;
     uint32_t stat_processed_frame_cnt;
     uint32_t stat_line_cnt;
@@ -319,29 +311,29 @@ public:
     ~MainWindow();
 
 private:
-    void moveEvent(QMoveEvent *event);
-    void resizeEvent(QResizeEvent *event);
-    void closeEvent(QCloseEvent *event);
+    void moveEvent(QMoveEvent *event);      // Main window was moved.
+    void resizeEvent(QResizeEvent *event);  // Main window was resized.
+    void closeEvent(QCloseEvent *event);    // Application is about to close.
 
     QString generateTranslationPath(QString in_locale);
     QStringList getTranslationList();
     void updateGUILangList();
     void setGUILanguage(QString in_locale, bool suppress = false);      // Select UI language.
     // Update settings for modules.
-    void setVIPOptions();                   // Set options for [vin_processor] module.
-    void setLBOptions();                    // Set options for [videotodigital] and [stc007binarizer] modules.
-    void setDIOptions();                    // Set options for [stc007datastitcher] and [stc007deinterleaver] modules.
-    void setAPOptions();                    // Set options for [audioprocessor] and [stc007towav] modules.
+    void setVIPOptions();                   // Set options for [VideoInFFMPEG] module.
+    void setLBOptions();                    // Set options for [VideoToDigital] and [Binarizer] modules.
+    void setDIOptions();                    // Set options for [xDataStitcher] and [xDeinterleaver] modules.
+    void setAPOptions();                    // Set options for [AudioProcessor], [SamplesToAudio] and [SamplesToWAV] modules.
     // Update logging settings.
     void setMainLogMode();                  // Set debug logging mode for main module.
-    void setVIPLogMode();                   // Set debug logging mode for [vin_processor] module.
-    void setLBLogMode();                    // Set debug logging mode for [videotodigital] and [stc007binarizer] modules.
-    void setDILogMode();                    // Set debug logging mode for [stc007datastitcher] and [stc007deinterleaver] modules.
-    void setAPLogMode();                    // Set debug logging mode for [audioprocessor] and [stc007towav] modules.
+    void setVIPLogMode();                   // Set debug logging mode for [VideoInFFMPEG] module.
+    void setLBLogMode();                    // Set debug logging mode for [VideoToDigital] and [Binarizer] modules.
+    void setDILogMode();                    // Set debug logging mode for [xDataStitcher] and [xDeinterleaver] modules.
+    void setAPLogMode();                    // Set debug logging mode for [AudioProcessor], [SamplesToAudio] and [SamplesToWAV] modules.
 
-    void disableGUIEvents();                // Disable comboboxes events to prevent switching settings to default while changing translation.
-    void enableGUIEvents();                 // Re-enable comboboxes events after changing translation.
-    void applyGUISettings();                // Apply GUI settings to the decoder.
+    void disableGUIEvents();                // Disable GUI events to prevent switching settings to default while changing translation.
+    void enableGUIEvents();                 // Re-enable GUI events after changing translation.
+    void applyGUISettings();                // Apply GUI settings to different modules.
     void readGUISettings();                 // Read settings into GUI.
 
     CoordinatePair getCoordByFrameNo(uint32_t);     // Find and return coordinates from video tracking history.
@@ -349,33 +341,30 @@ private:
 private slots:
     //void dbgSlot(int);
 
-    void updateWindowPosition();
-    void displayErrorMessage(QString);
+    void exitAction();                      // Exit application.
+    void setLang(QAction *);                // User request to set GUI language.
+    void updateWindowPosition();            // Save new main window position and size in setting storage.
+    void displayErrorMessage(QString);      // Display window with an error, stop playback.
 
-    void setLang(QAction *);
-
-    void playVideo();
-    void pauseVideo();
-    void loadVideo();
-    void unloadSource();
-    void loadPicture();
-    void exitAction();
+    void loadVideo();                       // User request to open a new source.
+    void unloadSource();                    // User request to close the source and free resources.
+    void usrPlayStop();                     // User request to start/stop video playback/decode.
+    void usrPause();                        // User request to pause video playback/decode.
 
     // GUI selection reactions.
     void updateGUISettings();               // Save settings for GUI options.
     void clearStat();                       // Clear decoder stats.
+    void sliderDisplayUpdate();
 
     // Main menu reactions.
-    void resetOptDecoder();
-    void resetVisPositions();
-    void resetFull();
-
+    void resetOptDecoder();                 // Confirm and reset decoder settings.
+    void resetVisPositions();               // Confirm and reset visualizer windows positions.
+    void resetFull();                       // Confirm and reset all settings.
     void showAbout();                       // Display "About" window.
     void showCaptureSelector();             // Display video capture selection dialog.
     void showVidInFineSettings();           // Display video processor fine settings dialog.
     void showBinFineSettings();             // Display binarizator fine settings dialog.
     void showDeintFineSettings();           // Display deinterleaver fine settings dialog.
-
     void setDefaultFineSettings();          // Receive request for fine settings reset from video processor fine settings dialog.
     void requestCurrentFineSettings();      // Receive request for fine settings from video processor fine settings dialog.
     void setFineDrawDeint(bool);
@@ -392,15 +381,15 @@ private slots:
     void reopenVisualizers();               // Re-open all vizualization windows.
 
     void updateSetMainLog();                // Save settings for logging mode for main module.
-    void updateSetVIPLog();                 // Save settings for [vin_processor] module.
-    void updateSetLBLog();                  // Save settings for [videotodigital] and [stc007binarizer] modules.
-    void updateSetDILog();                  // Save settings for [stc007datastitcher] and [stc007deinterleaver] modules.
-    void updateSetAPLog();                  // Save settings for [audioprocessor] and [stc007towav] modules.
+    void updateSetVIPLog();                 // Save settings for [VideoInFFMPEG] module.
+    void updateSetLBLog();                  // Save settings for [VideoToDigital] and [Binarizer] modules.
+    void updateSetDILog();                  // Save settings for [xDataStitcher] and [xDeinterleaver] modules.
+    void updateSetAPLog();                  // Save settings for [AudioProcessor], [SamplesToAudio] and [SamplesToWAV] modules.
     void clearMainPLog();                   // Turn off debug logging for main module.
-    void clearVIPLog();                     // Turn off debug logging for [vin_processor] module.
-    void clearLBLog();                      // Turn off debug logging for [videotodigital] and [stc007binarizer] modules.
-    void clearDILog();                      // Turn off debug logging for [stc007datastitcher] and [stc007deinterleaver] modules.
-    void clearAPLog();                      // Turn off debug logging for [audioprocessor] and [stc007towav] modules.
+    void clearVIPLog();                     // Turn off debug logging for [VideoInFFMPEG] module.
+    void clearLBLog();                      // Turn off debug logging for [VideoToDigital] and [stc007binarizer] modules.
+    void clearDILog();                      // Turn off debug logging for [xDataStitcher] and [xDeinterleaver] modules.
+    void clearAPLog();                      // Turn off debug logging for [AudioProcessor], [SamplesToAudio] and [SamplesToWAV] modules.
     void clearAllLogging();                 // Turn off all debug logging.
 
     // Player state reactions.
@@ -412,41 +401,34 @@ private slots:
     void playerError(QString);              // React on video decoder error.
     void livePBUpdate(bool);                // React on live playback state.
 
-    // Timer reactions.
-    void checkThreads();                    // Check if all threads are alive.
-
-    void updateGUIByTimer();
+    void updateGUIByTimer();                // Update GUI counters and bars with data.
     void updatePCM1FrameData();             // Update PCM-1 frame assembling data.
     void updatePCM16x0FrameData();          // Update PCM-16x0 frame assembling data.
     void updateSTC007FrameData();           // Update STC-007 frame assembling data.
 
     // Buffered receivers for visualizers.
-    void receiveBinLine(PCM1Line);
-    void receiveBinLine(PCM16X0SubLine);
-    void receiveBinLine(STC007Line);
-    void receiveAsmLine(PCM1SubLine);
-    void receiveAsmLine(PCM16X0SubLine);
-    void receiveAsmLine(STC007Line);
-    void receivePCMDataBlock(PCM1DataBlock);
-    void receivePCMDataBlock(PCM16X0DataBlock);
-    void receivePCMDataBlock(STC007DataBlock);
+    void receiveBinLine(PCM1Line);          // Receive and retransmit binarized PCM-1 line.
+    void receiveBinLine(PCM16X0SubLine);    // Receive and retransmit binarized PCM-16x0 sub-line.
+    void receiveBinLine(STC007Line);        // Receive and retransmit binarized STC-007 line.
+    void receiveAsmLine(PCM1SubLine);       // Receive and retransmit PCM-1 sub-line from re-assembled frame.
+    void receiveAsmLine(PCM16X0SubLine);    // Receive and retransmit PCM-16x0 sub-line from re-assembled frame.
+    void receiveAsmLine(STC007Line);        // Receive and retransmit STC-007 line from re-assembled frame.
+    void receivePCMDataBlock(PCM1DataBlock);            // Receive and retransmit PCM-1 data block after deinterleave.
+    void receivePCMDataBlock(PCM16X0DataBlock);         // Receive and retransmit PCM-16x0 data block after deinterleave.
+    void receivePCMDataBlock(STC007DataBlock);          // Receive and retransmit STC-007 data block after deinterleave.
+    void receiveVUMeters(uint8_t, uint8_t); // Receive VU levels for displaying.
 
     // Stats gathering reactions.
     void updateDebugBar(quint64);
-    void updateStatsVideoLineTime(uint32_t);// Update stats after VIP has finished a line and provided spent time count.
     void updateStatsVIPFrame(uint32_t);     // Update stats after VIP has read a frame.
     void updateStatsVideoTracking(FrameBinDescriptor);  // Update stats after VIP has spliced a frame.
     void updateStatsDroppedFrame();         // Update stats with new value for dropped frames.
-    void updateStatsLineTime(unsigned int); // Update stats after LB has finished a line and provided spent time count.
     void updateStatsFrameAsm(FrameAsmPCM1);     // Update stats and video processor with new trim settings.
     void updateStatsFrameAsm(FrameAsmPCM16x0);  // Update stats and video processor with new trim settings.
     void updateStatsFrameAsm(FrameAsmSTC007);   // Update stats and video processor with new trim settings.
-    void updateStatsMutes(uint16_t);        // Update stats with new value for muted samples.
     void updateStatsMaskes(uint16_t);       // Update stats with new value for masked samples.
     void updateStatsBlockTime(STC007DataBlock); // Update stats after DI has finished a data block and provided spent time count.
     void updateStatsDIFrame(uint32_t);      // Update stats after DI has finished a frame.
-
-    void updateVU(PCMSamplePair);
 
     // Self-test start and result reactions.
     void testStartCRCC();                   // Perform internal test of CRCC within PCM line.
@@ -474,6 +456,9 @@ signals:
     // Signals for deinterleaver (line-to-block) module.
     void newL2BLogLevel(uint16_t);          // Send new logging level for L2B thread.
     void newPCM1FieldOrder(uint8_t);        // Send new PCM-1 field order setting.
+    void newPCM1AutoOffset(bool);           // Send new PCM-1 auto offset setting.
+    void newPCM1OddOffset(int8_t);          // Send new PCM-1 odd line offset setting.
+    void newPCM1EvenOffset(int8_t);         // Send new PCM-1 even line offset setting.
     void newPCM16x0Format(uint8_t);         // Send new PCM-1630 format setting.
     void newPCM16x0FieldOrder(uint8_t);     // Send new PCM-16x0 field order setting.
     void newPCM16x0PCorrection(bool);       // Send new PCM-16x0 P-code correction setting.
@@ -508,10 +493,10 @@ signals:
     void newFineReset();
     void guiUpdFineDrawDeint(bool);
 
-    void doPlayUnload();
-    void doPlayStart();
-    void doPlayPause();
-    void doPlayStop();
+    void doPlayUnload();                    // Request unload/close source to video input processor.
+    void doPlayStart();                     // Request start playback to video input processor.
+    void doPlayPause();                     // Request pause playback to video input processor.
+    void doPlayStop();                      // Request stop playback to video input processor.
 };
 
 #endif // MAINWINDOW_H

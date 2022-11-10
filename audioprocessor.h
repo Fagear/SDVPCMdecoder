@@ -15,6 +15,7 @@
 #include <QString>
 #include "config.h"
 #include "frametrimset.h"
+#include "lookup.h"
 #include "pcmsamplepair.h"
 #include "samples2audio.h"
 #include "samples2wav.h"
@@ -48,7 +49,7 @@ public:
         MIN_LONG_INVALID = 16,                  // Minimum length of invalid region to be count as long.
         MAX_STRAY_LEN = 24,                     // Maximum length of valid region to be count as stray.
         MIN_VALID_BEFORE = 3,                   // Minimum number of valid data points to keep at the start of the buffer.
-        MAX_RAMP_DOWN = 128,                    // Length of ramp-down to mute region (in data points).
+        MAX_RAMP_DOWN = 192,                    // Length of ramp-down to mute region (in data points).
         MAX_RAMP_UP = 32,                       // Length of ramp-up from mute region (in data points).
         CHANNEL_CNT = PCMSamplePair::CH_MAX,    // Number of channels for processing.
     };
@@ -75,21 +76,22 @@ public:
 private:
     SamplesToAudio sc_output;                   // Handler for soundcard operations.
     SamplesToWAV wav_output;                    // Handler for WAV-file operations.
-    QString file_path;
-    QString file_name;
     std::deque<PCMSamplePair> *in_samples;      // Input sample pair queue (shared).
     QMutex *mtx_samples;                        // Mutex for input queue.
-    QTimer *tim_outflush;
+    QTimer *tim_outflush;                       // Timer for dumping output from cache when input stalles.
+    QTimer *tim_vu_fade;                        // Timer for VU levels drop off.
     std::deque<PCMSamplePair> prebuffer;        // Buffer for input data.
     std::deque<PCMSample> channel_bufs[CHANNEL_CNT];    // Per-channel buffers for sample processing.
-    std::deque<CoordinatePair> long_bads[CHANNEL_CNT];
+    std::deque<CoordinatePair> long_bads[CHANNEL_CNT];  // Per-channel buffers for regions of long invalid samples.
     uint8_t log_level;                          // Level of debug output.
     uint8_t mask_mode;                          // Mode of masking dropouts.
-    uint16_t min_valid_before;
-    uint16_t max_ramp_down;
-    uint16_t max_ramp_up;
+    uint16_t min_valid_before;                  // Minimum number of valid data points at the front of the buffer.
+    uint16_t max_ramp_down;                     // Length of ramp-down for interpolation from last valid sample into silence (inside invalid region).
+    uint16_t max_ramp_up;                       // Length of ramp-up for interpolation from silence (inside invalid region) into first valid sample.
     uint64_t sample_index;                      // Master index for samples for the current file.
     uint16_t sample_rate;                       // Last sample rate.
+    uint8_t vu_left;                            // VU-level for the left channel.
+    uint8_t vu_right;                           // VU-level for the right channel.
     bool file_end;                              // Detected end of a file.
     bool unprocessed;                           // Are there unprocessed audio samples?
     bool remove_stray;                          // Invalidate stray VALID samples.
@@ -109,21 +111,25 @@ private:
     uint16_t setInvalids(std::deque<PCMSample> *samples, CoordinatePair &range);
     void fixStraySamples(std::deque<PCMSample> *samples, std::deque<CoordinatePair> *regions);
     uint16_t clearInvalids(std::deque<PCMSample> *samples, CoordinatePair &range);
-    uint16_t performMute(std::deque<PCMSample> *samples, CoordinatePair &range);
-    uint16_t performLevelHold(std::deque<PCMSample> *samples, CoordinatePair &range);
-    uint16_t performLinearInterpolation(std::deque<PCMSample> *samples, CoordinatePair &range);
+    uint16_t sampleMute(std::deque<PCMSample> *samples, int16_t offset);
+    uint16_t rangeMute(std::deque<PCMSample> *samples, CoordinatePair &range);
+    uint16_t rangeLevelHold(std::deque<PCMSample> *samples, CoordinatePair &range);
+    uint16_t rangeLinearInterpolation(std::deque<PCMSample> *samples, CoordinatePair &range);
     void fixBadSamples(std::deque<PCMSample> *samples);
     void dumpPrebuffer();
     void fillBufferForOutput();
+    void samplesToVU(PCMSamplePair *in_samples);
     void outputWordPair(PCMSamplePair *out_samples);
     void outputAudio();
     bool scanBuffer();
     void dumpBuffer();
 
 private slots:
-    void restartFlushTimer();
-    void actCloseOutput();
+    void restartFlushTimer();               // Stop and start flushing timer.
+    void redirectError(QString);            // Receive error message and redirect it.
+    void actFlushOutput();                  // Timer event for flushing buffer.
     void livePlayUpdate(bool);              // Emit [guiLivePB] signal to report live playback state.
+    void updateVUMeters();                  // Timer event for VU-meters updating and fading.
 
 public slots:
     void setLogLevel(uint8_t);              // Set logging level.
@@ -139,9 +145,11 @@ public slots:
 signals:
     void guiAddMask(uint16_t);              // Report new masked samples.
     void guiLivePB(bool);                   // Report live playback state.
+    void mediaError(QString);               // Error while processing audio.
     void newSource();                       // Report about changed source.
-    void reqTimerRestart();
+    void reqTimerRestart();                 // Deffered call for [restartFlushTimer()].
     void outSamples(PCMSamplePair);         // Copy of outputting samples.
+    void outVULevels(uint8_t, uint8_t);     // Report VU-meters.
     void stopOutput();                      // Report about thread terminating.
     void finished();
 };

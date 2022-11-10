@@ -5,6 +5,7 @@ RenderPCM::RenderPCM(QObject *parent)
     Q_UNUSED(parent);
 
     live_pb = true;
+    drawer_ready = true;
     frame_time_lim = TIME_NTSC;
     frame_number = 0;
     fill_line_num = 0;
@@ -14,9 +15,7 @@ RenderPCM::RenderPCM(QObject *parent)
     img_data = new QImage(640, 480, QImage::Format_RGB32);
     img_data->fill(Qt::black);
 
-    pix_data = QPixmap::fromImage(*img_data);
-
-    qInfo()<<"[REN] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[REN] Created, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
 }
 
 RenderPCM::~RenderPCM()
@@ -85,9 +84,9 @@ void RenderPCM::resizeToFrame(uint16_t in_width, uint16_t in_height)
 {
     provided_width = in_width;
     provided_heigth = in_height;
+    // Compare new dimensions to the old ones.
     if((img_data->width()!=provided_width)||(img_data->height()!=provided_heigth))
     {
-        pix_data.fill(Qt::black);
         // Resize container if required.
         if(img_data!=NULL)
         {
@@ -179,26 +178,21 @@ void RenderPCM::finishNewFrame(uint32_t in_frame_no)
 #ifdef VIS_EN_DBG_OUT
     qInfo()<<"[REN] Frame"<<in_frame_no<<"is done";
 #endif
-    qint64 time_spent;
-    // Convert assembled image to pixmap.
-    pix_data = QPixmap::fromImage(*img_data);
     // Start frame timer if not already.
     if(frame_time.isValid()==false)
     {
         frame_time.start();
     }
-    // Report new frame to renderer.
-    frame_number = in_frame_no;
-    emit newFrame(pix_data, frame_number);
-    // Measure time from last frame.
-    time_spent = frame_time.elapsed();
-    if((live_pb!=false)&&(time_spent<frame_time_lim))
-   {
-        // Frame pace if required.
-        QThread::msleep(frame_time_lim-time_spent);
+
+    if(drawer_ready!=false)
+    {
+        // Report new frame to renderer.
+        frame_number = in_frame_no;
+        // Send QImage for displaying.
+        emit newFrame(img_data->copy(), frame_number);
+        // Clear ready flag.
+        drawer_ready = false;
     }
-    // Restart frame timer.
-    frame_time.start();
 }
 
 //------------------------ Insert next video line into the frame.
@@ -471,7 +465,7 @@ void RenderPCM::renderNewLine(PCM1Line in_line)
                            (line_bit>(PCM1Line::BITS_PCM_DATA-in_line.picked_bits_right-1)))
                         {
                             // Highlight picked bits.
-                            *pixel_ptr = VIS_BIT0_GRN;
+                            *pixel_ptr = VIS_BIT0_BLU;
                         }
                     }
                     else if(in_line.isForcedBad()!=false)
@@ -501,7 +495,7 @@ void RenderPCM::renderNewLine(PCM1Line in_line)
                            (line_bit>(PCM1Line::BITS_PCM_DATA-in_line.picked_bits_right-1)))
                         {
                             // Highlight picked bits.
-                            *pixel_ptr = VIS_BIT1_GRN;
+                            *pixel_ptr = VIS_BIT1_BLU;
                         }
                     }
                     else if(in_line.isForcedBad()!=false)
@@ -594,7 +588,7 @@ void RenderPCM::renderNewLine(PCM1SubLine in_line)
                         if((line_bit<in_line.picked_bits_left)&&(in_line.getLinePart()==PCM1SubLine::PART_LEFT))
                         {
                             // Highlight picked bits.
-                            *pixel_ptr = VIS_BIT0_GRN;
+                            *pixel_ptr = VIS_BIT0_BLU;
                         }
                     }
                     else if(in_line.hasBWSet()!=false)
@@ -618,7 +612,7 @@ void RenderPCM::renderNewLine(PCM1SubLine in_line)
                         if((line_bit<in_line.picked_bits_left)&&(in_line.getLinePart()==PCM1SubLine::PART_LEFT))
                         {
                             // Highlight picked bits.
-                            *pixel_ptr = VIS_BIT1_GRN;
+                            *pixel_ptr = VIS_BIT1_BLU;
                         }
                     }
                     else if(in_line.hasBWSet()!=false)
@@ -728,7 +722,7 @@ void RenderPCM::renderNewLine(PCM16X0SubLine in_line)
                            (line_bit>(PCM16X0SubLine::BITS_PCM_DATA-in_line.picked_bits_right-1)))
                         {
                             // Highlight picked bits.
-                            *pixel_ptr = VIS_BIT0_GRN;
+                            *pixel_ptr = VIS_BIT0_BLU;
                         }
                     }
                     else if(in_line.isForcedBad()!=false)
@@ -757,7 +751,7 @@ void RenderPCM::renderNewLine(PCM16X0SubLine in_line)
                         if((line_bit<in_line.picked_bits_left)||
                            (line_bit>(PCM16X0SubLine::BITS_PCM_DATA-in_line.picked_bits_right-1)))
                         {
-                            *pixel_ptr = VIS_BIT1_GRN;
+                            *pixel_ptr = VIS_BIT1_BLU;
                         }
                     }
                     else if(in_line.isForcedBad()!=false)
@@ -922,20 +916,20 @@ void RenderPCM::renderNewLine(STC007Line in_line)
         if((in_line.getWord(word)&(1<<word_bit))==0)
         {
             // Bit state "0".
-            if(in_line.isWordCRCOk(word)!=false)
-            {
-                // Data in the word was ok after binarization.
-                *pixel_ptr = VIS_BIT0_GRY;
-            }
-            else if(in_line.isForcedBad()!=false)
+            if(in_line.isForcedBad()!=false)
             {
                 // Line is forced to be bad.
                 *pixel_ptr = VIS_BIT0_MGN;
             }
+            else if(in_line.isWordCRCOk(word)!=false)
+            {
+                // Data in the word was ok after binarization.
+                *pixel_ptr = VIS_BIT0_GRY;
+            }
             else if(in_line.isWordValid(word)!=false)
             {
-                // Line was marked with bad CRC after binarization but the word is now valid (fixed by CWD).
-                *pixel_ptr = VIS_BIT0_BLU;
+                // Line was marked with bad CRC after binarization but the word is now valid (fixed on CWD prescan).
+                *pixel_ptr = VIS_BIT0_GRN;
             }
             else if(in_line.hasMarkers()!=false)
             {
@@ -951,20 +945,20 @@ void RenderPCM::renderNewLine(STC007Line in_line)
         else
         {
             // Bit state "1".
-            if(in_line.isWordCRCOk(word)!=false)
-            {
-                // Data in the word was ok after binarization.
-                *pixel_ptr = VIS_BIT1_GRY;
-            }
-            else if(in_line.isForcedBad()!=false)
+            if(in_line.isForcedBad()!=false)
             {
                 // Line is forced to be bad.
                 *pixel_ptr = VIS_BIT1_MGN;
             }
+            else if(in_line.isWordCRCOk(word)!=false)
+            {
+                // Data in the word was ok after binarization.
+                *pixel_ptr = VIS_BIT1_GRY;
+            }
             else if(in_line.isWordValid(word)!=false)
             {
-                // Line was marked with bad CRC after binarization but the word is now valid (fixed by CWD).
-                *pixel_ptr = VIS_BIT1_BLU;
+                // Line was marked with bad CRC after binarization but the word is now valid (fixed on CWD prescan).
+                *pixel_ptr = VIS_BIT1_GRN;
             }
             else if(in_line.hasMarkers()!=false)
             {
@@ -1703,17 +1697,7 @@ void RenderPCM::renderNewBlock(STC007DataBlock in_block)
             if(in_block.isBlockValid()==false)
             {
                 // Data block is invalid.
-                bool cwd_used;
-                cwd_used = false;
-                for(uint8_t index=STC007DataBlock::WORD_L0;index<=STC007DataBlock::WORD_R2;index++)
-                {
-                    if(in_block.isWordCWDFixed(index)!=false)
-                    {
-                        cwd_used = true;
-                        break;
-                    }
-                }
-                if(cwd_used!=false)
+                if(in_block.isAudioAlteredByCWD()!=false)
                 {
                     // Indicate that words were fixed with CWD.
                     pixel_data = VIS_BIT0_BLU;
@@ -1722,7 +1706,7 @@ void RenderPCM::renderNewBlock(STC007DataBlock in_block)
             else
             {
                 // Data block is valid.
-                if(in_block.isDataFixedByCWD()!=false)
+                if(in_block.isAudioAlteredByCWD()!=false)
                 {
                     pixel_data = VIS_BIT1_BLU;
                 }
@@ -1769,30 +1753,12 @@ void RenderPCM::renderNewBlock(STC007DataBlock in_block)
         {
             // Bit state "0".
             pixel_data = VIS_BIT0_BLK;
-            if(in_block.isBlockValid()==false)
+            if(in_block.isDataBroken()!=false)
             {
-                // Data block is invalid (has too many errors for ECC).
-                if(in_block.isDataBroken()==false)
+                // Data in the block is BROKEN.
+                if(in_block.isWordLineCRCOk(word)==false)
                 {
-                    // Data in the block is NOT broken.
-                    if(in_block.isWordCWDFixed(word)!=false)
-                    {
-                        // This exact word in a block was fixed with CWD.
-                        pixel_data = VIS_BIT0_BLU;
-                    }
-                    else if(in_block.isWordValid(word)==false)
-                    {
-                        // This exact word in a block was CRC-marked as BAD and was not fixed.
-                        pixel_data = VIS_BIT0_RED;
-                    }
-                }
-                else
-                {
-                    // Data in the block is BROKEN.
-                    if(in_block.isWordLineCRCOk(word)==false)
-                    {
-                        pixel_data = VIS_BIT0_MGN;
-                    }
+                    pixel_data = VIS_BIT0_MGN;
                 }
             }
             else if(in_block.isDataFixedByQ()!=false)
@@ -1832,6 +1798,7 @@ void RenderPCM::renderNewBlock(STC007DataBlock in_block)
             }
             else if(in_block.isWordValid(word)==false)
             {
+                // This exact word in a block was CRC-marked as BAD and was not fixed.
                 pixel_data = VIS_BIT0_RED;
             }
         }
@@ -1839,30 +1806,13 @@ void RenderPCM::renderNewBlock(STC007DataBlock in_block)
         {
             // Bit state "1".
             pixel_data = VIS_BIT1_GRY;
-            if(in_block.isBlockValid()==false)
+            // Data block is invalid (has too many errors for ECC).
+            if(in_block.isDataBroken()!=false)
             {
-                // Data block is invalid (has too many errors for ECC).
-                if(in_block.isDataBroken()==false)
+                // Data in the block is BROKEN.
+                if(in_block.isWordLineCRCOk(word)==false)
                 {
-                    // Data in the block is NOT broken.
-                    if(in_block.isWordCWDFixed(word)!=false)
-                    {
-                        // This exact word in a block was fixed with CWD.
-                        pixel_data = VIS_BIT1_BLU;
-                    }
-                    else if(in_block.isWordValid(word)==false)
-                    {
-                        // This exact word in a block was CRC-marked as BAD and was not fixed.
-                        pixel_data = VIS_BIT1_RED;
-                    }
-                }
-                else
-                {
-                    // Data in the block is BROKEN.
-                    if(in_block.isWordLineCRCOk(word)==false)
-                    {
-                        pixel_data = VIS_BIT1_MGN;
-                    }
+                    pixel_data = VIS_BIT1_MGN;
                 }
             }
             else if(in_block.isDataFixedByQ()!=false)
@@ -1977,4 +1927,10 @@ void RenderPCM::renderNewBlock(STC007DataBlock in_block)
     {
         fill_line_num++;
     }
+}
+
+//------------------------ Receive "ready" message from display window.
+void RenderPCM::displayIsReady()
+{
+    drawer_ready = true;
 }

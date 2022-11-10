@@ -5,7 +5,6 @@
 #include <QElapsedTimer>
 #include <QImage>
 #include <QObject>
-#include <QPixmap>
 #include <QThread>
 #include "frametrimset.h"
 #include "pcm1datablock.h"
@@ -27,10 +26,10 @@
 #define VIS_BIT0_BLK        (Qt::black)             // Bit "0", PCM with valid CRC in the line.
 #define VIS_BIT0_GRY        (qRgb(45, 45, 45))      // Bit "0", PCM with valid CRC in the line for STC-007.
 #define VIS_BIT1_GRY        (qRgb(150, 150, 150))   // Bit "1", PCM with valid CRC in the line.
-#define VIS_BIT0_YEL        (qRgb(127, 116, 0))     // Bit "0", PCM with yellow tint.
-#define VIS_BIT1_YEL        (qRgb(255, 233, 0))     // Bit "1", PCM with yellow tint.
-#define VIS_BIT0_GRN        (qRgb(0, 90, 0))        // Bit "0", PCM with green tint.
-#define VIS_BIT1_GRN        (qRgb(0, 220, 0))       // Bit "1", PCM with green tint.
+#define VIS_BIT0_YEL        (qRgb(127, 110, 0))     // Bit "0", PCM with yellow tint.
+#define VIS_BIT1_YEL        (qRgb(255, 220, 0))     // Bit "1", PCM with yellow tint.
+#define VIS_BIT0_GRN        (qRgb(0, 95, 30))       // Bit "0", PCM with green tint.
+#define VIS_BIT1_GRN        (qRgb(0, 225, 70))      // Bit "1", PCM with green tint.
 #define VIS_BIT0_RED        (qRgb(140, 0, 0))       // Bit "0", PCM with red tint.
 #define VIS_BIT1_RED        (qRgb(255, 70, 43))     // Bit "1", PCM with red tint.
 #define VIS_BIT0_BLU        (qRgb(0, 95, 127))      // Bit "0", PCM with blue tint.
@@ -80,10 +79,10 @@ private:
     void resetFrame();
 
 private:
-    QPixmap pix_data;
     QImage *img_data;
     QElapsedTimer frame_time;
     bool live_pb;
+    bool drawer_ready;
     uint8_t frame_time_lim;
     uint32_t frame_number;
     uint16_t fill_line_num;
@@ -117,9 +116,10 @@ public slots:
     void renderNewBlock(PCM1DataBlock);
     void renderNewBlock(PCM16X0DataBlock);
     void renderNewBlock(STC007DataBlock);
+    void displayIsReady();
 
 signals:
-    void newFrame(QPixmap, uint32_t);
+    void newFrame(QImage, uint32_t);
 };
 
 #endif // RENDERPCM_H
