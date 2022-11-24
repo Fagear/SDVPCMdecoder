@@ -153,7 +153,7 @@ uint16_t PCM16X0SubLine::getSourceCRC()
     return words[WORD_CRCC];
 }
 
-//------------------------ Get the type of PCM to determine class derived from [PCMLine];
+//------------------------ Get the type of PCM to determine class derived from [PCMLine].
 uint8_t PCM16X0SubLine::getPCMType()
 {
     return TYPE_PCM16X0;
@@ -162,22 +162,17 @@ uint8_t PCM16X0SubLine::getPCMType()
 //------------------------ Convert one 16-bit word to a 16-bit sample.
 int16_t PCM16X0SubLine::getSample(uint8_t index)
 {
-    if(index<WORD_CRCC)
+    if(index<=WORD_R3P3L3)
     {
         return (int16_t)words[index];
     }
-    else
-    {
-        // Index out-of-bounds.
-        return 0;
-    }
+    // Index out-of-bounds.
+    return 0;
 }
 
 //------------------------ Does provided line have the same words?
 bool PCM16X0SubLine::hasSameWords(PCM16X0SubLine *in_line)
 {
-    bool equal;
-    equal = true;
     if(in_line==NULL)
     {
         return false;
@@ -188,11 +183,10 @@ bool PCM16X0SubLine::hasSameWords(PCM16X0SubLine *in_line)
         {
             if(words[index]!=in_line->words[index])
             {
-                equal = false;
-                break;
+                return false;
             }
         }
-        return equal;
+        return true;
     }
 }
 
@@ -233,10 +227,7 @@ bool PCM16X0SubLine::isCRCValidIgnoreForced()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Is audio sample near zero value?
@@ -259,32 +250,26 @@ bool PCM16X0SubLine::isNearSilence(uint8_t index)
 //------------------------ Are audio samples in both channels near zero?
 bool PCM16X0SubLine::isAlmostSilent()
 {
-    bool silent;
-    silent = false;
     // Check if both channels are close to silence.
     if(((isNearSilence(WORD_R1P1L1)!=false)&&(isNearSilence(WORD_L2P2R2)!=false))||
         ((isNearSilence(WORD_L2P2R2)!=false)&&(isNearSilence(WORD_R3P3L3)!=false)))
     {
-        silent = true;
+        return true;
     }
-
-    return silent;
+    return false;
 }
 
 //------------------------ Are all audio words zeroed?
 bool PCM16X0SubLine::isSilent()
 {
-    bool zero;
-    zero = true;
     for(uint8_t index=WORD_R1P1L1;index<=WORD_R3P3L3;index++)
     {
         if(getSample(index)!=0)
         {
-            zero = false;
-            break;
+            return false;
         }
     }
-    return zero;
+    return true;
 }
 
 //------------------------ Were the word's bits picked during binarization?

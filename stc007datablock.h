@@ -117,6 +117,7 @@ private:
     bool line_crc[WORD_CNT];        // Flags for each word (was word intact or not by CRC in source PCM line).
     bool cwd_fixed[WORD_CNT];       // Flags for each word (was word from PCM line that was fixed by CWD).
     bool word_valid[WORD_CNT];      // Flags for each word (is word intact after correction).
+    bool m2_format;                 // Are samples formatted for M2?
     uint8_t resolution;             // Resolution of audio data in data block.
     uint8_t audio_state;            // Audio data state in the block (patched by parity, ECC or broken).
 
@@ -132,6 +133,7 @@ public:
     void setValid(uint8_t index);
     void setAudioState(uint8_t in_state);
     void setEmphasis(bool in_set = true);
+    void setM2Format(bool in_set = false);
     void markAsOriginalData();
     void markAsFixedByCWD();
     void markAsFixedByP();

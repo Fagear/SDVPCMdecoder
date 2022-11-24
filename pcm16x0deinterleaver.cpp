@@ -692,9 +692,12 @@ void PCM16X0Deinterleaver::setWordData(PCM16X0SubLine *line1, PCM16X0SubLine *li
 {
     bool subline1_crc_ok, subline2_crc_ok, subline3_crc_ok;
 
+    // Preset that CRCs are ok.
+    subline1_crc_ok = subline2_crc_ok = subline3_crc_ok = true;
     // Check if CRC should be ignored.
     if(ignore_crc==false)
     {
+        // Word CRCs must be checked.
         // Take CRC states from the sub-lines.
         subline1_crc_ok = line1->isCRCValid();
         subline2_crc_ok = line2->isCRCValid();
@@ -702,8 +705,11 @@ void PCM16X0Deinterleaver::setWordData(PCM16X0SubLine *line1, PCM16X0SubLine *li
     }
     else
     {
-        // Always assume that CRC is ok.
-        subline1_crc_ok = subline2_crc_ok = subline3_crc_ok = true;
+        // CRC skip is allowed.
+        // Check word statuses by subline state (filler or not).
+        subline1_crc_ok = line1->coords.areValid()&&line1->hasBWSet();
+        subline2_crc_ok = line2->coords.areValid()&&line2->hasBWSet();
+        subline3_crc_ok = line3->coords.areValid()&&line3->hasBWSet();
     }
 
     // Line 1.

@@ -51,13 +51,13 @@ public:
     // Word order in the [words[]] for the line.
     enum
     {
-        WORD_L2,                // Left channel 13-bit sample.
-        WORD_R2,                // Right channel 13-bit sample.
-        WORD_L4,                // Left channel 13-bit sample.
-        WORD_R4,                // Right channel 13-bit sample.
-        WORD_L6,                // Left channel 13-bit sample.
-        WORD_R6,                // Right channel 13-bit sample.
-        WORD_CRCC,              // CRCC 16-bit sample for current line.
+        WORD_L2,                // Left channel 13-bit word.
+        WORD_R2,                // Right channel 13-bit word.
+        WORD_L4,                // Left channel 13-bit word.
+        WORD_R4,                // Right channel 13-bit word.
+        WORD_L6,                // Left channel 13-bit word.
+        WORD_R6,                // Right channel 13-bit word.
+        WORD_CRCC,              // CRCC 16-bit word for current line.
         WORD_MAX                // Limiter for word-operations.
     };
 

@@ -20,6 +20,7 @@ STC007DataBlock::STC007DataBlock(const STC007DataBlock &in_object)
         word_valid[index] = in_object.word_valid[index];
     }
     cwd_applied = in_object.cwd_applied;
+    m2_format = in_object.m2_format;
     resolution = in_object.resolution;
     audio_state = in_object.audio_state;
 }
@@ -41,6 +42,7 @@ STC007DataBlock& STC007DataBlock::operator= (const STC007DataBlock &in_object)
         word_valid[index] = in_object.word_valid[index];
     }
     cwd_applied = in_object.cwd_applied;
+    m2_format = in_object.m2_format;
     resolution = in_object.resolution;
     audio_state = in_object.audio_state;
 
@@ -61,6 +63,7 @@ void STC007DataBlock::clear()
         line_crc[index] = cwd_fixed[index] = word_valid[index] = false;
     }
     cwd_applied = false;
+    m2_format = false;
     resolution = RES_14BIT;
     audio_state = AUD_ORIG;
 }
@@ -128,6 +131,12 @@ void STC007DataBlock::setAudioState(uint8_t in_state)
 void STC007DataBlock::setEmphasis(bool in_set)
 {
     emphasis = in_set;
+}
+
+//------------------------ Set sample format (normal/M2).
+void STC007DataBlock::setM2Format(bool in_set)
+{
+    m2_format = in_set;
 }
 
 //------------------------ Mark data words as "original state".
@@ -236,9 +245,6 @@ void STC007DataBlock::clearFixedByCWD()
 //------------------------ Check if data block can be forced to check integrity via P and Q codes.
 bool STC007DataBlock::canForceCheck()
 {
-    bool check_available;
-    // Forced ECC check can not be done by default.
-    check_available = false;
     if(isDataBroken()==false)
     {
         if(resolution==RES_14BIT)
@@ -247,7 +253,7 @@ bool STC007DataBlock::canForceCheck()
             if(getErrorsTotalCWD()<=1)
             {
                 // If only one word is damaged, it can be any - P or Q will always be available.
-                check_available = true;
+                return true;
             }
         }
         else
@@ -257,11 +263,12 @@ bool STC007DataBlock::canForceCheck()
             if(getErrorsTotalCWD()==0)
             {
                 // No errors at all.
-                check_available = true;
+                return true;
             }
         }
     }
-    return check_available;
+    // Forced ECC check can not be done by default.
+    return false;
 }
 
 //------------------------ Check if line containing the word is marked after binarization with CRC as "not damaged".
@@ -411,19 +418,7 @@ bool STC007DataBlock::isNearSilence(uint8_t index)
 {
     int16_t audio_sample;
     audio_sample = getSample(index);
-    if(resolution==RES_14BIT)
-    {
-        // Allow 2 LSBs (2 LSBs in 14-bit word become 4 LSBs in 16-bit state) wiggle room.
-        if(audio_sample>=(int16_t)(1<<4))
-        {
-            return false;
-        }
-        if(audio_sample<(0-(int16_t)(1<<4)))
-        {
-            return false;
-        }
-    }
-    else
+    if((resolution==RES_16BIT)||(m2_format!=false))
     {
         // Allow 2 LSBs wiggle room.
         if(audio_sample>=(int16_t)(1<<2))
@@ -431,6 +426,18 @@ bool STC007DataBlock::isNearSilence(uint8_t index)
             return false;
         }
         if(audio_sample<(0-(int16_t)(1<<2)))
+        {
+            return false;
+        }
+    }
+    else
+    {
+        // Allow 2 LSBs (2 LSBs in 14-bit word become 4 LSBs in 16-bit state) wiggle room.
+        if(audio_sample>=(int16_t)(1<<4))
+        {
+            return false;
+        }
+        if(audio_sample<(0-(int16_t)(1<<4)))
         {
             return false;
         }
@@ -496,20 +503,59 @@ uint16_t STC007DataBlock::getWord(uint8_t index)
     return 0;
 }
 
-//------------------------ Get audio sample according to its resolution.
+//------------------------ Get audio sample according to its resolution (convert to 16 bits if needed).
 int16_t STC007DataBlock::getSample(uint8_t index)
 {
-    if(index<WORD_P0)
+    if(index<=WORD_R2)
     {
-        if(resolution==RES_16BIT)
+        if(m2_format==false)
         {
-            // 16-bit Sony PCM-F1 mode.
-            return (int16_t)(words[index]);
+            // Normal sample format.
+            if(resolution==RES_16BIT)
+            {
+                // 16-bit Sony PCM-F1 mode.
+                return (int16_t)(words[index]);
+            }
+            else
+            {
+                // 14-bit STC-007 mode, converting to 16-bits.
+                return (int16_t)(words[index]<<2);
+            }
         }
         else
         {
-            // 14-bit STC-007 mode, converting to 16-bits.
-            return (int16_t)(words[index]<<2);
+            // M2 sample format.
+            bool is_positive;
+            uint16_t data_word;
+
+            data_word = words[index];
+
+            // Check 14th bit for range (R bit).
+            if((data_word&STC007Line::BIT_M2_RANGE_POS)==0)
+            {
+                // Higher range.
+                // Move 3 bits left (VALUE x8) to fill up 16-bit MSBs.
+                data_word = (data_word<<3);
+            }
+            else
+            {
+                // Lower range.
+                // Pick sign of the value.
+                is_positive = ((data_word&STC007Line::BIT_M2_SIGN_POS)==0);
+                // Remove range bit.
+                data_word = data_word&(~STC007Line::BIT_M2_RANGE_POS);
+                if(is_positive==false)
+                {
+                    // Fill all MSBs following negative sign.
+                    data_word|=(1<<15)|(1<<14)|(1<<13);
+                }
+            }
+            /*if((int16_t)data_word==-4096)
+            {
+                qDebug()<<data_word;
+            }*/
+            // Return the word converted in 16-bit sample.
+            return (int16_t)data_word;
         }
     }
     return 0;

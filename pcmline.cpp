@@ -360,10 +360,7 @@ bool PCMLine::isCRCValid()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Was PCM data decoded with use of reference level sweep?
@@ -391,10 +388,7 @@ bool PCMLine::isServiceLine()
     {
         return false;
     }
-    else
-    {
-        return true;
-    }
+    return true;
 }
 
 //------------------------ Check if line has service tag "new file opened".
@@ -404,10 +398,7 @@ bool PCMLine::isServNewFile()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if line has service tag "file ended".
@@ -417,10 +408,7 @@ bool PCMLine::isServEndFile()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Is this a filler line (from padding frame)?
@@ -430,10 +418,7 @@ bool PCMLine::isServFiller()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if line has service tag "field ended".
@@ -443,10 +428,7 @@ bool PCMLine::isServEndField()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if line has service tag "frame ended".
@@ -456,10 +438,7 @@ bool PCMLine::isServEndFrame()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Restart help output.

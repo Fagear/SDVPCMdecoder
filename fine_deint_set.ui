@@ -65,6 +65,12 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="toolTip">
          <string>Ошибки, обнаруженные по не совпавшим CRC, будут исправлены при помощи P и/или Q слов, либо замаскированы</string>
         </property>
@@ -163,6 +169,12 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
         </property>
         <property name="toolTip">
          <string>Отключить исправление CRC-ошибок на непроверенных сшивках полей кадров для избежания некорректной работы коррекции ошибок и возможных щелчков в звуке</string>
@@ -363,6 +375,12 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="toolTip">
          <string>Добавлять пустую строку в начале собранного кадра (может устранить треск при воспроизведении файлов с большим числом незахваченных строк)</string>
         </property>
@@ -488,8 +506,8 @@
   <tabstop>cbxInsertAbove</tabstop>
   <tabstop>spbMaxUnch14</tabstop>
   <tabstop>spbMaxUnch16</tabstop>
-  <tabstop>btnClose</tabstop>
   <tabstop>btnSave</tabstop>
+  <tabstop>btnClose</tabstop>
   <tabstop>btnRevert</tabstop>
   <tabstop>btnDefaults</tabstop>
  </tabstops>

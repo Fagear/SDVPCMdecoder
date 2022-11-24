@@ -29,6 +29,7 @@ public:
         TYPE_PCM1,              // Class [PCM1Line] for PCM-1 standard.
         TYPE_PCM16X0,           // Class [PCM16X0SubLine] for PCM-1600/PCM-1610/PCM-1630 standard.
         TYPE_STC007,            // Class [STC007Line] for STC-007/STC-008/PCM-F1 standard.
+        TYPE_ARVA,              // ArVid Audio.
         TYPE_MAX                // Limiter for type-operations.
     };
 
@@ -132,6 +133,10 @@ public:
     void setForcedBad();
     void setSourcePixels(uint16_t in_start, uint16_t in_stop);
     void calcPPB(CoordinatePair in_coords);
+    // PCM-1: 94 bits
+    // STC-007: 137 bits (128 bits of data)
+    // ArVid Audio: 156 bits (144 bits of data)
+    // PCM-16x0: 193 bits (192 bits of data)
     virtual uint8_t getBitsPerSourceLine() = 0;
     virtual uint8_t getBitsBetweenDataCoordinates() = 0;        // Should NEVER return 0!
     uint8_t getPPB();

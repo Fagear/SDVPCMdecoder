@@ -190,6 +190,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->lbxSTC007CWD, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
     connect(ui->lbxSTC007Resolution, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
     connect(ui->lbxSTC007SampleRate, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
+    connect(ui->lbxM2VidStandard, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
+    connect(ui->lbxM2FieldOrder, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
+    connect(ui->lbxM2ECC, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
+    connect(ui->lbxM2CWD, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
+    connect(ui->lbxM2SampleRate, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
     connect(ui->lbxDropAction, SIGNAL(currentIndexChanged(int)), this, SLOT(updateGUISettings()));
 
     connect(ui->btnStatReset, SIGNAL(clicked(bool)), this, SLOT(clearStat()));
@@ -270,7 +275,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(conv_V2D, SIGNAL(finished()), conv_V2D, SLOT(deleteLater()));
     connect(this, SIGNAL(aboutToExit()), V2D_worker, SLOT(stop()));
     connect(this, SIGNAL(newV2DLogLevel(uint8_t)), V2D_worker, SLOT(setLogLevel(uint8_t)));
-    connect(this, SIGNAL(newPCMType(uint8_t)), V2D_worker, SLOT(setPCMType(uint8_t)));
+    connect(this, SIGNAL(newBinPCMType(uint8_t)), V2D_worker, SLOT(setPCMType(uint8_t)));
     connect(this, SIGNAL(newBinMode(uint8_t)), V2D_worker, SLOT(setBinarizationMode(uint8_t)));
     connect(this, SIGNAL(newLineDupMode(bool)), V2D_worker, SLOT(setCheckLineDup(bool)));
     connect(V2D_worker, SIGNAL(newLine(PCM1Line)), this, SLOT(receiveBinLine(PCM1Line)));
@@ -346,6 +351,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this, SIGNAL(newSTC007PCorrection(bool)), L2B_STC007_worker, SLOT(setPCorrection(bool)));
     connect(this, SIGNAL(newSTC007QCorrection(bool)), L2B_STC007_worker, SLOT(setQCorrection(bool)));
     connect(this, SIGNAL(newSTC007CWDCorrection(bool)), L2B_STC007_worker, SLOT(setCWDCorrection(bool)));
+    connect(this, SIGNAL(newSTC007M2Sampling(bool)), L2B_STC007_worker, SLOT(setM2SampleFormat(bool)));
     connect(this, SIGNAL(newSTC007ResolutionPreset(uint8_t)), L2B_STC007_worker, SLOT(setResolutionPreset(uint8_t)));
     connect(this, SIGNAL(newSTC007SampleRatePreset(uint16_t)), L2B_STC007_worker, SLOT(setSampleRatePreset(uint16_t)));
     connect(L2B_STC007_worker, SIGNAL(newLineProcessed(STC007Line)), this, SLOT(receiveAsmLine(STC007Line)));
@@ -390,7 +396,6 @@ MainWindow::MainWindow(QWidget *parent) :
     conv_L2B_PCM16X0->start(QThread::InheritPriority);
     conv_L2B_STC007->start(QThread::InheritPriority);
     // Start new thread with audio processor.
-    //audio_PU->start(QThread::HighPriority);
     audio_PU->start(QThread::InheritPriority);
 
     qInfo()<<"[M] Application path:"<<qApp->applicationDirPath();
@@ -404,8 +409,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Start UI counters updater.
     timUIUpdate.start();
-
-    //buffer_tester();
 }
 
 MainWindow::~MainWindow()
@@ -651,15 +654,19 @@ void MainWindow::setLBOptions()
     {
         if(ui->lbxPCMType->currentIndex()==LIST_TYPE_PCM1)
         {
-            emit newPCMType(PCMLine::TYPE_PCM1);
+            emit newBinPCMType(VideoToDigital::TYPE_PCM1);
         }
         else if(ui->lbxPCMType->currentIndex()==LIST_TYPE_PCM16X0)
         {
-            emit newPCMType(PCMLine::TYPE_PCM16X0);
+            emit newBinPCMType(VideoToDigital::TYPE_PCM16X0);
         }
         else if(ui->lbxPCMType->currentIndex()==LIST_TYPE_STC007)
         {
-            emit newPCMType(PCMLine::TYPE_STC007);
+            emit newBinPCMType(VideoToDigital::TYPE_STC007);
+        }
+        else if(ui->lbxPCMType->currentIndex()==LIST_TYPE_M2)
+        {
+            emit newBinPCMType(VideoToDigital::TYPE_M2);
         }
         else
         {
@@ -805,107 +812,200 @@ void MainWindow::setDIOptions()
         }
     }
 
-    // STC-007 settings.
-    // Preset STC-007 video standard.
-    if(ui->lbxSTC007VidStandard->currentIndex()==LIST_STC007_VID_NTSC)
+    if(set_pcm_type==LIST_TYPE_STC007)
     {
-        emit newSTC007VidStandard(FrameAsmDescriptor::VID_NTSC);
-    }
-    else if(ui->lbxSTC007VidStandard->currentIndex()==LIST_STC007_VID_PAL)
-    {
-        emit newSTC007VidStandard(FrameAsmDescriptor::VID_PAL);
-    }
-    else
-    {
-        emit newSTC007VidStandard(FrameAsmDescriptor::VID_UNKNOWN);
-        if(ui->lbxSTC007VidStandard->currentIndex()!=LIST_STC007_VID_AUTO)
+        // STC-007 settings.
+        // Preset STC-007 video standard.
+        if(ui->lbxSTC007VidStandard->currentIndex()==LIST_STC007_VID_NTSC)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007VidStandard] out of bounds:"<<ui->lbxSTC007VidStandard->currentIndex();
+            emit newSTC007VidStandard(FrameAsmDescriptor::VID_NTSC);
         }
-    }
-    // Preset STC-007 field order.
-    if(ui->lbxSTC007FieldOrder->currentIndex()==LIST_STC007_FO_TFF)
-    {
-        emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_TFF);
-    }
-    else if(ui->lbxSTC007FieldOrder->currentIndex()==LIST_STC007_FO_BFF)
-    {
-        emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_BFF);
-    }
-    else
-    {
-        emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_UNK);
-        if(ui->lbxSTC007FieldOrder->currentIndex()!=LIST_STC007_FO_AUTO)
+        else if(ui->lbxSTC007VidStandard->currentIndex()==LIST_STC007_VID_PAL)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007FieldOrder] out of bounds:"<<ui->lbxSTC007FieldOrder->currentIndex();
+            emit newSTC007VidStandard(FrameAsmDescriptor::VID_PAL);
         }
-    }
-    // Set STC-007 error correction settings.
-    if(ui->lbxSTC007ECC->currentIndex()==LIST_STC007_ECC_NONE)
-    {
-        emit newSTC007PCorrection(false);
-        emit newSTC007QCorrection(false);
-    }
-    else if(ui->lbxSTC007ECC->currentIndex()==LIST_STC007_ECC_PARITY)
-    {
-        emit newSTC007PCorrection(true);
-        emit newSTC007QCorrection(false);
-    }
-    else
-    {
-        emit newSTC007PCorrection(true);
-        emit newSTC007QCorrection(true);
-        if(ui->lbxSTC007ECC->currentIndex()!=LIST_STC007_ECC_FULL)
+        else
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007ECC] out of bounds:"<<ui->lbxSTC007ECC->currentIndex();
+            emit newSTC007VidStandard(FrameAsmDescriptor::VID_UNKNOWN);
+            if(ui->lbxSTC007VidStandard->currentIndex()!=LIST_STC007_VID_AUTO)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007VidStandard] out of bounds:"<<ui->lbxSTC007VidStandard->currentIndex();
+            }
         }
-    }
-    // Set STC-007 CWD correction settings.
-    if(ui->lbxSTC007CWD->currentIndex()==LIST_STC007_CWD_DIS)
-    {
-        emit newSTC007CWDCorrection(false);
-    }
-    else
-    {
-        emit newSTC007CWDCorrection(true);
-        if(ui->lbxSTC007CWD->currentIndex()!=LIST_STC007_CWD_EN)
+        // Preset STC-007 field order.
+        if(ui->lbxSTC007FieldOrder->currentIndex()==LIST_STC007_FO_TFF)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007CWD] out of bounds:"<<ui->lbxSTC007CWD->currentIndex();
+            emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_TFF);
         }
-    }
-    // Preset STC-007 audio resolution.
-    if(ui->lbxSTC007Resolution->currentIndex()==LIST_STC007_RES_14BIT)
-    {
-        emit newSTC007ResolutionPreset(STC007DataStitcher::SAMPLE_RES_14BIT);
-    }
-    else if(ui->lbxSTC007Resolution->currentIndex()==LIST_STC007_RES_16BIT)
-    {
-        emit newSTC007ResolutionPreset(STC007DataStitcher::SAMPLE_RES_16BIT);
-    }
-    else
-    {
-        emit newSTC007ResolutionPreset(STC007DataStitcher::SAMPLE_RES_UNKNOWN);
-        if(ui->lbxSTC007Resolution->currentIndex()!=LIST_STC007_RES_AUTO)
+        else if(ui->lbxSTC007FieldOrder->currentIndex()==LIST_STC007_FO_BFF)
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007Resolution] out of bounds:"<<ui->lbxSTC007Resolution->currentIndex();
+            emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_BFF);
         }
-    }
-    // Preset STC-007 audio sample rate.
-    if(ui->lbxSTC007SampleRate->currentIndex()==LIST_STC007_SRATE_44056)
-    {
-        emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_44056);
-    }
-    else if(ui->lbxSTC007SampleRate->currentIndex()==LIST_STC007_SRATE_44100)
-    {
-        emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_44100);
-    }
-    else
-    {
-        emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_AUTO);
-        if(ui->lbxSTC007SampleRate->currentIndex()!=LIST_STC007_SRATE_AUTO)
+        else
         {
-            qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007SampleRate] out of bounds:"<<ui->lbxSTC007SampleRate->currentIndex();
+            emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_UNK);
+            if(ui->lbxSTC007FieldOrder->currentIndex()!=LIST_STC007_FO_AUTO)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007FieldOrder] out of bounds:"<<ui->lbxSTC007FieldOrder->currentIndex();
+            }
         }
+        // Set STC-007 error correction settings.
+        if(ui->lbxSTC007ECC->currentIndex()==LIST_STC007_ECC_NONE)
+        {
+            emit newSTC007PCorrection(false);
+            emit newSTC007QCorrection(false);
+        }
+        else if(ui->lbxSTC007ECC->currentIndex()==LIST_STC007_ECC_PARITY)
+        {
+            emit newSTC007PCorrection(true);
+            emit newSTC007QCorrection(false);
+        }
+        else
+        {
+            emit newSTC007PCorrection(true);
+            emit newSTC007QCorrection(true);
+            if(ui->lbxSTC007ECC->currentIndex()!=LIST_STC007_ECC_FULL)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007ECC] out of bounds:"<<ui->lbxSTC007ECC->currentIndex();
+            }
+        }
+        // Set STC-007 CWD correction settings.
+        if(ui->lbxSTC007CWD->currentIndex()==LIST_STC007_CWD_DIS)
+        {
+            emit newSTC007CWDCorrection(false);
+        }
+        else
+        {
+            emit newSTC007CWDCorrection(true);
+            if(ui->lbxSTC007CWD->currentIndex()!=LIST_STC007_CWD_EN)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007CWD] out of bounds:"<<ui->lbxSTC007CWD->currentIndex();
+            }
+        }
+        // Preset STC-007 audio resolution.
+        if(ui->lbxSTC007Resolution->currentIndex()==LIST_STC007_RES_14BIT)
+        {
+            emit newSTC007ResolutionPreset(STC007DataStitcher::SAMPLE_RES_14BIT);
+        }
+        else if(ui->lbxSTC007Resolution->currentIndex()==LIST_STC007_RES_16BIT)
+        {
+            emit newSTC007ResolutionPreset(STC007DataStitcher::SAMPLE_RES_16BIT);
+        }
+        else
+        {
+            emit newSTC007ResolutionPreset(STC007DataStitcher::SAMPLE_RES_UNKNOWN);
+            if(ui->lbxSTC007Resolution->currentIndex()!=LIST_STC007_RES_AUTO)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007Resolution] out of bounds:"<<ui->lbxSTC007Resolution->currentIndex();
+            }
+        }
+        // Preset STC-007 audio sample rate.
+        if(ui->lbxSTC007SampleRate->currentIndex()==LIST_STC007_SRATE_44056)
+        {
+            emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_44056);
+        }
+        else if(ui->lbxSTC007SampleRate->currentIndex()==LIST_STC007_SRATE_44100)
+        {
+            emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_44100);
+        }
+        else
+        {
+            emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_AUTO);
+            if(ui->lbxSTC007SampleRate->currentIndex()!=LIST_STC007_SRATE_AUTO)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxSTC007SampleRate] out of bounds:"<<ui->lbxSTC007SampleRate->currentIndex();
+            }
+        }
+        emit newSTC007M2Sampling(false);
+    }
+    else if(set_pcm_type==LIST_TYPE_M2)
+    {
+        // M2 settings.
+        // Preset M2 video standard.
+        if(ui->lbxM2VidStandard->currentIndex()==LIST_M2_VID_NTSC)
+        {
+            emit newSTC007VidStandard(FrameAsmDescriptor::VID_NTSC);
+        }
+        else if(ui->lbxM2VidStandard->currentIndex()==LIST_M2_VID_PAL)
+        {
+            emit newSTC007VidStandard(FrameAsmDescriptor::VID_PAL);
+        }
+        else
+        {
+            emit newSTC007VidStandard(FrameAsmDescriptor::VID_UNKNOWN);
+            if(ui->lbxM2VidStandard->currentIndex()!=LIST_M2_VID_AUTO)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxM2VidStandard] out of bounds:"<<ui->lbxM2VidStandard->currentIndex();
+            }
+        }
+        // Preset M2 field order.
+        if(ui->lbxM2FieldOrder->currentIndex()==LIST_M2_FO_TFF)
+        {
+            emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_TFF);
+        }
+        else if(ui->lbxM2FieldOrder->currentIndex()==LIST_M2_FO_BFF)
+        {
+            emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_BFF);
+        }
+        else
+        {
+            emit newSTC007FieldOrder(FrameAsmDescriptor::ORDER_UNK);
+            if(ui->lbxM2FieldOrder->currentIndex()!=LIST_M2_FO_AUTO)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxM2FieldOrder] out of bounds:"<<ui->lbxM2FieldOrder->currentIndex();
+            }
+        }
+        // Set M2 error correction settings.
+        if(ui->lbxM2ECC->currentIndex()==LIST_M2_ECC_NONE)
+        {
+            emit newSTC007PCorrection(false);
+            emit newSTC007QCorrection(false);
+        }
+        else if(ui->lbxM2ECC->currentIndex()==LIST_M2_ECC_PARITY)
+        {
+            emit newSTC007PCorrection(true);
+            emit newSTC007QCorrection(false);
+        }
+        else
+        {
+            emit newSTC007PCorrection(true);
+            emit newSTC007QCorrection(true);
+            if(ui->lbxM2ECC->currentIndex()!=LIST_M2_ECC_FULL)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxM2ECC] out of bounds:"<<ui->lbxM2ECC->currentIndex();
+            }
+        }
+        // Set M2 CWD correction settings.
+        if(ui->lbxM2CWD->currentIndex()==LIST_M2_CWD_DIS)
+        {
+            emit newSTC007CWDCorrection(false);
+        }
+        else
+        {
+            emit newSTC007CWDCorrection(true);
+            if(ui->lbxM2CWD->currentIndex()!=LIST_M2_CWD_EN)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxM2CWD] out of bounds:"<<ui->lbxM2CWD->currentIndex();
+            }
+        }
+        // Preset M2 audio sample rate.
+        if(ui->lbxM2SampleRate->currentIndex()==LIST_M2_SRATE_44056)
+        {
+            emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_44056);
+        }
+        else if(ui->lbxM2SampleRate->currentIndex()==LIST_M2_SRATE_44100)
+        {
+            emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_44100);
+        }
+        else
+        {
+            emit newSTC007SampleRatePreset(PCMSamplePair::SAMPLE_RATE_AUTO);
+            if(ui->lbxM2SampleRate->currentIndex()!=LIST_M2_SRATE_AUTO)
+            {
+                qWarning()<<DBG_ANCHOR<<"[M] Logic error: index of [lbxM2SampleRate] out of bounds:"<<ui->lbxM2SampleRate->currentIndex();
+            }
+        }
+        emit newSTC007M2Sampling(true);
     }
 }
 
@@ -1077,6 +1177,8 @@ void MainWindow::applyGUISettings()
         ui->pgPCM16x0Frame->setEnabled(false);
         ui->pgSTC007Settings->setEnabled(false);
         ui->pgSTC007Frame->setEnabled(false);
+        ui->pgM2Settings->setEnabled(false);
+        ui->pgM2Frame->setEnabled(false);
         // Show/hide stats indicators.
         ui->lblBadStitch->setEnabled(false);
         ui->lcdBadStitch->setEnabled(false);
@@ -1101,6 +1203,8 @@ void MainWindow::applyGUISettings()
         ui->pgPCM16x0Frame->setEnabled(true);
         ui->pgSTC007Settings->setEnabled(false);
         ui->pgSTC007Frame->setEnabled(false);
+        ui->pgM2Settings->setEnabled(false);
+        ui->pgM2Frame->setEnabled(false);
         // Show/hide stats indicators.
         ui->lblBadStitch->setEnabled(false);
         ui->lcdBadStitch->setEnabled(false);
@@ -1137,6 +1241,8 @@ void MainWindow::applyGUISettings()
         ui->pgPCM16x0Frame->setEnabled(false);
         ui->pgSTC007Settings->setEnabled(true);
         ui->pgSTC007Frame->setEnabled(true);
+        ui->pgM2Settings->setEnabled(false);
+        ui->pgM2Frame->setEnabled(false);
         // Show/hide stats indicators.
         ui->lblBadStitch->setEnabled(true);
         ui->lcdBadStitch->setEnabled(true);
@@ -1167,6 +1273,62 @@ void MainWindow::applyGUISettings()
             ui->lcdCWDCorr->setEnabled(false);
         }
         else if(ui->lbxSTC007ECC->currentIndex()!=LIST_STC007_ECC_NONE)
+        {
+            ui->lblCWDCorr->setEnabled(true);
+            ui->lcdCWDCorr->setEnabled(true);
+        }
+        else
+        {
+            ui->lblCWDCorr->setEnabled(false);
+            ui->lcdCWDCorr->setEnabled(false);
+        }
+        ui->lblBroken->setEnabled(true);
+        ui->lcdBroken->setEnabled(true);
+    }
+    else if(ui->lbxPCMType->currentIndex()==LIST_TYPE_M2)
+    {
+        // Select pages for the format.
+        ui->stcDecoderSettings->setCurrentIndex(LIST_TYPE_M2);
+        ui->stcFrameAsm->setCurrentIndex(LIST_TYPE_M2);
+        // Enable controls on showed pages, disable on others.
+        ui->pgPCM1Settings->setEnabled(false);
+        ui->pgPCM1Frame->setEnabled(false);
+        ui->pgPCM16x0Settings->setEnabled(false);
+        ui->pgPCM16x0Frame->setEnabled(false);
+        ui->pgSTC007Settings->setEnabled(false);
+        ui->pgSTC007Frame->setEnabled(false);
+        ui->pgM2Settings->setEnabled(true);
+        ui->pgM2Frame->setEnabled(true);
+        // Show/hide stats indicators.
+        ui->lblBadStitch->setEnabled(true);
+        ui->lcdBadStitch->setEnabled(true);
+        if(ui->lbxM2ECC->currentIndex()==LIST_M2_ECC_FULL)
+        {
+            ui->lblPCorr->setEnabled(true);
+            ui->lcdPCorr->setEnabled(true);
+            ui->lblQCorr->setEnabled(true);
+            ui->lcdQCorr->setEnabled(true);
+        }
+        else if(ui->lbxM2ECC->currentIndex()==LIST_M2_ECC_PARITY)
+        {
+            ui->lblPCorr->setEnabled(true);
+            ui->lcdPCorr->setEnabled(true);
+            ui->lblQCorr->setEnabled(false);
+            ui->lcdQCorr->setEnabled(false);
+        }
+        else
+        {
+            ui->lblPCorr->setEnabled(false);
+            ui->lcdPCorr->setEnabled(false);
+            ui->lblQCorr->setEnabled(false);
+            ui->lcdQCorr->setEnabled(false);
+        }
+        if(ui->lbxM2CWD->currentIndex()==LIST_M2_CWD_DIS)
+        {
+            ui->lblCWDCorr->setEnabled(false);
+            ui->lcdCWDCorr->setEnabled(false);
+        }
+        else if(ui->lbxM2ECC->currentIndex()!=LIST_M2_ECC_NONE)
         {
             ui->lblCWDCorr->setEnabled(true);
             ui->lcdCWDCorr->setEnabled(true);
@@ -1250,6 +1412,11 @@ void MainWindow::readGUISettings()
     ui->lbxSTC007CWD->setCurrentIndex(settings_hdl.value("stc007_cwd", LIST_STC007_CWD_DIS).toInt());
     ui->lbxSTC007Resolution->setCurrentIndex(settings_hdl.value("stc007_resolution", LIST_STC007_RES_AUTO).toInt());
     ui->lbxSTC007SampleRate->setCurrentIndex(settings_hdl.value("stc007_sample_rate", LIST_STC007_SRATE_AUTO).toInt());
+    ui->lbxM2VidStandard->setCurrentIndex(settings_hdl.value("m2_video_std", LIST_M2_VID_AUTO).toInt());
+    ui->lbxM2FieldOrder->setCurrentIndex(settings_hdl.value("m2_field_order", LIST_M2_FO_AUTO).toInt());
+    ui->lbxM2ECC->setCurrentIndex(settings_hdl.value("m2_ecc", LIST_M2_ECC_FULL).toInt());
+    ui->lbxM2CWD->setCurrentIndex(settings_hdl.value("m2_cwd", LIST_M2_CWD_DIS).toInt());
+    ui->lbxM2SampleRate->setCurrentIndex(settings_hdl.value("m2_sample_rate", LIST_M2_SRATE_AUTO).toInt());
     ui->lbxDropAction->setCurrentIndex(settings_hdl.value("drop_action", LIST_DOA_INTER_WORD).toInt());
     settings_hdl.endGroup();
 
@@ -1319,18 +1486,18 @@ void MainWindow::readGUISettings()
 }
 
 //------------------------ Find and return coordinates from video tracking history.
-CoordinatePair MainWindow::getCoordByFrameNo(uint32_t frame_num)
+FrameBinDescriptor MainWindow::getBinDescriptorByFrameNo(uint32_t frame_num)
 {
-    CoordinatePair coord_res;
+    FrameBinDescriptor bin_stats;
     for(uint8_t idx=0;idx<TRACKING_BUF_LEN;idx++)
     {
         if(stat_tracking_arr[idx].frame_id==frame_num)
         {
-            coord_res = stat_tracking_arr[idx].data_coord;
+            bin_stats = stat_tracking_arr[idx];
             break;
         }
     }
-    return coord_res;
+    return bin_stats;
 }
 
 //------------------------ Exit application.
@@ -1383,7 +1550,7 @@ void MainWindow::loadVideo()
     file_path = QFileDialog::getOpenFileName(this,
                                              tr("Открыть видео с PCM"),
                                              QDir::currentPath(),
-                                             tr("Видео-файлы (*.avi *.mkv *.mpg *.mp4)"),
+                                             tr("Видео-файлы (*.avi *.mkv *.mov *.mpg *.mp4 *.wmv)"),
                                              0,
                                              QFileDialog::HideNameFilterDetails);
     if(file_path.isNull()==false)
@@ -1467,6 +1634,7 @@ void MainWindow::updateGUISettings()
         frame_asm_pcm1.clear();
         frame_asm_pcm16x0.clear();
         frame_asm_stc007.clear();
+        frame_asm_m2.clear();
     }
     settings_hdl.endGroup();
     // Save GUI settings.
@@ -1494,6 +1662,11 @@ void MainWindow::updateGUISettings()
     settings_hdl.setValue("stc007_cwd", ui->lbxSTC007CWD->currentIndex());
     settings_hdl.setValue("stc007_resolution", ui->lbxSTC007Resolution->currentIndex());
     settings_hdl.setValue("stc007_sample_rate", ui->lbxSTC007SampleRate->currentIndex());
+    settings_hdl.setValue("m2_video_std", ui->lbxM2VidStandard->currentIndex());
+    settings_hdl.setValue("m2_field_order", ui->lbxM2FieldOrder->currentIndex());
+    settings_hdl.setValue("m2_ecc", ui->lbxM2ECC->currentIndex());
+    settings_hdl.setValue("m2_cwd", ui->lbxM2CWD->currentIndex());
+    settings_hdl.setValue("m2_sample_rate", ui->lbxM2SampleRate->currentIndex());
     settings_hdl.setValue("drop_action", ui->lbxDropAction->currentIndex());
     settings_hdl.endGroup();
 
@@ -1507,6 +1680,7 @@ void MainWindow::clearStat()
     frame_asm_pcm1.clear();
     frame_asm_pcm16x0.clear();
     frame_asm_stc007.clear();
+    frame_asm_m2.clear();
 
     stat_dbg_index = 0;
     for(uint8_t i=0;i<DBG_AVG_LEN;i++)
@@ -1549,7 +1723,7 @@ void MainWindow::clearStat()
     ui->lcdProcessedFrames->display(0);
 }
 
-//------------------------
+//------------------------ Update PCM-1 vertical offset indicators.
 void MainWindow::sliderDisplayUpdate()
 {
     ui->edtPCM1OddOfs->setText(QString::number(ui->sldPCM1OddOfs->sliderPosition()));
@@ -1650,7 +1824,6 @@ void MainWindow::showCaptureSelector()
 //------------------------ Display video processor fine settings dialog.
 void MainWindow::showVidInFineSettings()
 {
-    //vipFineSetDialog = new (std::nothrow) fine_vidin_set(this);
     fine_vidin_set vipFineSetDialog(this);
     //connect(VIN_worker, SIGNAL(guiUpdFineLineSkip(bool)), vipFineSetDialog, SLOT(newSkipLines(bool)));
     connect(VIN_worker, SIGNAL(guiUpdFineSettings(vid_preset_t)), &vipFineSetDialog, SLOT(newSettings(vid_preset_t)));
@@ -1662,26 +1835,22 @@ void MainWindow::showVidInFineSettings()
     connect(&vipFineSetDialog, SIGNAL(requestFineCurrent()), this, SLOT(requestCurrentFineSettings()));
     connect(&vipFineSetDialog, SIGNAL(setDrawDeint(bool)), this, SLOT(setFineDrawDeint(bool)));
     vipFineSetDialog.exec();
-    //vipFineSetDialog->deleteLater();
 }
 
 //------------------------ Display binarizator fine settings dialog.
 void MainWindow::showBinFineSettings()
 {
-    //binFineSetDialog = new fine_bin_set(this);
     fine_bin_set binFineSetDialog(this);
     connect(V2D_worker, SIGNAL(guiUpdFineSettings(bin_preset_t)), &binFineSetDialog, SLOT(newSettings(bin_preset_t)));
     connect(&binFineSetDialog, SIGNAL(setFineDefaults()), V2D_worker, SLOT(setDefaultFineSettings()));
     connect(&binFineSetDialog, SIGNAL(requestFineCurrent()), V2D_worker, SLOT(requestCurrentFineSettings()));
     connect(&binFineSetDialog, SIGNAL(setFineCurrent(bin_preset_t)), V2D_worker, SLOT(setFineSettings(bin_preset_t)));
     binFineSetDialog.exec();
-    //binFineSetDialog->deleteLater();
 }
 
 //------------------------ Display deinterleaver fine settings dialog.
 void MainWindow::showDeintFineSettings()
 {
-    //deintFineSetDialog = new fine_deint_set(this);
     fine_deint_set deintFineSetDialog(this);
     if(set_pcm_type==LIST_TYPE_PCM1)
     {
@@ -1703,7 +1872,7 @@ void MainWindow::showDeintFineSettings()
         connect(&deintFineSetDialog, SIGNAL(setMaskSeams(bool)), L2B_PCM16X0_worker, SLOT(setFineMaskSeams(bool)));
         connect(&deintFineSetDialog, SIGNAL(setBrokeMask(uint8_t)), L2B_PCM16X0_worker, SLOT(setFineBrokeMask(uint8_t)));
     }
-    else if(set_pcm_type==LIST_TYPE_STC007)
+    else if((set_pcm_type==LIST_TYPE_STC007)||(set_pcm_type==LIST_TYPE_M2))
     {
         connect(L2B_STC007_worker, SIGNAL(guiUpdFineMaxUnch14(uint8_t)), &deintFineSetDialog, SLOT(newMaxUnchecked14(uint8_t)));
         connect(L2B_STC007_worker, SIGNAL(guiUpdFineMaxUnch16(uint8_t)), &deintFineSetDialog, SLOT(newMaxUnchecked16(uint8_t)));
@@ -1722,7 +1891,6 @@ void MainWindow::showDeintFineSettings()
         connect(&deintFineSetDialog, SIGNAL(setBrokeMask(uint8_t)), L2B_STC007_worker, SLOT(setFineBrokeMask(uint8_t)));
     }
     deintFineSetDialog.exec();
-    //deintFineSetDialog->deleteLater();
 }
 
 //------------------------ Receive request for fine settings reset from video processor fine settings dialog.
@@ -1844,7 +2012,7 @@ void MainWindow::showVisBin(bool is_checked)
             renderBin->startPCM1600Frame();
             connect(this, SIGNAL(retransmitBinLine(PCM16X0SubLine)), renderBin, SLOT(renderNewLine(PCM16X0SubLine)));
         }
-        else if(ui->lbxPCMType->currentIndex()==LIST_TYPE_STC007)
+        else if((ui->lbxPCMType->currentIndex()==LIST_TYPE_STC007)||(ui->lbxPCMType->currentIndex()==LIST_TYPE_M2))
         {
             renderBin->startSTC007NTSCFrame();
             renderBin->setLineCount(FrameAsmDescriptor::VID_UNKNOWN);
@@ -1906,7 +2074,7 @@ void MainWindow::showVisAssembled(bool is_checked)
             renderAssembled->startPCM1600Frame();
             connect(this, SIGNAL(retransmitAsmLine(PCM16X0SubLine)), renderAssembled, SLOT(renderNewLine(PCM16X0SubLine)));
         }
-        else if(ui->lbxPCMType->currentIndex()==LIST_TYPE_STC007)
+        else if((ui->lbxPCMType->currentIndex()==LIST_TYPE_STC007)||(ui->lbxPCMType->currentIndex()==LIST_TYPE_M2))
         {
             renderAssembled->startSTC007NTSCFrame();
             connect(this, SIGNAL(retransmitAsmLine(STC007Line)), renderAssembled, SLOT(renderNewLine(STC007Line)));
@@ -1967,7 +2135,7 @@ void MainWindow::showVisBlocks(bool is_checked)
             renderBlocks->startPCM1600DBFrame();
             connect(this, SIGNAL(retransmitPCMDataBlock(PCM16X0DataBlock)), renderBlocks, SLOT(renderNewBlock(PCM16X0DataBlock)));
         }
-        else if(ui->lbxPCMType->currentIndex()==LIST_TYPE_STC007)
+        else if((ui->lbxPCMType->currentIndex()==LIST_TYPE_STC007)||(ui->lbxPCMType->currentIndex()==LIST_TYPE_M2))
         {
             renderBlocks->startSTC007DBFrame();
             connect(this, SIGNAL(retransmitPCMDataBlock(STC007DataBlock)), renderBlocks, SLOT(renderNewBlock(STC007DataBlock)));
@@ -2333,6 +2501,10 @@ void MainWindow::updateGUIByTimer()
     {
         updateSTC007FrameData();
     }
+    if(frame_asm_m2.drawn==false)
+    {
+        updateM2FrameData();
+    }
 
     // Update decoder stats.
     ui->lcdTotalNumber->display((int)stat_total_frame_cnt);
@@ -2358,6 +2530,13 @@ void MainWindow::updateGUIByTimer()
         ui->pgrTracking->setValue(frame_asm_stc007.odd_data_lines+frame_asm_stc007.even_data_lines);
         ui->pgrDataQuality->setMaximum(frame_asm_stc007.odd_std_lines+frame_asm_stc007.even_std_lines);
         ui->pgrDataQuality->setValue(frame_asm_stc007.odd_valid_lines+frame_asm_stc007.even_valid_lines);
+    }
+    else if(set_pcm_type==LIST_TYPE_M2)
+    {
+        ui->pgrTracking->setMaximum(frame_asm_m2.odd_std_lines+frame_asm_m2.even_std_lines);
+        ui->pgrTracking->setValue(frame_asm_m2.odd_data_lines+frame_asm_m2.even_data_lines);
+        ui->pgrDataQuality->setMaximum(frame_asm_m2.odd_std_lines+frame_asm_m2.even_std_lines);
+        ui->pgrDataQuality->setValue(frame_asm_m2.odd_valid_lines+frame_asm_m2.even_valid_lines);
     }
 
     ui->lcdRefLevel->display((int)stat_ref_level);
@@ -2404,7 +2583,7 @@ void MainWindow::updateGUIByTimer()
             ui->pgrLineBuf->setValue(buf_size*100/MAX_PCMLINE_QUEUE_SIZE);
         }
     }
-    else if(set_pcm_type==LIST_TYPE_STC007)
+    else if((set_pcm_type==LIST_TYPE_STC007)||(set_pcm_type==LIST_TYPE_M2))
     {
         if(stcline_lock.tryLock(5)!=false)
         {
@@ -2425,7 +2604,7 @@ void MainWindow::updateGUIByTimer()
 void MainWindow::updatePCM1FrameData()
 {
     QString odd_number_str, even_number_str;
-    CoordinatePair data_coord;
+    FrameBinDescriptor bin_data;
     // Update frame number.
     ui->edtPCM1FrameNo->setText(QString::number(frame_asm_pcm1.frame_number, 10));
     // Update field order.
@@ -2445,8 +2624,13 @@ void MainWindow::updatePCM1FrameData()
         ui->edtPCM1SetOrder->setEnabled(false);
     }
     // Update data coordinates.
-    data_coord = getCoordByFrameNo(frame_asm_pcm1.frame_number);
-    if(data_coord.areValid()==false)
+    bin_data = getBinDescriptorByFrameNo(frame_asm_pcm1.frame_number);
+    if(bin_data.data_coord.isSourceDoubleWidth()!=false)
+    {
+        bin_data.line_length = bin_data.line_length/2;
+    }
+    ui->spbPCM1LineLen->setValue(bin_data.line_length);
+    if(bin_data.data_coord.areValid()==false)
     {
         ui->spbPCM1DataCoordStart->setValue(0);
         ui->spbPCM1DataCoordStart->setEnabled(false);
@@ -2455,14 +2639,14 @@ void MainWindow::updatePCM1FrameData()
     }
     else
     {
-        if(data_coord.isSourceDoubleWidth()!=false)
+        if(bin_data.data_coord.isSourceDoubleWidth()!=false)
         {
-            data_coord.data_start = data_coord.data_start/2;
-            data_coord.data_stop = data_coord.data_stop/2;
+            bin_data.data_coord.data_start = bin_data.data_coord.data_start/2;
+            bin_data.data_coord.data_stop = bin_data.data_coord.data_stop/2;
         }
-        ui->spbPCM1DataCoordStart->setValue(data_coord.data_start);
-        ui->spbPCM1DataCoordStop->setValue(data_coord.data_stop);
-        if(data_coord.not_sure!=false)
+        ui->spbPCM1DataCoordStart->setValue(bin_data.data_coord.data_start);
+        ui->spbPCM1DataCoordStop->setValue((int16_t)bin_data.line_length-bin_data.data_coord.data_stop);
+        if(bin_data.data_coord.not_sure!=false)
         {
             ui->spbPCM1DataCoordStart->setEnabled(false);
             ui->spbPCM1DataCoordStop->setEnabled(false);
@@ -2482,8 +2666,6 @@ void MainWindow::updatePCM1FrameData()
     even_number_str = QString::number(frame_asm_pcm1.even_data_lines, 10);
     odd_number_str += "/"+QString::number(frame_asm_pcm1.odd_std_lines, 10);
     even_number_str += "/"+QString::number(frame_asm_pcm1.even_std_lines, 10);
-    /*odd_number_str += "/"+QString::number(PCM1DataStitcher::LINES_PF, 10);
-    even_number_str += "/"+QString::number(PCM1DataStitcher::LINES_PF, 10);*/
     ui->edtPCM1OddCount->setText(odd_number_str);
     ui->edtPCM1EvenCount->setText(even_number_str);
     // Update frame padding indicators.
@@ -2499,7 +2681,7 @@ void MainWindow::updatePCM1FrameData()
 void MainWindow::updatePCM16x0FrameData()
 {
     QString odd_number_str, even_number_str;
-    CoordinatePair data_coord;
+    FrameBinDescriptor bin_data;
     // Update frame number.
     ui->edtPCM16x0FrameNo->setText(QString::number(frame_asm_pcm16x0.frame_number, 10));
     // Update field order.
@@ -2519,8 +2701,13 @@ void MainWindow::updatePCM16x0FrameData()
         ui->edtPCM16x0SetOrder->setEnabled(false);
     }
     // Update data coordinates.
-    data_coord = getCoordByFrameNo(frame_asm_pcm16x0.frame_number);
-    if(data_coord.areValid()==false)
+    bin_data = getBinDescriptorByFrameNo(frame_asm_pcm16x0.frame_number);
+    if(bin_data.data_coord.isSourceDoubleWidth()!=false)
+    {
+        bin_data.line_length = bin_data.line_length/2;
+    }
+    ui->spbPCM16x0LineLen->setValue(bin_data.line_length);
+    if(bin_data.data_coord.areValid()==false)
     {
         ui->spbPCM16x0DataCoordStart->setValue(0);
         ui->spbPCM16x0DataCoordStart->setEnabled(false);
@@ -2529,14 +2716,14 @@ void MainWindow::updatePCM16x0FrameData()
     }
     else
     {
-        if(data_coord.isSourceDoubleWidth()!=false)
+        if(bin_data.data_coord.isSourceDoubleWidth()!=false)
         {
-            data_coord.data_start = data_coord.data_start/2;
-            data_coord.data_stop = data_coord.data_stop/2;
+            bin_data.data_coord.data_start = bin_data.data_coord.data_start/2;
+            bin_data.data_coord.data_stop = bin_data.data_coord.data_stop/2;
         }
-        ui->spbPCM16x0DataCoordStart->setValue(data_coord.data_start);
-        ui->spbPCM16x0DataCoordStop->setValue(data_coord.data_stop);
-        if(data_coord.not_sure!=false)
+        ui->spbPCM16x0DataCoordStart->setValue(bin_data.data_coord.data_start);
+        ui->spbPCM16x0DataCoordStop->setValue((int16_t)bin_data.line_length-bin_data.data_coord.data_stop);
+        if(bin_data.data_coord.not_sure!=false)
         {
             ui->spbPCM16x0DataCoordStart->setEnabled(false);
             ui->spbPCM16x0DataCoordStop->setEnabled(false);
@@ -2564,8 +2751,6 @@ void MainWindow::updatePCM16x0FrameData()
     even_number_str = QString::number(frame_asm_pcm16x0.even_data_lines, 10);
     odd_number_str += "/"+QString::number(frame_asm_pcm16x0.odd_std_lines, 10);
     even_number_str += "/"+QString::number(frame_asm_pcm16x0.even_std_lines, 10);
-    /*odd_number_str += "/"+QString::number(PCM16X0DataStitcher::LINES_PF, 10);
-    even_number_str += "/"+QString::number(PCM16X0DataStitcher::LINES_PF, 10);*/
     ui->edtPCM16x0OddCount->setText(odd_number_str);
     ui->edtPCM16x0EvenCount->setText(even_number_str);
     // Update frame padding indicators.
@@ -2596,7 +2781,7 @@ void MainWindow::updateSTC007FrameData()
 {
     uint16_t field_imbalance;
     QString frame_num, odd_number_str, even_number_str;
-    CoordinatePair data_coord;
+    FrameBinDescriptor bin_data;
     // Update frame number.
     frame_num = QString::number(frame_asm_stc007.frame_number, 10);
     if(frame_asm_stc007.isAddressSet()!=false)
@@ -2656,8 +2841,13 @@ void MainWindow::updateSTC007FrameData()
         }
     }
     // Update data coordinates.
-    data_coord = getCoordByFrameNo(frame_asm_stc007.frame_number);
-    if(data_coord.areValid()==false)
+    bin_data = getBinDescriptorByFrameNo(frame_asm_stc007.frame_number);
+    if(bin_data.data_coord.isSourceDoubleWidth()!=false)
+    {
+        bin_data.line_length = bin_data.line_length/2;
+    }
+    ui->spbSTC007LineLen->setValue(bin_data.line_length);
+    if(bin_data.data_coord.areValid()==false)
     {
         ui->spbSTC007DataCoordStart->setValue(0);
         ui->spbSTC007DataCoordStart->setEnabled(false);
@@ -2666,14 +2856,14 @@ void MainWindow::updateSTC007FrameData()
     }
     else
     {
-        if(data_coord.isSourceDoubleWidth()!=false)
+        if(bin_data.data_coord.isSourceDoubleWidth()!=false)
         {
-            data_coord.data_start = data_coord.data_start/2;
-            data_coord.data_stop = data_coord.data_stop/2;
+            bin_data.data_coord.data_start = bin_data.data_coord.data_start/2;
+            bin_data.data_coord.data_stop = bin_data.data_coord.data_stop/2;
         }
-        ui->spbSTC007DataCoordStart->setValue(data_coord.data_start);
-        ui->spbSTC007DataCoordStop->setValue(data_coord.data_stop);
-        if(data_coord.not_sure!=false)
+        ui->spbSTC007DataCoordStart->setValue(bin_data.data_coord.data_start);
+        ui->spbSTC007DataCoordStop->setValue((int16_t)bin_data.line_length-bin_data.data_coord.data_stop);
+        if(bin_data.data_coord.not_sure!=false)
         {
             ui->spbSTC007DataCoordStart->setEnabled(false);
             ui->spbSTC007DataCoordStop->setEnabled(false);
@@ -2778,21 +2968,6 @@ void MainWindow::updateSTC007FrameData()
     even_number_str = QString::number(frame_asm_stc007.even_data_lines, 10);
     odd_number_str += "/"+QString::number(frame_asm_stc007.odd_std_lines);
     even_number_str += "/"+QString::number(frame_asm_stc007.even_std_lines);
-    /*if(frame_asm_stc007.video_standard==FrameAsmDescriptor::VID_PAL)
-    {
-        odd_number_str += "/"+QString::number(STC007DataStitcher::LINES_PF_PAL, 10);
-        even_number_str += "/"+QString::number(STC007DataStitcher::LINES_PF_PAL, 10);
-    }
-    else if(frame_asm_stc007.video_standard==FrameAsmDescriptor::VID_NTSC)
-    {
-        odd_number_str += "/"+QString::number(STC007DataStitcher::LINES_PF_NTSC, 10);
-        even_number_str += "/"+QString::number(STC007DataStitcher::LINES_PF_NTSC, 10);
-    }
-    else
-    {
-        odd_number_str += "/???";
-        even_number_str += "/???";
-    }*/
     ui->edtSTC007OddCount->setText(odd_number_str);
     ui->edtSTC007EvenCount->setText(even_number_str);
     // Update audio resolution.
@@ -2837,6 +3012,159 @@ void MainWindow::updateSTC007FrameData()
 
     // Prevent updating fields in the window until [frame_asm_stc007] is updated/rewritten.
     frame_asm_stc007.drawn = true;
+}
+
+//------------------------ Update M2 frame assembling data.
+void MainWindow::updateM2FrameData()
+{
+    QString frame_num, odd_number_str, even_number_str;
+    FrameBinDescriptor bin_data;
+    // Update frame number.
+    frame_num = QString::number(frame_asm_m2.frame_number, 10);
+    if(frame_asm_m2.isAddressSet()!=false)
+    {
+        // Assemble index and time code string.
+        frame_num.sprintf("%u (Index: %02d, %02d:%02d:%02d.%02d)",
+                          frame_asm_m2.frame_number,
+                          frame_asm_m2.ctrl_index,
+                          frame_asm_m2.ctrl_hour,
+                          frame_asm_m2.ctrl_minute,
+                          frame_asm_m2.ctrl_second,
+                          frame_asm_m2.ctrl_field/2);
+    }
+    ui->edtM2FrameNo->setText(frame_num);
+    // Update field order.
+    if(frame_asm_m2.isOrderSet()==false)
+    {
+        ui->edtM2SetOrder->setText(LIST_ORDER_UNK);
+        ui->edtM2SetOrder->setEnabled(false);
+    }
+    else if(frame_asm_m2.isOrderBFF()!=false)
+    {
+        if(frame_asm_m2.isOrderPreset()==false)
+        {
+            ui->edtM2SetOrder->setText(LIST_ORDER_BFF);
+        }
+        else
+        {
+            ui->edtM2SetOrder->setText(LIST_ORDER_BFF+LIST_ORDER_FORCE);
+        }
+        if((frame_asm_m2.isOrderGuessed()==false)&&(frame_asm_m2.isOrderPreset()==false))
+        {
+            ui->edtM2SetOrder->setEnabled(true);
+        }
+        else
+        {
+            ui->edtM2SetOrder->setEnabled(false);
+        }
+    }
+    else
+    {
+        if(frame_asm_m2.isOrderPreset()==false)
+        {
+            ui->edtM2SetOrder->setText(LIST_ORDER_TFF);
+        }
+        else
+        {
+            ui->edtM2SetOrder->setText(LIST_ORDER_TFF+LIST_ORDER_FORCE);
+        }
+        if((frame_asm_m2.isOrderGuessed()==false)&&(frame_asm_m2.isOrderPreset()==false))
+        {
+            ui->edtM2SetOrder->setEnabled(true);
+        }
+        else
+        {
+            ui->edtM2SetOrder->setEnabled(false);
+        }
+    }
+    // Update data coordinates.
+    bin_data = getBinDescriptorByFrameNo(frame_asm_m2.frame_number);
+    if(bin_data.data_coord.isSourceDoubleWidth()!=false)
+    {
+        bin_data.line_length = bin_data.line_length/2;
+    }
+    ui->spbM2LineLen->setValue(bin_data.line_length);
+    if(bin_data.data_coord.areValid()==false)
+    {
+        ui->spbM2DataCoordStart->setValue(0);
+        ui->spbM2DataCoordStart->setEnabled(false);
+        ui->spbM2DataCoordStop->setValue(0);
+        ui->spbM2DataCoordStop->setEnabled(false);
+    }
+    else
+    {
+        if(bin_data.data_coord.isSourceDoubleWidth()!=false)
+        {
+            bin_data.data_coord.data_start = bin_data.data_coord.data_start/2;
+            bin_data.data_coord.data_stop = bin_data.data_coord.data_stop/2;
+        }
+        ui->spbM2DataCoordStart->setValue(bin_data.data_coord.data_start);
+        ui->spbM2DataCoordStop->setValue((int16_t)bin_data.line_length-bin_data.data_coord.data_stop);
+        if(bin_data.data_coord.not_sure!=false)
+        {
+            ui->spbM2DataCoordStart->setEnabled(false);
+            ui->spbM2DataCoordStop->setEnabled(false);
+        }
+        else
+        {
+            ui->spbM2DataCoordStart->setEnabled(true);
+            ui->spbM2DataCoordStop->setEnabled(true);
+        }
+    }
+
+    // Update video standard.
+    if(frame_asm_m2.video_standard==FrameAsmDescriptor::VID_NTSC)
+    {
+        if(frame_asm_m2.vid_std_preset==false)
+        {
+            ui->edtM2LineCnt->setText(LIST_VIDSTD_NTSC);
+        }
+        else
+        {
+            ui->edtM2LineCnt->setText(LIST_VIDSTD_NTSC+LIST_VIDSTD_FORCE);
+        }
+    }
+    else if(frame_asm_m2.video_standard==FrameAsmDescriptor::VID_PAL)
+    {
+        if(frame_asm_m2.vid_std_preset==false)
+        {
+            ui->edtM2LineCnt->setText(LIST_VIDSTD_PAL);
+        }
+        else
+        {
+            ui->edtM2LineCnt->setText(LIST_VIDSTD_PAL+LIST_VIDSTD_FORCE);
+        }
+    }
+    else
+    {
+        ui->edtM2LineCnt->setText(LIST_VIDSTD_UNK);
+    }
+    if(frame_asm_m2.vid_std_guessed==false)
+    {
+        ui->edtM2LineCnt->setEnabled(true);
+    }
+    else
+    {
+        ui->edtM2LineCnt->setEnabled(false);
+    }
+    // Update frame trim indicators.
+    ui->spbM2OddTopCut->setValue(frame_asm_m2.odd_top_data);
+    ui->spbM2EvenTopCut->setValue(frame_asm_m2.even_top_data);
+    // Update line count indicators.
+    odd_number_str = QString::number(frame_asm_m2.odd_data_lines, 10);
+    even_number_str = QString::number(frame_asm_m2.even_data_lines, 10);
+    odd_number_str += "/"+QString::number(frame_asm_m2.odd_std_lines);
+    even_number_str += "/"+QString::number(frame_asm_m2.even_std_lines);
+    ui->edtM2OddCount->setText(odd_number_str);
+    ui->edtM2EvenCount->setText(even_number_str);
+    // Update frame padding indicators.
+    ui->spbM2InnerPadding->setValue(frame_asm_m2.inner_padding);
+    ui->spbM2OuterPadding->setValue(frame_asm_m2.outer_padding);
+    ui->spbM2InnerPadding->setEnabled(frame_asm_m2.inner_padding_ok);
+    ui->spbM2OuterPadding->setEnabled(frame_asm_m2.outer_padding_ok);
+
+    // Prevent updating fields in the window until [frame_asm_m2] is updated/rewritten.
+    frame_asm_m2.drawn = true;
 }
 
 //------------------------ Receive and retransmit binarized PCM-1 line.
@@ -3019,39 +3347,47 @@ void MainWindow::updateStatsFrameAsm(FrameAsmPCM16x0 new_trim)
 void MainWindow::updateStatsFrameAsm(FrameAsmSTC007 new_trim)
 {
     // Update GUI and video processor with new parameters.
-    frame_asm_stc007 = new_trim;
-    frame_asm_stc007.drawn = false;
+    if(set_pcm_type==LIST_TYPE_STC007)
+    {
+        frame_asm_stc007 = new_trim;
+        frame_asm_stc007.drawn = false;
+    }
+    else
+    {
+        frame_asm_m2 = new_trim;
+        frame_asm_m2.drawn = false;
+    }
 
     // Update reference level.
-    stat_ref_level = frame_asm_stc007.getAvgRef();
+    stat_ref_level = new_trim.getAvgRef();
 
     // Count bad stitches.
-    if(frame_asm_stc007.inner_padding_ok==false)
+    if(new_trim.inner_padding_ok==false)
     {
-        if(frame_asm_stc007.inner_silence==false)
+        if(new_trim.inner_silence==false)
         {
             stat_bad_stitch_cnt++;
         }
     }
-    if(frame_asm_stc007.outer_padding_ok==false)
+    if(new_trim.outer_padding_ok==false)
     {
-        if(frame_asm_stc007.outer_silence==false)
+        if(new_trim.outer_silence==false)
         {
             stat_bad_stitch_cnt++;
         }
     }
     // Count drops and fixes.
-    stat_p_fix_cnt += frame_asm_stc007.blocks_fix_p;
-    stat_q_fix_cnt += frame_asm_stc007.blocks_fix_q;
-    stat_cwd_fix_cnt += frame_asm_stc007.blocks_fix_cwd;
-    stat_drop_block_cnt += frame_asm_stc007.blocks_drop;
-    stat_broken_block_cnt += frame_asm_stc007.blocks_broken_field;
-    stat_drop_sample_cnt += frame_asm_stc007.samples_drop;
+    stat_p_fix_cnt += new_trim.blocks_fix_p;
+    stat_q_fix_cnt += new_trim.blocks_fix_q;
+    stat_cwd_fix_cnt += new_trim.blocks_fix_cwd;
+    stat_drop_block_cnt += new_trim.blocks_drop;
+    stat_broken_block_cnt += new_trim.blocks_broken_field;
+    stat_drop_sample_cnt += new_trim.samples_drop;
 
     // Report video standard information for STC-007/PCM-F1.
-    emit newVideoStandard(frame_asm_stc007.video_standard);
+    emit newVideoStandard(new_trim.video_standard);
     // Report the number of the assembled frame.
-    emit newFrameAssembled(frame_asm_stc007.frame_number);
+    emit newFrameAssembled(new_trim.frame_number);
 }
 
 //------------------------ Update stats with new value for masked samples.

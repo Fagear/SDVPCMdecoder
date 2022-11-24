@@ -511,7 +511,7 @@
             </sizepolicy>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>3</number>
            </property>
            <widget class="QWidget" name="pgPCM1Settings">
             <layout class="QGridLayout" name="gridLayout_3">
@@ -1468,6 +1468,311 @@
              </item>
             </layout>
            </widget>
+           <widget class="QWidget" name="pgM2Settings">
+            <layout class="QGridLayout" name="gridLayout_11">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="4" column="0">
+              <widget class="QLabel" name="lblM2SampleRate">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Частота отсчётов декодируемого аудио (будет записана в заголовок WAV)</string>
+               </property>
+               <property name="statusTip">
+                <string>Частота отсчётов декодируемого аудио (будет записана в заголовок WAV)</string>
+               </property>
+               <property name="text">
+                <string>Частота отсчётов:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="lblM2VidStandard">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Формат входного видео (число строк и частота кадров)</string>
+               </property>
+               <property name="statusTip">
+                <string>Формат входного видео (число строк и частота кадров)</string>
+               </property>
+               <property name="text">
+                <string>Строк в кадре:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="lblM2ECC">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Разрешённые ступени исправления ошибок CRC</string>
+               </property>
+               <property name="statusTip">
+                <string>Разрешённые ступени исправления ошибок CRC</string>
+               </property>
+               <property name="text">
+                <string>Коррекция ошибок:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="lblM2FieldOrder">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>120</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Порядок полей в кадрах исходного видео</string>
+               </property>
+               <property name="statusTip">
+                <string>Порядок полей в кадрах исходного видео</string>
+               </property>
+               <property name="text">
+                <string>Порядок полей:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QComboBox" name="lbxM2ECC">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Разрешённые ступени исправления ошибок CRC</string>
+               </property>
+               <property name="statusTip">
+                <string>Разрешённые ступени исправления ошибок CRC</string>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>полная (P и Q коды)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>частичная (P-код)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>отключена</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QComboBox" name="lbxM2CWD">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Активация дополнительной коррекции Cross-Word Decoding</string>
+               </property>
+               <property name="statusTip">
+                <string>Активация дополнительной коррекции Cross-Word Decoding</string>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>CWD коррекция</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>CWD отключено</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="1" colspan="2">
+              <widget class="QComboBox" name="lbxM2FieldOrder">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Порядок полей в кадрах исходного видео</string>
+               </property>
+               <property name="statusTip">
+                <string>Порядок полей в кадрах исходного видео</string>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>автоматически</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>TFF (сначала нечётное)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>BFF (сначала чётное)</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="0" column="1" colspan="2">
+              <widget class="QComboBox" name="lbxM2VidStandard">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Формат входного видео (число строк и частота кадров)</string>
+               </property>
+               <property name="statusTip">
+                <string>Формат входного видео (число строк и частота кадров)</string>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <item>
+                <property name="text">
+                 <string>автоматически</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>525 (NTSC, 2x245)</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>625 (PAL, 2x294)</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="4" column="1" colspan="2">
+              <widget class="QComboBox" name="lbxM2SampleRate">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>200</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Частота отсчётов декодируемого аудио (будет записана в заголовок WAV)</string>
+               </property>
+               <property name="statusTip">
+                <string>Частота отсчётов декодируемого аудио (будет записана в заголовок WAV)</string>
+               </property>
+               <item>
+                <property name="text">
+                 <string>автоматически</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>44056 Гц</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>44100 Гц</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </widget>
          </item>
          <item row="5" column="0">
@@ -1685,6 +1990,11 @@
              <string>STC-007/Sony PCM-F1</string>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>M²</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item row="4" column="0">
@@ -1761,7 +2071,7 @@
          <enum>QFrame::Plain</enum>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="pgPCM1Frame">
          <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -1798,7 +2108,35 @@
              <property name="spacing">
               <number>3</number>
              </property>
-             <item row="4" column="2">
+             <item row="3" column="1">
+              <widget class="QSpinBox" name="spbPCM1LineStart">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Координата начала строки (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Координата начала строки (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1" colspan="2">
               <widget class="QLabel" name="lblPCM1Odd">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -1814,37 +2152,6 @@
                </property>
                <property name="text">
                 <string>Нечётное поле:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="2">
-              <widget class="QSpinBox" name="spbPCM1OddTopCut">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Начальная строка PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Начальная строка PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
                </property>
               </widget>
              </item>
@@ -1889,37 +2196,6 @@
                </property>
               </widget>
              </item>
-             <item row="7" column="2">
-              <widget class="QSpinBox" name="spbPCM1OddTopPad">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк, которое необходимо вставить выше PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк, которое необходимо вставить выше PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
              <item row="7" column="0">
               <widget class="QLabel" name="lblPCM1TopPadding">
                <property name="sizePolicy">
@@ -1936,37 +2212,6 @@
                </property>
                <property name="text">
                 <string>Дополнение сверху:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="8" column="2">
-              <widget class="QSpinBox" name="spbPCM1OddBottomPad">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк, которое необходимо вставить ниже PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк, которое необходимо вставить ниже PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
                </property>
               </widget>
              </item>
@@ -2027,230 +2272,6 @@
                </property>
               </widget>
              </item>
-             <item row="4" column="3">
-              <widget class="QLabel" name="lblPCM1Even">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Параметры чётного поля видео сигнала</string>
-               </property>
-               <property name="statusTip">
-                <string>Параметры чётного поля видео сигнала</string>
-               </property>
-               <property name="text">
-                <string>Чётное поле:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="3">
-              <widget class="QSpinBox" name="spbPCM1EvenTopCut">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Начальная строка PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Начальная строка PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="3">
-              <widget class="QSpinBox" name="spbPCM1EvenTopPad">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк, которое необходимо вставить выше PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк, которое необходимо вставить выше PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="8" column="3">
-              <widget class="QSpinBox" name="spbPCM1EvenBottomPad">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк, которое необходимо вставить ниже PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк, которое необходимо вставить ниже PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2" colspan="2">
-              <widget class="QLineEdit" name="edtPCM1SetOrder">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Установленный порядок полей в кадре</string>
-               </property>
-               <property name="statusTip">
-                <string>Установленный порядок полей в кадре</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2" colspan="2">
-              <widget class="QLineEdit" name="edtPCM1FrameNo">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
-               </property>
-               <property name="statusTip">
-                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="2">
-              <widget class="QLineEdit" name="edtPCM1OddCount">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="3">
-              <widget class="QLineEdit" name="edtPCM1EvenCount">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
              <item row="3" column="0">
               <widget class="QLabel" name="lblPCM1DataCoord">
                <property name="sizePolicy">
@@ -2282,10 +2303,10 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
+                <string>Усреднённое по кадру смещение координаты начала данных (в пикселях)</string>
                </property>
                <property name="statusTip">
-                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
+                <string>Усреднённое по кадру смещение координаты начала данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -2313,10 +2334,10 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
+                <string>Усреднённое по кадру смещение координаты конца данных (в пикселях)</string>
                </property>
                <property name="statusTip">
-                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
+                <string>Усреднённое по кадру смещение координаты конца данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -2329,6 +2350,354 @@
                </property>
                <property name="maximum">
                 <number>32767</number>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="4">
+              <widget class="QSpinBox" name="spbPCM1LineLen">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Координата конца строки (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Координата конца строки (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>100</number>
+               </property>
+               <property name="maximum">
+                <number>65535</number>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1" colspan="4">
+              <widget class="QLineEdit" name="edtPCM1SetOrder">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="statusTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1" colspan="4">
+              <widget class="QLineEdit" name="edtPCM1FrameNo">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="statusTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="3" colspan="2">
+              <widget class="QLabel" name="lblPCM1Even">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Параметры чётного поля видео сигнала</string>
+               </property>
+               <property name="statusTip">
+                <string>Параметры чётного поля видео сигнала</string>
+               </property>
+               <property name="text">
+                <string>Чётное поле:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="3" colspan="2">
+              <widget class="QSpinBox" name="spbPCM1EvenTopCut">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Начальная строка PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Начальная строка PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="3" colspan="2">
+              <widget class="QLineEdit" name="edtPCM1EvenCount">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="3" colspan="2">
+              <widget class="QSpinBox" name="spbPCM1EvenTopPad">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, которое необходимо вставить выше PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, которое необходимо вставить выше PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="3" colspan="2">
+              <widget class="QSpinBox" name="spbPCM1EvenBottomPad">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, которое необходимо вставить ниже PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, которое необходимо вставить ниже PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1" colspan="2">
+              <widget class="QSpinBox" name="spbPCM1OddTopCut">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Начальная строка PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Начальная строка PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1" colspan="2">
+              <widget class="QLineEdit" name="edtPCM1OddCount">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="1" colspan="2">
+              <widget class="QSpinBox" name="spbPCM1OddTopPad">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, которое необходимо вставить выше PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, которое необходимо вставить выше PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="1" colspan="2">
+              <widget class="QSpinBox" name="spbPCM1OddBottomPad">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, которое необходимо вставить ниже PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, которое необходимо вставить ниже PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
                </property>
               </widget>
              </item>
@@ -2372,6 +2741,96 @@
              <property name="spacing">
               <number>3</number>
              </property>
+             <item row="3" column="2">
+              <widget class="QSpinBox" name="spbPCM16x0DataCoordStart">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённое по кадру смещение координаты начала данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённое по кадру смещение координаты начала данных (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>-32768</number>
+               </property>
+               <property name="maximum">
+                <number>32767</number>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="3">
+              <widget class="QSpinBox" name="spbPCM16x0DataCoordStop">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённое по кадру смещение координаты конца данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённое по кадру смещение координаты конца данных (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>-32768</number>
+               </property>
+               <property name="maximum">
+                <number>32767</number>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QSpinBox" name="spbPCM16x0LineStart">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Координата начала строки (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Координата начала строки (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
              <item row="10" column="0">
               <widget class="QLabel" name="lblPCM16x0BottomPadding">
                <property name="sizePolicy">
@@ -2429,134 +2888,6 @@
                </property>
               </widget>
              </item>
-             <item row="4" column="1" colspan="2">
-              <widget class="QLineEdit" name="edtPCM16x0DataFormat">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Формат данных PCM-1630</string>
-               </property>
-               <property name="statusTip">
-                <string>Формат данных PCM-1630</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="1">
-              <widget class="QLabel" name="lblPCM16x0Odd">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Параметры нечётного поля видео сигнала</string>
-               </property>
-               <property name="statusTip">
-                <string>Параметры нечётного поля видео сигнала</string>
-               </property>
-               <property name="text">
-                <string>Нечётное поле:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="2">
-              <widget class="QLabel" name="lblPCM16x0Even">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Параметры чётного поля видео сигнала</string>
-               </property>
-               <property name="statusTip">
-                <string>Параметры чётного поля видео сигнала</string>
-               </property>
-               <property name="text">
-                <string>Чётное поле:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="1">
-              <widget class="QSpinBox" name="spbPCM16x0OddTopCut">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Начальная строка PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Начальная строка PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="2">
-              <widget class="QSpinBox" name="spbPCM16x0EvenTopCut">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Начальная строка PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Начальная строка PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
              <item row="6" column="0">
               <widget class="QLabel" name="lblPCM16x0TopCut">
                <property name="sizePolicy">
@@ -2598,158 +2929,6 @@
                </property>
               </widget>
              </item>
-             <item row="9" column="1">
-              <widget class="QSpinBox" name="spbPCM16x0OddTopPad">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк, которое необходимо вставить выше PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк, которое необходимо вставить выше PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="2">
-              <widget class="QSpinBox" name="spbPCM16x0EvenTopPad">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк, которое необходимо вставить выше PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк, которое необходимо вставить выше PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="1">
-              <widget class="QSpinBox" name="spbPCM16x0OddBottomPad">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк, которое необходимо вставить ниже PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк, которое необходимо вставить ниже PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="2">
-              <widget class="QSpinBox" name="spbPCM16x0EvenBottomPad">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк, которое необходимо вставить ниже PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк, которое необходимо вставить ниже PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1" colspan="2">
-              <widget class="QLineEdit" name="edtPCM16x0SetOrder">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Установленный порядок полей в кадре</string>
-               </property>
-               <property name="statusTip">
-                <string>Установленный порядок полей в кадре</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
              <item row="0" column="0">
               <widget class="QLabel" name="lblPCM16x0FrameNo">
                <property name="sizePolicy">
@@ -2766,90 +2945,6 @@
                </property>
                <property name="text">
                 <string>Номер кадра:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1" colspan="2">
-              <widget class="QLineEdit" name="edtPCM16x0FrameNo">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
-               </property>
-               <property name="statusTip">
-                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="1">
-              <widget class="QLineEdit" name="edtPCM16x0OddCount">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="2">
-              <widget class="QLineEdit" name="edtPCM16x0EvenCount">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
                </property>
               </widget>
              </item>
@@ -2891,8 +2986,8 @@
                </property>
               </widget>
              </item>
-             <item row="3" column="1">
-              <widget class="QSpinBox" name="spbPCM16x0DataCoordStart">
+             <item row="3" column="4">
+              <widget class="QSpinBox" name="spbPCM16x0LineLen">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                  <horstretch>0</horstretch>
@@ -2903,10 +2998,10 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
+                <string>Координата конца строки (в пикселях)</string>
                </property>
                <property name="statusTip">
-                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
+                <string>Координата конца строки (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -2915,15 +3010,140 @@
                 <enum>QAbstractSpinBox::NoButtons</enum>
                </property>
                <property name="minimum">
-                <number>-32768</number>
+                <number>100</number>
                </property>
                <property name="maximum">
-                <number>32767</number>
+                <number>65535</number>
                </property>
               </widget>
              </item>
-             <item row="3" column="2">
-              <widget class="QSpinBox" name="spbPCM16x0DataCoordStop">
+             <item row="0" column="1" colspan="4">
+              <widget class="QLineEdit" name="edtPCM16x0FrameNo">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="statusTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1" colspan="4">
+              <widget class="QLineEdit" name="edtPCM16x0SetOrder">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="statusTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1" colspan="4">
+              <widget class="QLineEdit" name="edtPCM16x0DataFormat">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Формат данных PCM-1630</string>
+               </property>
+               <property name="statusTip">
+                <string>Формат данных PCM-1630</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1" colspan="2">
+              <widget class="QLabel" name="lblPCM16x0Odd">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Параметры нечётного поля видео сигнала</string>
+               </property>
+               <property name="statusTip">
+                <string>Параметры нечётного поля видео сигнала</string>
+               </property>
+               <property name="text">
+                <string>Нечётное поле:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="3" colspan="2">
+              <widget class="QLabel" name="lblPCM16x0Even">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Параметры чётного поля видео сигнала</string>
+               </property>
+               <property name="statusTip">
+                <string>Параметры чётного поля видео сигнала</string>
+               </property>
+               <property name="text">
+                <string>Чётное поле:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="3" colspan="2">
+              <widget class="QSpinBox" name="spbPCM16x0EvenTopCut">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                  <horstretch>0</horstretch>
@@ -2934,10 +3154,10 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
+                <string>Начальная строка PCM-данных в чётном поле</string>
                </property>
                <property name="statusTip">
-                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
+                <string>Начальная строка PCM-данных в чётном поле</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -2945,11 +3165,219 @@
                <property name="buttonSymbols">
                 <enum>QAbstractSpinBox::NoButtons</enum>
                </property>
-               <property name="minimum">
-                <number>-32768</number>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="3" colspan="2">
+              <widget class="QLineEdit" name="edtPCM16x0EvenCount">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="3" colspan="2">
+              <widget class="QSpinBox" name="spbPCM16x0EvenTopPad">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, которое необходимо вставить выше PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, которое необходимо вставить выше PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
                </property>
                <property name="maximum">
-                <number>32767</number>
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="3" colspan="2">
+              <widget class="QSpinBox" name="spbPCM16x0EvenBottomPad">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, которое необходимо вставить ниже PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, которое необходимо вставить ниже PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="1" colspan="2">
+              <widget class="QSpinBox" name="spbPCM16x0OddBottomPad">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, которое необходимо вставить ниже PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, которое необходимо вставить ниже PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="1" colspan="2">
+              <widget class="QSpinBox" name="spbPCM16x0OddTopPad">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, которое необходимо вставить выше PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, которое необходимо вставить выше PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="1" colspan="2">
+              <widget class="QLineEdit" name="edtPCM16x0OddCount">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1" colspan="2">
+              <widget class="QSpinBox" name="spbPCM16x0OddTopCut">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Начальная строка PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Начальная строка PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
                </property>
               </widget>
              </item>
@@ -3002,87 +3430,6 @@
              <property name="spacing">
               <number>3</number>
              </property>
-             <item row="9" column="2">
-              <widget class="QSpinBox" name="spbSTC007OddTopCut">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Начальная строка PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Начальная строка PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="3">
-              <widget class="QLabel" name="lblSTC007Even">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>Параметры чётного поля видео сигнала</string>
-               </property>
-               <property name="statusTip">
-                <string>Параметры чётного поля видео сигнала</string>
-               </property>
-               <property name="text">
-                <string>Чётное поле:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="3">
-              <widget class="QSpinBox" name="spbSTC007EvenTopCut">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Начальная строка PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Начальная строка PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
              <item row="2" column="1">
               <widget class="QLabel" name="lblSTC007FrameFieldOrder">
                <property name="sizePolicy">
@@ -3099,34 +3446,6 @@
                </property>
                <property name="text">
                 <string>Порядок полей:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="2" colspan="2">
-              <widget class="QLineEdit" name="edtSTC007SetOrder">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Установленный порядок полей в кадре</string>
-               </property>
-               <property name="statusTip">
-                <string>Установленный порядок полей в кадре</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
                </property>
               </widget>
              </item>
@@ -3149,90 +3468,6 @@
                </property>
               </widget>
              </item>
-             <item row="0" column="2" colspan="2">
-              <widget class="QLineEdit" name="edtSTC007FrameNo">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
-               </property>
-               <property name="statusTip">
-                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="2">
-              <widget class="QLineEdit" name="edtSTC007OddCount">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк PCM-данных в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк PCM-данных в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="3">
-              <widget class="QLineEdit" name="edtSTC007EvenCount">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Количество строк PCM-данных в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Количество строк PCM-данных в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
              <item row="3" column="1">
               <widget class="QLabel" name="lblSTC007DataCoord">
                <property name="sizePolicy">
@@ -3252,7 +3487,7 @@
                </property>
               </widget>
              </item>
-             <item row="3" column="2">
+             <item row="3" column="3">
               <widget class="QSpinBox" name="spbSTC007DataCoordStart">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
@@ -3264,10 +3499,10 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
+                <string>Усреднённое по кадру смещение координаты начала данных (в пикселях)</string>
                </property>
                <property name="statusTip">
-                <string>Усреднённые по кадру координаты начала данных (в пикселях)</string>
+                <string>Усреднённое по кадру смещение координаты начала данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -3283,7 +3518,7 @@
                </property>
               </widget>
              </item>
-             <item row="3" column="3">
+             <item row="3" column="4">
               <widget class="QSpinBox" name="spbSTC007DataCoordStop">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
@@ -3295,10 +3530,10 @@
                 <enum>Qt::NoFocus</enum>
                </property>
                <property name="toolTip">
-                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
+                <string>Усреднённое по кадру смещение координаты конца данных (в пикселях)</string>
                </property>
                <property name="statusTip">
-                <string>Усреднённые по кадру координаты конца данных (в пикселях)</string>
+                <string>Усреднённое по кадру смещение координаты конца данных (в пикселях)</string>
                </property>
                <property name="readOnly">
                 <bool>true</bool>
@@ -3311,34 +3546,6 @@
                </property>
                <property name="maximum">
                 <number>32767</number>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="2" colspan="2">
-              <widget class="QLineEdit" name="edtSTC007LineCnt">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Установленный стандарт исходного видео</string>
-               </property>
-               <property name="statusTip">
-                <string>Установленный стандарт исходного видео</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
                </property>
               </widget>
              </item>
@@ -3380,93 +3587,6 @@
                </property>
               </widget>
              </item>
-             <item row="11" column="3">
-              <widget class="QLineEdit" name="edtSTC007EvenAudRes">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Разрешение аудио в чётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Разрешение аудио в чётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="2">
-              <widget class="QSpinBox" name="spbSTC007InnerPadding">
-               <property name="enabled">
-                <bool>true</bool>
-               </property>
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Вставка строк между PCM-данными из полей одного кадра</string>
-               </property>
-               <property name="statusTip">
-                <string>Вставка строк между PCM-данными из полей одного кадра</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::NoButtons</enum>
-               </property>
-               <property name="maximum">
-                <number>2160</number>
-               </property>
-              </widget>
-             </item>
-             <item row="11" column="2">
-              <widget class="QLineEdit" name="edtSTC007OddAudRes">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="mouseTracking">
-                <bool>false</bool>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::NoFocus</enum>
-               </property>
-               <property name="acceptDrops">
-                <bool>false</bool>
-               </property>
-               <property name="toolTip">
-                <string>Разрешение аудио в нечётном поле</string>
-               </property>
-               <property name="statusTip">
-                <string>Разрешение аудио в нечётном поле</string>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
              <item row="9" column="1">
               <widget class="QLabel" name="lblSTC007TopCut">
                <property name="sizePolicy">
@@ -3486,19 +3606,6 @@
                </property>
                <property name="text">
                 <string>Начальная строка:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="12" column="3">
-              <widget class="QLabel" name="lblSTC007Outer">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Между кадрами:</string>
                </property>
               </widget>
              </item>
@@ -3540,10 +3647,153 @@
                </property>
               </widget>
              </item>
-             <item row="7" column="2">
+             <item row="3" column="2">
+              <widget class="QSpinBox" name="spbSTC007LineStart">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Координата начала строки (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Координата начала строки (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="5">
+              <widget class="QSpinBox" name="spbSTC007LineLen">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Координата конца строки (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Координата конца строки (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>100</number>
+               </property>
+               <property name="maximum">
+                <number>65535</number>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2" colspan="4">
+              <widget class="QLineEdit" name="edtSTC007FrameNo">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="statusTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2" colspan="4">
+              <widget class="QLineEdit" name="edtSTC007SetOrder">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="statusTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="2" colspan="4">
+              <widget class="QLineEdit" name="edtSTC007LineCnt">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Установленный стандарт исходного видео</string>
+               </property>
+               <property name="statusTip">
+                <string>Установленный стандарт исходного видео</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="2" colspan="2">
               <widget class="QLabel" name="lblSTC007Odd">
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
@@ -3559,8 +3809,157 @@
                </property>
               </widget>
              </item>
-             <item row="12" column="2">
-              <widget class="QLabel" name="lblSTC007Inner">
+             <item row="7" column="4" colspan="2">
+              <widget class="QLabel" name="lblSTC007Even">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Параметры чётного поля видео сигнала</string>
+               </property>
+               <property name="statusTip">
+                <string>Параметры чётного поля видео сигнала</string>
+               </property>
+               <property name="text">
+                <string>Чётное поле:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="4" colspan="2">
+              <widget class="QLabel" name="lblDBGEven">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
+                 <horstretch>25</horstretch>
+                 <verstretch>20</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>25</width>
+                 <height>20</height>
+                </size>
+               </property>
+               <property name="toolTip">
+                <string>Индикация качества данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Индикация качества данных в чётном поле</string>
+               </property>
+               <property name="autoFillBackground">
+                <bool>true</bool>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="frameShadow">
+                <enum>QFrame::Plain</enum>
+               </property>
+               <property name="lineWidth">
+                <number>2</number>
+               </property>
+               <property name="midLineWidth">
+                <number>2</number>
+               </property>
+               <property name="textFormat">
+                <enum>Qt::PlainText</enum>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="4" colspan="2">
+              <widget class="QSpinBox" name="spbSTC007EvenTopCut">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Начальная строка PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Начальная строка PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="4" colspan="2">
+              <widget class="QLineEdit" name="edtSTC007EvenCount">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="4" colspan="2">
+              <widget class="QLineEdit" name="edtSTC007EvenAudRes">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Разрешение аудио в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Разрешение аудио в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="12" column="4" colspan="2">
+              <widget class="QLabel" name="lblSTC007Outer">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
                  <horstretch>0</horstretch>
@@ -3568,11 +3967,11 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>Внутри кадра:</string>
+                <string>Между кадрами:</string>
                </property>
               </widget>
              </item>
-             <item row="13" column="3">
+             <item row="13" column="4" colspan="2">
               <widget class="QSpinBox" name="spbSTC007OuterPadding">
                <property name="enabled">
                 <bool>true</bool>
@@ -3606,7 +4005,7 @@
                </property>
               </widget>
              </item>
-             <item row="8" column="2">
+             <item row="8" column="2" colspan="2">
               <widget class="QLabel" name="lblDBGOdd">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
@@ -3619,6 +4018,12 @@
                  <width>25</width>
                  <height>20</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>Индикация качества данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Индикация качества данных в нечётном поле</string>
                </property>
                <property name="autoFillBackground">
                 <bool>true</bool>
@@ -3643,40 +4048,771 @@
                </property>
               </widget>
              </item>
-             <item row="8" column="3">
-              <widget class="QLabel" name="lblDBGEven">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="MinimumExpanding" vsizetype="Maximum">
-                 <horstretch>25</horstretch>
-                 <verstretch>20</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>25</width>
-                 <height>20</height>
-                </size>
-               </property>
-               <property name="autoFillBackground">
+             <item row="9" column="2" colspan="2">
+              <widget class="QSpinBox" name="spbSTC007OddTopCut">
+               <property name="enabled">
                 <bool>true</bool>
                </property>
-               <property name="frameShape">
-                <enum>QFrame::StyledPanel</enum>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
                </property>
-               <property name="frameShadow">
-                <enum>QFrame::Plain</enum>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
                </property>
-               <property name="lineWidth">
-                <number>2</number>
+               <property name="toolTip">
+                <string>Начальная строка PCM-данных в нечётном поле</string>
                </property>
-               <property name="midLineWidth">
-                <number>2</number>
+               <property name="statusTip">
+                <string>Начальная строка PCM-данных в нечётном поле</string>
                </property>
-               <property name="textFormat">
-                <enum>Qt::PlainText</enum>
+               <property name="readOnly">
+                <bool>true</bool>
                </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="2" colspan="2">
+              <widget class="QLineEdit" name="edtSTC007OddCount">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="2" colspan="2">
+              <widget class="QLineEdit" name="edtSTC007OddAudRes">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Разрешение аудио в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Разрешение аудио в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="12" column="2" colspan="2">
+              <widget class="QLabel" name="lblSTC007Inner">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Внутри кадра:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="2" colspan="2">
+              <widget class="QSpinBox" name="spbSTC007InnerPadding">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Вставка строк между PCM-данными из полей одного кадра</string>
+               </property>
+               <property name="statusTip">
+                <string>Вставка строк между PCM-данными из полей одного кадра</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="pgM2Frame">
+         <layout class="QVBoxLayout" name="gridLayout_12">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QGroupBox" name="gbxM2FrameSettings">
+            <property name="enabled">
+             <bool>true</bool>
+            </property>
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Параметры сборки кадра M²</string>
+            </property>
+            <layout class="QGridLayout" name="gridLayoutM">
+             <property name="leftMargin">
+              <number>6</number>
+             </property>
+             <property name="topMargin">
+              <number>6</number>
+             </property>
+             <property name="rightMargin">
+              <number>6</number>
+             </property>
+             <property name="bottomMargin">
+              <number>6</number>
+             </property>
+             <property name="spacing">
+              <number>3</number>
+             </property>
+             <item row="2" column="1">
+              <widget class="QLabel" name="lblM2FrameFieldOrder">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="statusTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="text">
+                <string>Порядок полей:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="lblM2FrameNo">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="statusTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="text">
+                <string>Номер кадра:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLabel" name="lblM2DataCoord">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённые по кадру координаты данных по горизонтали (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённые по кадру координаты данных по горизонтали (в пикселях)</string>
+               </property>
+               <property name="text">
+                <string>Координаты:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="3">
+              <widget class="QSpinBox" name="spbM2DataCoordStart">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённое по кадру смещение координаты начала данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённое по кадру смещение координаты начала данных (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>-32768</number>
+               </property>
+               <property name="maximum">
+                <number>32767</number>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="4">
+              <widget class="QSpinBox" name="spbM2DataCoordStop">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Усреднённое по кадру смещение координаты конца данных (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Усреднённое по кадру смещение координаты конца данных (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>-32768</number>
+               </property>
+               <property name="maximum">
+                <number>32767</number>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <widget class="QLabel" name="lblM2VideoStd">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Установленный стандарт исходного видео</string>
+               </property>
+               <property name="statusTip">
+                <string>Установленный стандарт исходного видео</string>
+               </property>
+               <property name="text">
+                <string>Стандарт видео:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="1">
+              <widget class="QLabel" name="lblM2TopCut">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Номер строки, с которой начинаются PCM-данные</string>
+               </property>
+               <property name="statusTip">
+                <string>Номер строки, с которой начинаются PCM-данные</string>
+               </property>
+               <property name="layoutDirection">
+                <enum>Qt::LeftToRight</enum>
+               </property>
+               <property name="text">
+                <string>Начальная строка:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="1">
+              <widget class="QLabel" name="lblM2LineCount">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, в которых могут быть PCM-данные</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, в которых могут быть PCM-данные</string>
+               </property>
+               <property name="text">
+                <string>Строк данных:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="1">
+              <widget class="QLabel" name="lblM2LinePadding">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк, которое необходимо вставить между полями</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк, которое необходимо вставить между PCM-данными соседних полей для корректной сборки кадра</string>
+               </property>
+               <property name="text">
+                <string>Дополнение строк:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="5">
+              <widget class="QSpinBox" name="spbM2LineLen">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Координата конца строки (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Координата конца строки (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="minimum">
+                <number>100</number>
+               </property>
+               <property name="maximum">
+                <number>65535</number>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2" colspan="4">
+              <widget class="QLineEdit" name="edtM2FrameNo">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="statusTip">
+                <string>Номер кадра исходного видео, для которого применяются параметры сборки</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2" colspan="4">
+              <widget class="QLineEdit" name="edtM2SetOrder">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="statusTip">
+                <string>Установленный порядок полей в кадре</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="2" colspan="2">
+              <widget class="QLabel" name="lblM2Odd">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Параметры нечётного поля видео сигнала</string>
+               </property>
+               <property name="statusTip">
+                <string>Параметры нечётного поля видео сигнала</string>
+               </property>
+               <property name="text">
+                <string>Нечётное поле:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="4" colspan="2">
+              <widget class="QLabel" name="lblM2Even">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Параметры чётного поля видео сигнала</string>
+               </property>
+               <property name="statusTip">
+                <string>Параметры чётного поля видео сигнала</string>
+               </property>
+               <property name="text">
+                <string>Чётное поле:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="4" colspan="2">
+              <widget class="QSpinBox" name="spbM2EvenTopCut">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Начальная строка PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Начальная строка PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="4" colspan="2">
+              <widget class="QLineEdit" name="edtM2EvenCount">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк PCM-данных в чётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк PCM-данных в чётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="4" colspan="2">
+              <widget class="QLabel" name="lblM2Outer">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Между кадрами:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="4" colspan="2">
+              <widget class="QSpinBox" name="spbM2OuterPadding">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Вставка строк между PCM-данными из смежных полей соседних кадров</string>
+               </property>
+               <property name="statusTip">
+                <string>Вставка строк между PCM-данными из смежных полей соседних кадров</string>
+               </property>
+               <property name="frame">
+                <bool>true</bool>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="2" colspan="2">
+              <widget class="QLineEdit" name="edtM2OddCount">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Количество строк PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Количество строк PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="2" colspan="2">
+              <widget class="QLabel" name="lblM2Inner">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Внутри кадра:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="2" colspan="2">
+              <widget class="QSpinBox" name="spbM2InnerPadding">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Вставка строк между PCM-данными из полей одного кадра</string>
+               </property>
+               <property name="statusTip">
+                <string>Вставка строк между PCM-данными из полей одного кадра</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QSpinBox" name="spbM2LineStart">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Координата начала строки (в пикселях)</string>
+               </property>
+               <property name="statusTip">
+                <string>Координата начала строки (в пикселях)</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>0</number>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="2" colspan="4">
+              <widget class="QLineEdit" name="edtM2LineCnt">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="mouseTracking">
+                <bool>false</bool>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="acceptDrops">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>Установленный стандарт исходного видео</string>
+               </property>
+               <property name="statusTip">
+                <string>Установленный стандарт исходного видео</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="2" colspan="2">
+              <widget class="QSpinBox" name="spbM2OddTopCut">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="focusPolicy">
+                <enum>Qt::NoFocus</enum>
+               </property>
+               <property name="toolTip">
+                <string>Начальная строка PCM-данных в нечётном поле</string>
+               </property>
+               <property name="statusTip">
+                <string>Начальная строка PCM-данных в нечётном поле</string>
+               </property>
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+               <property name="buttonSymbols">
+                <enum>QAbstractSpinBox::NoButtons</enum>
+               </property>
+               <property name="maximum">
+                <number>2160</number>
                </property>
               </widget>
              </item>

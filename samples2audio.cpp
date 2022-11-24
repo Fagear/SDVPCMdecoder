@@ -92,6 +92,12 @@ void SamplesToAudio::setSampleRate(uint16_t in_rate)
 //------------------------ Setup for new stream.
 void SamplesToAudio::prepareNewFile()
 {
+#ifdef TA_EN_DBG_OUT
+    if((log_level&LOG_WAVE_LIVE)!=0)
+    {
+        qInfo()<<"[TA] Opening output...";
+    }
+#endif
     // Close old output (if exists).
     deleteTimer();
     deleteAudioInterface();
@@ -227,8 +233,18 @@ void SamplesToAudio::saveAudio(PCMSamplePair in_audio)
 //------------------------ Output all data from the buffer into sound device.
 void SamplesToAudio::purgeBuffer()
 {
+#ifdef TA_EN_DBG_OUT
+
+    if((log_level&LOG_WAVE_LIVE)!=0)
+    {
+        if(audio.empty()==false)
+        {
+            qInfo()<<"[TA] Purging buffer...";
+        }
+    }
+#endif
     // Check if there is anything to dump.
-    if(audio.empty()==false)
+    while(audio.empty()==false)
     {
         if((audio_if!=NULL)&&(audio_if->state()!=QAudio::StoppedState))
         {
@@ -282,6 +298,10 @@ void SamplesToAudio::purgeBuffer()
                 }
                 chunks--;
             }
+        }
+        else
+        {
+            break;
         }
     }
 }

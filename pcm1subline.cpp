@@ -101,8 +101,7 @@ void PCM1SubLine::setSilent()
 {
     for(uint8_t i=WORD_L;i<=WORD_R;i++)
     {
-        words[i] = 0;
-        words[i] |= PCM1Line::BIT_RANGE_POS;
+        words[i] = PCM1Line::BIT_RANGE_POS;
     }
 }
 

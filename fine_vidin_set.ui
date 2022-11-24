@@ -490,8 +490,8 @@
   <tabstop>spbCropBottom</tabstop>
   <tabstop>lbxColorUse</tabstop>
   <tabstop>cbxDrawDeint</tabstop>
-  <tabstop>btnClose</tabstop>
   <tabstop>btnSave</tabstop>
+  <tabstop>btnClose</tabstop>
   <tabstop>btnRevert</tabstop>
   <tabstop>btnDefaults</tabstop>
  </tabstops>

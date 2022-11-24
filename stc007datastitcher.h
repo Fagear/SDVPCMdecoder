@@ -35,11 +35,8 @@
     //#define DI_LOG_AUDRES_VERBOSE           1       // Produce verbose output for audio resolution detection.
 #endif
 
-// TODO: add time/cue parsing and storing
 // TODO: try to pick best padding for failed stitches by minimum BROKEN blocks
 // TODO: don't mask first 32 lines in the failed stitch
-// TODO: tune up limits for 16-bit stats stitching
-// TODO: fix CWD
 class STC007DataStitcher : public QObject
 {
     Q_OBJECT
@@ -142,7 +139,6 @@ private:
     FrameAsmSTC007 frasm_f1;                    // Frame assembling for the current frame (Frame A).
     FrameAsmSTC007 frasm_f2;                    // Frame assembling for the next frame (Frame B).
     QElapsedTimer file_time;                    // Timer for measuring file processing time.
-    std::ofstream bin_file_hdl;                 // Handler for RAW output.
     std::deque<STC007Line> *in_lines;           // Input PCM line quene (shared).
     std::deque<PCMSamplePair> *out_samples;     // Output sample pairs queue (shared).
     QMutex *mtx_lines;                          // Mutex for input queue.
@@ -173,11 +169,10 @@ private:
     bool file_start;                            // Detected start of a new file, filename saved to [file_name].
     bool file_end;                              // Detected end of a file.
     bool ignore_CRC;                            // Ignore CRC from video lines or not (and force parity check).
-    bool dump_raw_bin;                          // Enable dumping of input binary data to a file.
-    bool video_standard_ext;                    // Video standard is preset externally.
     bool enable_P_code;                         // Enable P-code error correction or not.
     bool enable_Q_code;                         // Enable Q-code error correction or not.
     bool enable_CWD;                            // Enable CWD (Cross-Word Decoding) error correction or not.
+    bool mode_m2;                               // Set new M2 mode and disable STC-007/PCM-F1 output.
     bool fix_cut_above;                         // Add artificial line to begining of the frame for frames with invalid seams.
     bool mask_seams;                            // Mark data blocks on incorrect field seams as invalid (cleans most of clicks and pops on bad quality video).
     bool finish_work;                           // Flag to break executing loop.
@@ -192,8 +187,6 @@ private:
     bool waitForTwoFrames();
     void fillUntilTwoFrames();
     void findFramesTrim();
-    void releaseBinFile();
-    void linesToBin();
     void splitFramesToFields();
     uint8_t getFieldResolution(std::vector<STC007Line> *field = NULL, uint16_t f_size = 0);
     uint8_t getResolutionModeForSeam(uint8_t in_res_field1, uint8_t in_res_field2);
@@ -215,6 +208,7 @@ private:
     void detectAudioResolution();
     void detectVideoStandard();
     uint8_t findFieldStitching();
+    uint8_t getAssemblyFieldOrder();
     uint16_t getFirstFieldLineNum(uint8_t in_order);
     uint16_t getSecondFieldLineNum(uint8_t in_order);
     uint16_t addLinesFromField(std::vector<STC007Line> *field_buf, uint16_t ind_start, uint16_t count, uint16_t *last_line_num = NULL);
@@ -229,6 +223,7 @@ private:
     void prescanFrame();
     void setBlockSampleRate(STC007DataBlock *in_block);
     void outputFileStart();
+    void outputSamplePair(STC007DataBlock *in_block, uint8_t idx_left, uint8_t idx_right);
     void outputDataBlock(STC007DataBlock *in_block = NULL);
     void outputFileStop();
     void performDeinterleave();
@@ -240,6 +235,7 @@ public slots:
     void setPCorrection(bool);              // Enable/disable P-code error correction.
     void setQCorrection(bool);              // Enable/disable Q-code error correction.
     void setCWDCorrection(bool);            // Enable/disable CWD error correction.
+    void setM2SampleFormat(bool);           // Enable/disable M2 sample format (13/16-bits in 14-bit words).
     void setResolutionPreset(uint8_t);      // Preset audio resolution.
     void setSampleRatePreset(uint16_t);     // Preset audio sample rate.
     void setFineMaxUnch14(uint8_t);         // Set fine settings: maximum unchecked data blocks for a seam in 14-bit mode.

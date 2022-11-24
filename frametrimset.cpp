@@ -180,6 +180,7 @@ FrameBinDescriptor::FrameBinDescriptor()
 FrameBinDescriptor::FrameBinDescriptor(const FrameBinDescriptor &in_object)
 {
     frame_id = in_object.frame_id;
+    line_length = in_object.line_length;
     lines_odd = in_object.lines_odd;
     lines_even = in_object.lines_even;
     lines_pcm_odd = in_object.lines_pcm_odd;
@@ -198,6 +199,7 @@ FrameBinDescriptor& FrameBinDescriptor::operator= (const FrameBinDescriptor &in_
     if(this==&in_object) return *this;
 
     frame_id = in_object.frame_id;
+    line_length = in_object.line_length;
     lines_odd = in_object.lines_odd;
     lines_even = in_object.lines_even;
     lines_pcm_odd = in_object.lines_pcm_odd;
@@ -217,7 +219,7 @@ FrameBinDescriptor& FrameBinDescriptor::operator= (const FrameBinDescriptor &in_
 void FrameBinDescriptor::clear()
 {
     frame_id = 0;
-    lines_odd = lines_even = lines_pcm_odd = lines_pcm_even = lines_bad_odd = lines_bad_even = lines_dup_odd = lines_dup_even = 0;
+    line_length = lines_odd = lines_even = lines_pcm_odd = lines_pcm_even = lines_bad_odd = lines_bad_even = lines_dup_odd = lines_dup_even = 0;
     data_coord.clear();
     time_odd = time_even = 0;
 }

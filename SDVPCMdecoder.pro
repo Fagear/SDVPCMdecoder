@@ -71,7 +71,8 @@ SOURCES += main.cpp\
     samples2audio.cpp \
     samples2wav.cpp \
     capt_sel.cpp \
-    ffmpegwrapper.cpp
+    ffmpegwrapper.cpp \
+    arvidline.cpp
 
 HEADERS  += mainwindow.h \
     videoline.h \
@@ -110,7 +111,8 @@ HEADERS  += mainwindow.h \
     samples2wav.h \
     capt_sel.h \
     ffmpegwrapper.h \
-    lookup.h
+    lookup.h \
+    arvidline.h
 
 FORMS    += mainwindow.ui \
     fine_bin_set.ui \

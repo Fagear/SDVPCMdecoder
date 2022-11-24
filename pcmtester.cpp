@@ -391,6 +391,7 @@ void PCMTester::testCRCC()
         emit testOk();
     }
 
+    testHamming();
     emit finished();
 }
 
@@ -420,4 +421,91 @@ void PCMTester::testDataBlock()
 
     qInfo()<<"[TST] ECC test PASSED.";
     emit finished();
+}
+
+//------------------------
+void PCMTester::testHamming()
+{
+    uint8_t idx, cnt, summ;
+    uint16_t codeword, masked;
+
+    //codeword = 0b010001001011000;
+    codeword = 0b010101010101010;
+
+    masked = codeword&0b0101010101010100;
+    qDebug()<<"Mask c1:"<<"0x"+QString::number(masked, 16);
+    cnt = summ = 0;
+    for(idx=0;idx<16;idx++)
+    {
+        if((masked&(1<<0))!=0)
+        {
+            cnt++;
+        }
+        masked = (masked>>1);
+    }
+    qDebug()<<"Bit count:"<<cnt;
+    masked = codeword&0b0000000000000001;
+    if(masked!=0)
+    {
+        summ = 1;
+    }
+    qDebug()<<"C1 bit:"<<summ;
+
+    masked = codeword&0b0110011001100100;
+    qDebug()<<"Mask c2:"<<"0x"+QString::number(masked, 16);
+    cnt = summ = 0;
+    for(idx=0;idx<16;idx++)
+    {
+        if((masked&(1<<0))!=0)
+        {
+            cnt++;
+        }
+        masked = (masked>>1);
+    }
+    qDebug()<<"Bit count:"<<cnt;
+    masked = codeword&0b0000000000000010;
+    if(masked!=0)
+    {
+        summ = 1;
+    }
+    qDebug()<<"C2 bit:"<<summ;
+
+    masked = codeword&0b0111100001110000;
+    qDebug()<<"Mask c4:"<<"0x"+QString::number(masked, 16);
+    cnt = summ = 0;
+    for(idx=0;idx<16;idx++)
+    {
+        if((masked&(1<<0))!=0)
+        {
+            cnt++;
+        }
+        masked = (masked>>1);
+    }
+    qDebug()<<"Bit count:"<<cnt;
+    masked = codeword&0b0000000000001000;
+    if(masked!=0)
+    {
+        summ = 1;
+    }
+    qDebug()<<"C4 bit:"<<summ;
+
+    masked = codeword&0b0111111100000000;
+    qDebug()<<"Mask c8:"<<"0x"+QString::number(masked, 16);
+    cnt = summ = 0;
+    for(idx=0;idx<16;idx++)
+    {
+        if((masked&(1<<0))!=0)
+        {
+            cnt++;
+        }
+        masked = (masked>>1);
+    }
+    qDebug()<<"Bit count:"<<cnt;
+    masked = codeword&0b0000000010000000;
+    if(masked!=0)
+    {
+        summ = 1;
+    }
+    qDebug()<<"C8 bit:"<<summ;
+
 }

@@ -723,7 +723,7 @@ uint16_t AudioProcessor::rangeLinearInterpolation(std::deque<PCMSample> *samples
             int_idx++;
         }
 #ifdef AP_EN_DBG_OUT
-        if(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_DROP_ACT)!=0))
+        if((log_level&LOG_DROP_ACT)!=0)
         {
             if(mask_cnt!=0)
             {
@@ -1286,6 +1286,7 @@ void AudioProcessor::outputWordPair(PCMSamplePair *out_samples)
     {
         sc_output.saveAudio(*out_samples);
     }
+    // Process and report VU levels.
     samplesToVU(out_samples);
     emit outSamples(*out_samples);
 }

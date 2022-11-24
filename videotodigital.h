@@ -28,6 +28,23 @@ class VideoToDigital : public QObject
     Q_OBJECT
 
 public:
+    // PCM types.
+    enum
+    {
+        TYPE_PCM1,      // Sony PCM-1
+        TYPE_PCM16X0,   // Sony PCM-1600/PCM-1610/PCM-1630
+        TYPE_STC007,    // STC-007, Sony PCM-F1
+        TYPE_M2,        // M2 (based on STC-007)
+        TYPE_MAX
+    };
+
+    // PCM sample formats.
+    enum
+    {
+        PCM_FMT_NOT_SET,    // Nothing special, use enum above.
+        PCM_FMT_M2          // M2 sample format, sub-class of [TYPE_STC007].
+    };
+
     // Field start detector states.
     enum
     {
@@ -37,9 +54,10 @@ public:
         FIELD_UNSAFE,   // Field beginning passed, now in the field, first line is unsafe (can be duplicated from inactive region).
     };
 
+    // Horizontal coordinates damping parameters.
     enum
     {
-        COORD_CHECK_LINES = 6,                      // Number of lines to check PCM coordinates on buffer prescan.
+        COORD_CHECK_LINES = 4,                      // Number of lines to check PCM coordinates on buffer prescan.
         COORD_CHECK_PARTS = (COORD_CHECK_LINES+2),  // Add regions at the top and the bottom of first and last checked lines.
         COORD_HISTORY_DEPTH = 8,                    // Width of sliding window of history of valid data coordinates.
         COORD_LONG_HISTORY = 16                     // Number of last frames to store averaged valid data coordinates for.
@@ -57,7 +75,8 @@ private:
     QMutex *mtx_pcm16x0;                    // Mutex for PCM-16x0 output queue.
     QMutex *mtx_stc007;                     // Mutex for STC-007 output queue.
     uint8_t log_level;                      // Level of debug output.
-    uint8_t pcm_type;                       // Set PCM type in source video.
+    uint8_t pcm_type;                       // Preset PCM type in source video.
+    uint8_t pcm_sample_fmt;                 // Preset PCM sample format.
     uint8_t binarization_mode;              // Binarization mode.
     FrameBinDescriptor signal_quality;      // Statistics for tracking (signal/noise ratio).
     bool line_dump_help_done;               // Was help for line dump printed?

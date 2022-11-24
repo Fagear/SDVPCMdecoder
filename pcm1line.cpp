@@ -96,8 +96,7 @@ void PCM1Line::setSilent()
 {
     for(uint8_t i=WORD_L2;i<=WORD_R6;i++)
     {
-        words[i] = 0;
-        words[i] |= BIT_RANGE_POS;
+        words[i] = BIT_RANGE_POS;
     }
     calcCRC();
 }
@@ -155,7 +154,7 @@ uint16_t PCM1Line::getSourceCRC()
     return words[WORD_CRCC];
 }
 
-//------------------------ Get the type of PCM to determine class derived from [PCMLine];
+//------------------------ Get the type of PCM to determine class derived from [PCMLine].
 uint8_t PCM1Line::getPCMType()
 {
     return TYPE_PCM1;
@@ -204,23 +203,20 @@ int16_t PCM1Line::getSample(uint8_t index)
 //------------------------ Does provided line have the same words?
 bool PCM1Line::hasSameWords(PCM1Line *in_line)
 {
-    bool equal;
-    equal = true;
     if(in_line==NULL)
     {
         return false;
     }
     else
     {
-        for(uint8_t index=0;index<WORD_CRCC;index++)
+        for(uint8_t index=WORD_L2;index<=WORD_R6;index++)
         {
             if(words[index]!=in_line->words[index])
             {
-                equal = false;
-                break;
+                return false;
             }
         }
-        return equal;
+        return true;
     }
 }
 
@@ -263,10 +259,7 @@ bool PCM1Line::hasHeader()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Is CRC valid (re-calculated CRC is the same as read one) or does the line contain the header (PCM-1 special case)?
@@ -276,10 +269,7 @@ bool PCM1Line::isCRCValidIgnoreForced()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Is audio sample near zero value?
@@ -302,32 +292,27 @@ bool PCM1Line::isNearSilence(uint8_t index)
 //------------------------ Are audio samples in both channels near zero?
 bool PCM1Line::isAlmostSilent()
 {
-    bool silent;
-    silent = false;
     // Check if both channels are close to silence.
     if(((isNearSilence(WORD_L2)!=false)||(isNearSilence(WORD_L4)!=false)||(isNearSilence(WORD_L6)!=false))&&
         ((isNearSilence(WORD_R2)!=false)||(isNearSilence(WORD_R4)!=false)||(isNearSilence(WORD_R6)!=false)))
     {
-        silent = true;
+        return true;
     }
 
-    return silent;
+    return false;
 }
 
 //------------------------ Are all audio words zeroed?
 bool PCM1Line::isSilent()
 {
-    bool zero;
-    zero = true;
     for(uint8_t index=WORD_L2;index<=WORD_R6;index++)
     {
         if(getSample(index)!=0)
         {
-            zero = false;
-            break;
+            return false;
         }
     }
-    return zero;
+    return true;
 }
 
 //------------------------ Check if line has service tag "header/footer line".
@@ -337,10 +322,7 @@ bool PCM1Line::isServHeader()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Convert PCM data to string for debug.

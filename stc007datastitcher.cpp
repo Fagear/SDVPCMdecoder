@@ -25,10 +25,10 @@ STC007DataStitcher::STC007DataStitcher(QObject *parent) : QObject(parent)
     log_level = 0;
     trim_fill = 0;
     file_start = file_end = false;
-    dump_raw_bin = false;
     enable_P_code = false;
     enable_Q_code = false;
     enable_CWD = true;
+    mode_m2 = false;
     finish_work = false;
 
     // Reset internal state.
@@ -733,78 +733,6 @@ void STC007DataStitcher::findFramesTrim()
 #endif
 }
 
-//------------------------ Release RAW output file.
-void STC007DataStitcher::releaseBinFile()
-{
-    // Check if file is open.
-    if(bin_file_hdl.is_open()!=false)
-    {
-        // Update header.
-        //updateHeader();
-        // Write out all data and close.
-        bin_file_hdl.flush();
-        bin_file_hdl.close();
-
-#ifdef DI_EN_DBG_OUT
-        if((log_level&LOG_PROCESS)!=0)
-        {
-            qInfo()<<"[L2B-007] Closed file";
-        }
-#endif
-    }
-}
-
-//------------------------ Dump STC007 binarized lines from current frame into the file.
-void STC007DataStitcher::linesToBin()
-{
-    //uint16_t line_ind;
-
-    if(dump_raw_bin!=false)
-    {
-        // Check if file is not yet opened.
-        /*if(bin_file_hdl.is_open()==false)
-        {
-            std::string std_file_path(file_path.toLocal8Bit().constData());
-            std::string std_file_name(file_name.toLocal8Bit().constData());
-            std::string raw_bin_path;
-            // Assemble RAW output file name.
-            raw_bin_path = std_file_path+"/"+std_file_name+".bin";
-            // Open file to append.
-            bin_file_hdl.open(raw_bin_path, (std::ios::out|std::ios::binary|std::ios::trunc));
-            // Check if file opened.
-            if(bin_file_hdl.is_open()==false)
-            {
-                // No luck, failed to open.
-#ifdef DI_EN_DBG_OUT
-                if((log_level&LOG_PROCESS)!=0)
-                {
-                    qInfo()<<"[L2B-007] Failed to rewrite the file!"<<QString::fromStdString(raw_bin_path);
-                }
-#endif
-            }
-        }
-
-        // Recheck if file output is available.
-        if(bin_file_hdl.is_open()!=false)
-        {
-            while(line_ind<trim_fill)
-            {
-                if((trim_buf[line_ind].isServiceLine()==false)&&(frasm_f1.frame_number==trim_buf[line_ind].frame_number))
-                {
-                    // Dump STC007 line into file.
-                    //bin_file_hdl.write((const char*)trim_buf[line_ind].bytes, STC_LINE_TOTAL_BYTES);
-                }
-                line_ind++;
-            }
-        }*/
-    }
-    else
-    {
-        // Close output file if was opened before.
-        releaseBinFile();
-    }
-}
-
 //------------------------ Split 2 frames (current [Frame A] and the next one [Frame B]) into 4 internal buffers per field.
 void STC007DataStitcher::splitFramesToFields()
 {
@@ -1327,6 +1255,12 @@ uint8_t STC007DataStitcher::getResolutionForSeam(uint8_t in_res_field1, uint8_t 
 //------------------------ Get resolution of audio samples after [findFieldResolution()] run.
 uint8_t STC007DataStitcher::getDataBlockResolution(std::deque<STC007Line> *in_line_buffer, uint16_t line_sh)
 {
+    if(mode_m2!=false)
+    {
+        // Force strict 14-bit samples for M2 mode.
+        return STC007Deinterleaver::RES_MODE_14BIT;
+    }
+
     if(in_line_buffer==NULL)
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-007] Null pointer for buffer provided, exiting...";
@@ -1434,8 +1368,6 @@ uint8_t STC007DataStitcher::getDataBlockResolution(std::deque<STC007Line> *in_li
 
     // Determine resulting resolution mode.
     fin_res = getResolutionModeForSeam(first_res, last_res);
-
-    //qInfo()<<first_res<<"|"<<last_res<<"|"<<fin_res;
 
 #ifdef DI_EN_DBG_OUT
     /*if(((log_level&LOG_PADDING)!=0)&&((log_level&LOG_PROCESS)!=0))
@@ -2263,141 +2195,377 @@ void STC007DataStitcher::detectAudioResolution()
     }
 #endif
 
-    // Get audio resolution in the fields (preset or by testing data in the fields).
-    f1o_res = getFieldResolution(&frame1_odd, frasm_f1.odd_data_lines);
-    f1e_res = getFieldResolution(&frame1_even, frasm_f1.even_data_lines);
-    f2o_res = getFieldResolution(&frame2_odd, frasm_f2.odd_data_lines);
-    f2e_res = getFieldResolution(&frame2_even, frasm_f2.even_data_lines);
-    // Update resolution history if detected or preset.
-    if((f1o_res==SAMPLE_RES_14BIT)||(f1o_res==SAMPLE_RES_16BIT))
+    // Check if M2 sample format is set.
+    if(mode_m2==false)
     {
-        updateResolutionStats(f1o_res);
-    }
-    if((f1e_res==SAMPLE_RES_14BIT)||(f1e_res==SAMPLE_RES_16BIT))
-    {
-        updateResolutionStats(f1e_res);
-    }
-
-    if((f1o_res==SAMPLE_RES_UNKNOWN)&&(f1e_res==SAMPLE_RES_UNKNOWN))
-    {
-        // No resolution data for both fields of Frame A.
-#ifdef DI_EN_DBG_OUT
-        if(suppress_log==false)
+        // Non-M2 format, normal samples.
+        // Get audio resolution in the fields (preset or by testing data in the fields).
+        f1o_res = getFieldResolution(&frame1_odd, frasm_f1.odd_data_lines);
+        f1e_res = getFieldResolution(&frame1_even, frasm_f1.even_data_lines);
+        f2o_res = getFieldResolution(&frame2_odd, frasm_f2.odd_data_lines);
+        f2e_res = getFieldResolution(&frame2_even, frasm_f2.even_data_lines);
+        // Update resolution history if detected or preset.
+        if((f1o_res==SAMPLE_RES_14BIT)||(f1o_res==SAMPLE_RES_16BIT))
         {
-            qInfo()<<"[L2B-007] No resolution data on both fields of Frame A";
+            updateResolutionStats(f1o_res);
         }
-#endif
-        if((f2o_res==SAMPLE_RES_UNKNOWN)&&(f2e_res==SAMPLE_RES_UNKNOWN))
+        if((f1e_res==SAMPLE_RES_14BIT)||(f1e_res==SAMPLE_RES_16BIT))
         {
-            // No resolution data for both fields of Frame B.
+            updateResolutionStats(f1e_res);
+        }
+
+        if((f1o_res==SAMPLE_RES_UNKNOWN)&&(f1e_res==SAMPLE_RES_UNKNOWN))
+        {
+            // No resolution data for both fields of Frame A.
 #ifdef DI_EN_DBG_OUT
             if(suppress_log==false)
             {
-                qInfo()<<"[L2B-007] No resolution data on both fields of Frame B either";
+                qInfo()<<"[L2B-007] No resolution data on both fields of Frame A";
             }
 #endif
-            // Get stats on resolution.
-            f1o_res = getProbableResolution();
-            if(f1o_res==SAMPLE_RES_16BIT)
+            if((f2o_res==SAMPLE_RES_UNKNOWN)&&(f2e_res==SAMPLE_RES_UNKNOWN))
             {
-                // 16-bit by stats.
-                frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+                // No resolution data for both fields of Frame B.
 #ifdef DI_EN_DBG_OUT
                 if(suppress_log==false)
                 {
-                    qInfo()<<"[L2B-007] All fields (Frame A and Frame B) are assumed to be 16-bit by stats";
+                    qInfo()<<"[L2B-007] No resolution data on both fields of Frame B either";
                 }
 #endif
+                // Get stats on resolution.
+                f1o_res = getProbableResolution();
+                if(f1o_res==SAMPLE_RES_16BIT)
+                {
+                    // 16-bit by stats.
+                    frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] All fields (Frame A and Frame B) are assumed to be 16-bit by stats";
+                    }
+#endif
+                }
+                else
+                {
+                    // If 14-bit or unknown by stats, assume 14-bit.
+                    frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        if(f1o_res==SAMPLE_RES_14BIT)
+                        {
+                            qInfo()<<"[L2B-007] All fields (Frame A and Frame B) are assumed to be 14-bit by stats";
+                        }
+                        else
+                        {
+                            qInfo()<<"[L2B-007] All fields (Frame A and Frame B) are assumed to be 14-bit by default, no stats available yet";
+                        }
+                    }
+#endif
+                }
+            }
+            else if(f2o_res==SAMPLE_RES_UNKNOWN)
+            {
+                // No resolution for odd field of Frame B.
+                if(f2e_res==SAMPLE_RES_16BIT)
+                {
+                    // Frame B even field has 16-bit resolution.
+                    frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+                    frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame B even field is detected as 16-bit, assume all other fields to be 16-bit";
+                    }
+#endif
+                }
+                else
+                {
+                    // Frame B even field has 14-bit resolution.
+                    frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+                    frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame B even field is detected as 14-bit, assume all other fields to be 14-bit";
+                    }
+#endif
+                }
+            }
+            else if(f2e_res==SAMPLE_RES_UNKNOWN)
+            {
+                // No resolution for even field of Frame B.
+                if(f2o_res==SAMPLE_RES_16BIT)
+                {
+                    // Frame B odd field has 16-bit resolution.
+                    frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+                    frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame B odd field is detected as 16-bit, assume all other fields to be 16-bit";
+                    }
+#endif
+                }
+                else
+                {
+                    // Frame B odd field has 14-bit resolution.
+                    frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+                    frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame B odd field is detected as 14-bit, assume all other fields to be 14-bit";
+                    }
+#endif
+                }
             }
             else
             {
-                // If 14-bit or unknown by stats, assume 14-bit.
-                frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
+                // Resolution detected for both fields of Frame B.
+                if((f2o_res==f2e_res)&&(f2o_res==SAMPLE_RES_16BIT))
                 {
-                    if(f1o_res==SAMPLE_RES_14BIT)
+                    // Both fields of Frame B have 16-bit resolution.
+                    frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+                    frasm_f1.odd_resolution = frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
                     {
-                        qInfo()<<"[L2B-007] All fields (Frame A and Frame B) are assumed to be 14-bit by stats";
+                        qInfo()<<"[L2B-007] Both fields of Frame B are detected as 16-bit, assume Frame A fields to be 16-bit";
+                    }
+#endif
+                }
+                else
+                {
+                    if(f2o_res==SAMPLE_RES_16BIT)
+                    {
+                        frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+#ifdef DI_EN_DBG_OUT
+                        if(suppress_log==false)
+                        {
+                            qInfo()<<"[L2B-007] Frame B odd field is detected as 16-bit";
+                        }
+#endif
                     }
                     else
                     {
-                        qInfo()<<"[L2B-007] All fields (Frame A and Frame B) are assumed to be 14-bit by default, no stats available yet";
+                        frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+#ifdef DI_EN_DBG_OUT
+                        if(suppress_log==false)
+                        {
+                            qInfo()<<"[L2B-007] Frame B odd field is detected as 14-bit";
+                        }
+#endif
                     }
-                }
-#endif
-            }
-        }
-        else if(f2o_res==SAMPLE_RES_UNKNOWN)
-        {
-            // No resolution for odd field of Frame B.
-            if(f2e_res==SAMPLE_RES_16BIT)
-            {
-                // Frame B even field has 16-bit resolution.
-                frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-                frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+                    if(f2e_res==SAMPLE_RES_16BIT)
+                    {
+                        frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
 #ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B even field is detected as 16-bit, assume all other fields to be 16-bit";
-                }
+                        if(suppress_log==false)
+                        {
+                            qInfo()<<"[L2B-007] Frame B even field is detected as 16-bit";
+                        }
 #endif
-            }
-            else
-            {
-                // Frame B even field has 14-bit resolution.
-                frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-                frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
+                    }
+                    else
+                    {
+                        frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
 #ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B even field is detected as 14-bit, assume all other fields to be 14-bit";
-                }
+                        if(suppress_log==false)
+                        {
+                            qInfo()<<"[L2B-007] Frame B even field is detected as 14-bit";
+                        }
 #endif
-            }
-        }
-        else if(f2e_res==SAMPLE_RES_UNKNOWN)
-        {
-            // No resolution for even field of Frame B.
-            if(f2o_res==SAMPLE_RES_16BIT)
-            {
-                // Frame B odd field has 16-bit resolution.
-                frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-                frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+                    }
+                    // Different or 14-bit fields of Frame B, assume 14 bits for Frame A.
+                    frasm_f1.odd_resolution = frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
 #ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B odd field is detected as 16-bit, assume all other fields to be 16-bit";
-                }
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Assume Frame A fields to be 14-bit";
+                    }
 #endif
-            }
-            else
-            {
-                // Frame B odd field has 14-bit resolution.
-                frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-                frasm_f1.odd_resolution = frasm_f1.even_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B odd field is detected as 14-bit, assume all other fields to be 14-bit";
                 }
-#endif
             }
         }
         else
         {
-            // Resolution detected for both fields of Frame B.
-            if((f2o_res==f2e_res)&&(f2o_res==SAMPLE_RES_16BIT))
+            if(f1o_res==SAMPLE_RES_UNKNOWN)
             {
-                // Both fields of Frame B have 16-bit resolution.
-                frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-                frasm_f1.odd_resolution = frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+                if(f1e_res==SAMPLE_RES_16BIT)
+                {
+                    frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+                    frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame A even field is detected as 16-bit, assume Frame A odd field to be 16-bit";
+                    }
+#endif
+                }
+                else
+                {
+                    frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+                    frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame A even field is detected as 14-bit, assume Frame A odd field to be 14-bit";
+                    }
+#endif
+                }
+            }
+            else if(f1e_res==SAMPLE_RES_UNKNOWN)
+            {
+                if(f1o_res==SAMPLE_RES_16BIT)
+                {
+                    frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+                    frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame A odd field is detected as 16-bit, assume Frame A even field to be 16-bit";
+                    }
+#endif
+                }
+                else
+                {
+                    frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+                    frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame A odd field is detected as 14-bit, assume Frame A even field to be 14-bit";
+                    }
+#endif
+                }
+            }
+            else
+            {
+                if(f1o_res==SAMPLE_RES_16BIT)
+                {
+                    frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame A odd field is detected as 16-bit";
+                    }
+#endif
+                }
+                else
+                {
+                    frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame A odd field is detected as 14-bit";
+                    }
+#endif
+                }
+                if(f1e_res==SAMPLE_RES_16BIT)
+                {
+                    frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame A even field is detected as 16-bit";
+                    }
+#endif
+                }
+                else
+                {
+                    frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame A even field is detected as 14-bit";
+                    }
+#endif
+                }
+            }
+            if((f2o_res==SAMPLE_RES_UNKNOWN)&&(f2e_res==SAMPLE_RES_UNKNOWN))
+            {
+                // No resolution data for both fields of Frame B.
 #ifdef DI_EN_DBG_OUT
                 if(suppress_log==false)
                 {
-                    qInfo()<<"[L2B-007] Both fields of Frame B are detected as 16-bit, assume Frame A fields to be 16-bit";
+                    qInfo()<<"[L2B-007] No resolution data on both fields of Frame B";
                 }
 #endif
+                // Get stats on resolution.
+                f2o_res = getProbableResolution();
+                if(f2o_res==SAMPLE_RES_16BIT)
+                {
+                    // 16-bit by stats.
+                    frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Both fields of Frame B are assumed to be 16-bit by stats";
+                    }
+#endif
+                }
+                else
+                {
+                    // If 14-bit or unknown by stats, assume 14-bit.
+                    frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Both fields of Frame B are assumed to be 14-bit by stats";
+                    }
+#endif
+                }
+            }
+            else if(f2o_res==SAMPLE_RES_UNKNOWN)
+            {
+                if(f2e_res==SAMPLE_RES_16BIT)
+                {
+                    frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+                    frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame B even field is detected as 16-bit, assume Frame B odd field to be 16-bit";
+                    }
+#endif
+                }
+                else
+                {
+                    frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+                    frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame B even field is detected as 14-bit, assume Frame B odd field to be 14-bit";
+                    }
+#endif
+                }
+            }
+            else if(f2e_res==SAMPLE_RES_UNKNOWN)
+            {
+                if(f2o_res==SAMPLE_RES_16BIT)
+                {
+                    frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
+                    frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame B odd field is detected as 16-bit, assume Frame B even field to be 16-bit";
+                    }
+#endif
+                }
+                else
+                {
+                    frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+                    frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
+#ifdef DI_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Frame B odd field is detected as 14-bit, assume Frame B even field to be 14-bit";
+                    }
+#endif
+                }
             }
             else
             {
@@ -2441,239 +2609,21 @@ void STC007DataStitcher::detectAudioResolution()
                     }
 #endif
                 }
-                // Different or 14-bit fields of Frame B, assume 14 bits for Frame A.
-                frasm_f1.odd_resolution = frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Assume Frame A fields to be 14-bit";
-                }
-#endif
             }
         }
     }
     else
     {
-        if(f1o_res==SAMPLE_RES_UNKNOWN)
+        // M2 sample mode based on 14-bit words.
+#ifdef DI_EN_DBG_OUT
+        if(suppress_log==false)
         {
-            if(f1e_res==SAMPLE_RES_16BIT)
-            {
-                frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-                frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame A even field is detected as 16-bit, assume Frame A odd field to be 16-bit";
-                }
-#endif
-            }
-            else
-            {
-                frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-                frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame A even field is detected as 14-bit, assume Frame A odd field to be 14-bit";
-                }
-#endif
-            }
+            qInfo()<<"[L2B-007] Both fields of Frame A are set to be 14-bit by M2 sample mode";
+            qInfo()<<"[L2B-007] Both fields of Frame B are set to be 14-bit by M2 sample mode";
         }
-        else if(f1e_res==SAMPLE_RES_UNKNOWN)
-        {
-            if(f1o_res==SAMPLE_RES_16BIT)
-            {
-                frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-                frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame A odd field is detected as 16-bit, assume Frame A even field to be 16-bit";
-                }
 #endif
-            }
-            else
-            {
-                frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-                frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame A odd field is detected as 14-bit, assume Frame A even field to be 14-bit";
-                }
-#endif
-            }
-        }
-        else
-        {
-            if(f1o_res==SAMPLE_RES_16BIT)
-            {
-                frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame A odd field is detected as 16-bit";
-                }
-#endif
-            }
-            else
-            {
-                frasm_f1.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame A odd field is detected as 14-bit";
-                }
-#endif
-            }
-            if(f1e_res==SAMPLE_RES_16BIT)
-            {
-                frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame A even field is detected as 16-bit";
-                }
-#endif
-            }
-            else
-            {
-                frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame A even field is detected as 14-bit";
-                }
-#endif
-            }
-        }
-        if((f2o_res==SAMPLE_RES_UNKNOWN)&&(f2e_res==SAMPLE_RES_UNKNOWN))
-        {
-            // No resolution data for both fields of Frame B.
-#ifdef DI_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                qInfo()<<"[L2B-007] No resolution data on both fields of Frame B";
-            }
-#endif
-            // Get stats on resolution.
-            f2o_res = getProbableResolution();
-            if(f2o_res==SAMPLE_RES_16BIT)
-            {
-                // 16-bit by stats.
-                frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Both fields of Frame B are assumed to be 16-bit by stats";
-                }
-#endif
-            }
-            else
-            {
-                // If 14-bit or unknown by stats, assume 14-bit.
-                frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Both fields of Frame B are assumed to be 14-bit by stats";
-                }
-#endif
-            }
-        }
-        else if(f2o_res==SAMPLE_RES_UNKNOWN)
-        {
-            if(f2e_res==SAMPLE_RES_16BIT)
-            {
-                frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-                frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B even field is detected as 16-bit, assume Frame B odd field to be 16-bit";
-                }
-#endif
-            }
-            else
-            {
-                frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-                frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B even field is detected as 14-bit, assume Frame B odd field to be 14-bit";
-                }
-#endif
-            }
-        }
-        else if(f2e_res==SAMPLE_RES_UNKNOWN)
-        {
-            if(f2o_res==SAMPLE_RES_16BIT)
-            {
-                frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-                frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B odd field is detected as 16-bit, assume Frame B even field to be 16-bit";
-                }
-#endif
-            }
-            else
-            {
-                frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-                frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT_AUTO;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B odd field is detected as 14-bit, assume Frame B even field to be 14-bit";
-                }
-#endif
-            }
-        }
-        else
-        {
-            if(f2o_res==SAMPLE_RES_16BIT)
-            {
-                frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B odd field is detected as 16-bit";
-                }
-#endif
-            }
-            else
-            {
-                frasm_f2.odd_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B odd field is detected as 14-bit";
-                }
-#endif
-            }
-            if(f2e_res==SAMPLE_RES_16BIT)
-            {
-                frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_16BIT;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B even field is detected as 16-bit";
-                }
-#endif
-            }
-            else
-            {
-                frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Frame B even field is detected as 14-bit";
-                }
-#endif
-            }
-        }
+        frasm_f1.odd_resolution = frasm_f1.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
+        frasm_f2.odd_resolution = frasm_f2.even_resolution = STC007Deinterleaver::RES_MODE_14BIT;
     }
 
 #ifdef DI_EN_DBG_OUT
@@ -2685,6 +2635,10 @@ void STC007DataStitcher::detectAudioResolution()
         if(frasm_f1.odd_resolution==STC007Deinterleaver::RES_MODE_14BIT)
         {
             log_line += ", 14-bit";
+            if(mode_m2!=false)
+            {
+                log_line += " (for M2 samples)";
+            }
         }
         else if(frasm_f1.odd_resolution==STC007Deinterleaver::RES_MODE_16BIT)
         {
@@ -2707,6 +2661,10 @@ void STC007DataStitcher::detectAudioResolution()
         if(frasm_f1.even_resolution==STC007Deinterleaver::RES_MODE_14BIT)
         {
             log_line += ", 14-bit";
+            if(mode_m2!=false)
+            {
+                log_line += " (for M2 samples)";
+            }
         }
         else if(frasm_f1.even_resolution==STC007Deinterleaver::RES_MODE_16BIT)
         {
@@ -2729,6 +2687,10 @@ void STC007DataStitcher::detectAudioResolution()
         if(frasm_f2.odd_resolution==STC007Deinterleaver::RES_MODE_14BIT)
         {
             log_line += ", 14-bit";
+            if(mode_m2!=false)
+            {
+                log_line += " (for M2 samples)";
+            }
         }
         else if(frasm_f2.odd_resolution==STC007Deinterleaver::RES_MODE_16BIT)
         {
@@ -2751,6 +2713,10 @@ void STC007DataStitcher::detectAudioResolution()
         if(frasm_f2.even_resolution==STC007Deinterleaver::RES_MODE_14BIT)
         {
             log_line += ", 14-bit";
+            if(mode_m2!=false)
+            {
+                log_line += " (for M2 samples)";
+            }
         }
         else if(frasm_f2.even_resolution==STC007Deinterleaver::RES_MODE_16BIT)
         {
@@ -2796,7 +2762,7 @@ void STC007DataStitcher::detectVideoStandard()
 
     frasm_f1.video_standard = FrameAsmDescriptor::VID_UNKNOWN;
     frasm_f1.odd_std_lines = frasm_f1.even_std_lines = 0;
-    // Try to assume video standard.
+    // Check if video standard is preset.
     if(preset_video_mode==FrameAsmDescriptor::VID_UNKNOWN)
     {
         // Video standard is not preset externally.
@@ -4285,6 +4251,154 @@ uint8_t STC007DataStitcher::findFieldStitching()
     }
 }
 
+//------------------------ Get field order for frame assembly.
+uint8_t STC007DataStitcher::getAssemblyFieldOrder()
+{
+    bool suppress_log;
+    uint8_t last_good_order, cur_field_order;
+
+    suppress_log = ((log_level&LOG_FIELD_ASSEMBLY)==0);
+    cur_field_order = FrameAsmDescriptor::ORDER_UNK;
+
+    // Check if field order is detected.
+    if(frasm_f1.isOrderSet()!=false)
+    {
+        // Save known good field order.
+        cur_field_order = frasm_f1.field_order;
+        if(frasm_f1.isOrderPreset()==false)
+        {
+            // Update "last good" field order.
+            updateFieldOrderStats(cur_field_order);
+        }
+    }
+    else
+    {
+#ifdef DI_EN_DBG_OUT
+        if(suppress_log==false)
+        {
+            qInfo()<<"[L2B-007] Field order is not detected!";
+        }
+#endif
+        // Field order is not set.
+        // Check field order for next frame.
+        if((frasm_f2.isOrderPreset()!=false)&&(frasm_f2.isOrderSet()!=false))
+        {
+            // Set it by next frame, which has field order preset.
+            cur_field_order = frasm_f2.field_order;
+#ifdef DI_EN_DBG_OUT
+            if(suppress_log==false)
+            {
+                qInfo()<<"[L2B-007] Setting field order by next frame ("<<frasm_f2.frame_number<<")";
+            }
+#endif
+        }
+        // Check field order for previous frame.
+        else if((frasm_f0.isOrderSet()!=false)&&(frasm_f0.outer_padding_ok!=false))
+        {
+            // Set it by previous frame, which has field order set and has valid padding with current frame.
+            cur_field_order = frasm_f0.field_order;
+#ifdef DI_EN_DBG_OUT
+            if(suppress_log==false)
+            {
+                qInfo()<<"[L2B-007] Setting field order by previous frame ("<<frasm_f0.frame_number<<")";
+            }
+#endif
+        }
+    }
+
+    // Check if field order was determined by FrameAsmSTC007 data.
+    if((cur_field_order!=FrameAsmDescriptor::ORDER_TFF)&&(cur_field_order!=FrameAsmDescriptor::ORDER_BFF))
+    {
+        // Field order not set yet.
+        // Try to get field order by stats (history of last good orders).
+        last_good_order = getProbableFieldOrder();
+        // Check if there was successfull field order detected before.
+        if((last_good_order==FrameAsmDescriptor::ORDER_TFF)||(last_good_order==FrameAsmDescriptor::ORDER_BFF))
+        {
+            // There is previous good field order.
+            cur_field_order = last_good_order;
+#ifdef DI_EN_DBG_OUT
+            if(last_good_order==FrameAsmDescriptor::ORDER_BFF)
+            {
+                if(suppress_log==false)
+                {
+                    qInfo()<<"[L2B-007] Setting field order by previous good to BFF";
+                }
+            }
+            else
+            {
+                if(suppress_log==false)
+                {
+                    qInfo()<<"[L2B-007] Setting field order by previous good to TFF";
+                }
+            }
+#endif
+        }
+        else
+        {
+            // Still no field order...
+            // Check padding counters.
+            if(frasm_f1.tff_cnt<frasm_f1.bff_cnt)
+            {
+#ifdef DI_EN_DBG_OUT
+                if(suppress_log==false)
+                {
+                    QString log_line;
+                    log_line.sprintf("[L2B-007] Setting field order by counter to TFF (TFF=%u, BFF=%u)", frasm_f1.tff_cnt, frasm_f1.bff_cnt);
+                    qInfo()<<log_line;
+                }
+#endif
+                cur_field_order = FrameAsmDescriptor::ORDER_TFF;
+            }
+            else if(frasm_f1.tff_cnt>frasm_f1.bff_cnt)
+            {
+#ifdef DI_EN_DBG_OUT
+                if(suppress_log==false)
+                {
+                    QString log_line;
+                    log_line.sprintf("[L2B-007] Setting field order by counter to BFF (TFF=%u, BFF=%u)", frasm_f1.tff_cnt, frasm_f1.bff_cnt);
+                    qInfo()<<log_line;
+                }
+#endif
+                cur_field_order = FrameAsmDescriptor::ORDER_BFF;
+            }
+            else
+            {
+                // Field order is still not set, choose by default.
+                cur_field_order = FLD_ORDER_DEFAULT;
+#ifdef DI_EN_DBG_OUT
+                if((uint8_t)FLD_ORDER_DEFAULT==(uint8_t)FrameAsmDescriptor::ORDER_BFF)
+                {
+                    // Default is set to BFF, add lines from even field.
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Setting field order by default to BFF";
+                    }
+                }
+                else
+                {
+                    // Default is set to TFF, add lines from even field.
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[L2B-007] Setting field order by default to TFF";
+                    }
+                }
+#endif
+            }
+        }
+    }
+
+    // Field order must be set at this point.
+    if(frasm_f1.isOrderSet()==false)
+    {
+        // Field order was not properly detected, but was assumed and guessed.
+        // Set guessed value for stats (will not be used for frame assembly).
+        frasm_f1.field_order = cur_field_order;
+        frasm_f1.setOrderGuessed(true);
+    }
+    return cur_field_order;
+}
+
 //------------------------ Get first line number for first field to fill.
 uint16_t STC007DataStitcher::getFirstFieldLineNum(uint8_t in_order)
 {
@@ -4451,7 +4565,7 @@ bool STC007DataStitcher::isBlockNoReport(STC007DataBlock *in_block)
 void STC007DataStitcher::fillFrameForOutput()
 {
     bool suppress_log, suppress_anylog;
-    uint8_t last_good_order, cur_field_order;
+    uint8_t cur_field_order;
     uint16_t field_1_cnt, field_2_cnt;
     std::vector<STC007Line> *p_field_1, *p_field_2;
 
@@ -4470,142 +4584,7 @@ void STC007DataStitcher::fillFrameForOutput()
 #endif
 
     // Determine field order for current frame assembly.
-    // Check if field order is detected.
-    if(frasm_f1.isOrderSet()!=false)
-    {
-        // Save known good field order.
-        cur_field_order = frasm_f1.field_order;
-        if(frasm_f1.isOrderPreset()==false)
-        {
-            // Update "last good" field order.
-            updateFieldOrderStats(cur_field_order);
-        }
-    }
-    else
-    {
-#ifdef DI_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            qInfo()<<"[L2B-007] Field order is not detected!";
-        }
-#endif
-        // Field order is not set.
-        // Check field order for next frame.
-        if((frasm_f2.isOrderPreset()!=false)&&(frasm_f2.isOrderSet()!=false))
-        {
-            // Set it by next frame, which has field order preset.
-            cur_field_order = frasm_f2.field_order;
-#ifdef DI_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                qInfo()<<"[L2B-007] Setting field order by next frame ("<<frasm_f2.frame_number<<")";
-            }
-#endif
-        }
-        // Check field order for previous frame.
-        if((frasm_f0.isOrderSet()!=false)&&(frasm_f0.outer_padding_ok!=false))
-        {
-            // Set it by previous frame, which has field order set and has valid padding with current frame.
-            cur_field_order = frasm_f0.field_order;
-#ifdef DI_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                qInfo()<<"[L2B-007] Setting field order by previous frame ("<<frasm_f0.frame_number<<")";
-            }
-#endif
-        }
-    }
-
-    // Check if field order was determined by FrameTrimSet data.
-    if((cur_field_order!=FrameAsmDescriptor::ORDER_TFF)&&(cur_field_order!=FrameAsmDescriptor::ORDER_BFF))
-    {
-        // Field order not set yet.
-        // Try to get field order by stats (history of last good orders).
-        last_good_order = getProbableFieldOrder();
-        // Check if there was successfull field order detected before.
-        if((last_good_order==FrameAsmDescriptor::ORDER_TFF)||(last_good_order==FrameAsmDescriptor::ORDER_BFF))
-        {
-            // There is previous good field order.
-            cur_field_order = last_good_order;
-#ifdef DI_EN_DBG_OUT
-            if(last_good_order==FrameAsmDescriptor::ORDER_BFF)
-            {
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Setting field order by previous good to BFF";
-                }
-            }
-            else
-            {
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[L2B-007] Setting field order by previous good to TFF";
-                }
-            }
-#endif
-        }
-        else
-        {
-            // Still no field order...
-            // Check counters.
-            if(frasm_f1.tff_cnt<frasm_f1.bff_cnt)
-            {
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    QString log_line;
-                    log_line.sprintf("[L2B-007] Setting field order by counter to TFF (TFF=%u, BFF=%u)", frasm_f1.tff_cnt, frasm_f1.bff_cnt);
-                    qInfo()<<log_line;
-                }
-#endif
-                cur_field_order = FrameAsmDescriptor::ORDER_TFF;
-            }
-            else if(frasm_f1.tff_cnt>frasm_f1.bff_cnt)
-            {
-#ifdef DI_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    QString log_line;
-                    log_line.sprintf("[L2B-007] Setting field order by counter to BFF (TFF=%u, BFF=%u)", frasm_f1.tff_cnt, frasm_f1.bff_cnt);
-                    qInfo()<<log_line;
-                }
-#endif
-                cur_field_order = FrameAsmDescriptor::ORDER_BFF;
-            }
-            else
-            {
-                // Field order is still not set, choose by default.
-                cur_field_order = FLD_ORDER_DEFAULT;
-#ifdef DI_EN_DBG_OUT
-                if((uint8_t)FLD_ORDER_DEFAULT==(uint8_t)FrameAsmDescriptor::ORDER_BFF)
-                {
-                    // Default is set to BFF, add lines from even field.
-                    if(suppress_log==false)
-                    {
-                        qInfo()<<"[L2B-007] Setting field order by default to BFF";
-                    }
-                }
-                else
-                {
-                    // Default is set to TFF, add lines from even field.
-                    if(suppress_log==false)
-                    {
-                        qInfo()<<"[L2B-007] Setting field order by default to TFF";
-                    }
-                }
-#endif
-            }
-        }
-    }
-
-    // Field order must be set at this point.
-    if(frasm_f1.isOrderSet()==false)
-    {
-        // Field order was not properly detected, but was assumed and guessed.
-        // Set guessed value for stats (will not be used for frame assembly).
-        frasm_f1.field_order = cur_field_order;
-        frasm_f1.setOrderGuessed(true);
-    }
+    cur_field_order = getAssemblyFieldOrder();
 
     // Select field data to add lines from.
     if(cur_field_order==FrameAsmDescriptor::ORDER_TFF)
@@ -5905,7 +5884,6 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
         // Check if data block is valid and samples were fixed.
         if((pcm_block.isBlockValid()!=false)&&(pcm_block.isDataFixed()!=false))
         {
-
             //qInfo()<<QString::fromStdString(pcm_block.dumpContentString());
             // Cycle through all fixable words.
             for(uint8_t word_idx=STC007DataBlock::WORD_L0;word_idx<=max_fixable;word_idx++)
@@ -6404,6 +6382,7 @@ void STC007DataStitcher::prescanFrame()
 //------------------------ Set data block sample rate.
 void STC007DataStitcher::setBlockSampleRate(STC007DataBlock *in_block)
 {
+    // Check if sample rate is preset.
     if((preset_sample_rate==PCMSamplePair::SAMPLE_RATE_44100)||(preset_sample_rate==PCMSamplePair::SAMPLE_RATE_44056))
     {
         // Apply preset sample rate.
@@ -6468,6 +6447,53 @@ void STC007DataStitcher::outputFileStart()
     }
 }
 
+//------------------------ Output one sample pair from the data block into output queue.
+void STC007DataStitcher::outputSamplePair(STC007DataBlock *in_block, uint8_t idx_left, uint8_t idx_right)
+{
+    int16_t sample_left, sample_right;
+    bool block_state, word_left_state, word_right_state;
+    bool word_left_fixed, word_right_fixed;
+    PCMSamplePair sample_pair;
+    // Set emphasis state of the samples.
+    sample_pair.setEmphasis(in_block->hasEmphasis());
+    // Set sample rate.
+    sample_pair.setSampleRate(in_block->sample_rate);
+    if(in_block->isDataBroken()==false)
+    {
+        // Set validity of the whole block and the samples.
+        block_state = in_block->isBlockValid();
+        if(block_state==false)
+        {
+            word_left_fixed = word_right_fixed = false;
+        }
+        else
+        {
+            word_left_fixed = in_block->isWordLineCRCOk(idx_left);
+            word_right_fixed = in_block->isWordLineCRCOk(idx_right);
+        }
+        word_left_state = in_block->isWordValid(idx_left);
+        word_right_state = in_block->isWordValid(idx_right);
+    }
+    else
+    {
+        // Data block deemed to be "BROKEN", no data can be taken as valid.
+        block_state = false;
+        word_left_state = word_right_state = false;
+        word_left_fixed = word_right_fixed = false;
+    }
+    // Set data to [PCMSamplePair] object.
+    sample_left = in_block->getSample(idx_left);
+    sample_right = in_block->getSample(idx_right);
+    // Copy samples into the [PCMSamplePair] object.
+    sample_pair.setSamplePair(sample_left, sample_right,
+                              block_state, block_state,
+                              word_left_state, word_right_state,
+                              word_left_fixed, word_right_fixed);
+    // Put sample pair in the output queue.
+    // [mtx_samples] should be locked already!
+    out_samples->push_back(sample_pair);
+}
+
 //------------------------ Output PCM data block into output queue (blocking).
 void STC007DataStitcher::outputDataBlock(STC007DataBlock *in_block)
 {
@@ -6480,9 +6506,6 @@ void STC007DataStitcher::outputDataBlock(STC007DataBlock *in_block)
     }
     else
     {
-        bool block_state, word_left_state, word_right_state;
-        bool word_left_fixed, word_right_fixed;
-        PCMSamplePair sample_pair;
         while(1)
         {
             // Try to put processed data block into the queue.
@@ -6490,95 +6513,12 @@ void STC007DataStitcher::outputDataBlock(STC007DataBlock *in_block)
             queue_size = (out_samples->size()+1);
             if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-3))
             {
-                // Set emphasis state of the samples.
-                sample_pair.setEmphasis(in_block->hasEmphasis());
-                // Set sample rate.
-                sample_pair.setSampleRate(in_block->sample_rate);
                 // Output L0+R0 samples.
-                if(in_block->isDataBroken()==false)
-                {
-                    // Set validity of the whole block and the samples.
-                    block_state = in_block->isBlockValid();
-                    if(block_state==false)
-                    {
-                        word_left_fixed = word_right_fixed = false;
-                    }
-                    else
-                    {
-                        word_left_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_L0);
-                        word_right_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_R0);
-                    }
-                    word_left_state = in_block->isWordValid(STC007DataBlock::WORD_L0);
-                    word_right_state = in_block->isWordValid(STC007DataBlock::WORD_R0);
-                }
-                else
-                {
-                    // Data block deemed to be "broken", no data can be taken as valid.
-                    block_state = false;
-                    word_left_state = word_right_state = false;
-                    word_left_fixed = word_right_fixed = false;
-                }
-                // Set data to [PCMSamplePair] object.
-                sample_pair.setSamplePair(in_block->getSample(STC007DataBlock::WORD_L0), in_block->getSample(STC007DataBlock::WORD_R0),
-                                          block_state, block_state,
-                                          word_left_state, word_right_state,
-                                          word_left_fixed, word_right_fixed);
-                // Put sample pair in the output queue.
-                out_samples->push_back(sample_pair);
+                outputSamplePair(in_block, STC007DataBlock::WORD_L0, STC007DataBlock::WORD_R0);
                 // Output L1+R1 samples.
-                if(in_block->isDataBroken()==false)
-                {
-                    block_state = in_block->isBlockValid();
-                    if(block_state==false)
-                    {
-                        word_left_fixed = word_right_fixed = false;
-                    }
-                    else
-                    {
-                        word_left_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_L1);
-                        word_right_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_R1);
-                    }
-                    word_left_state = in_block->isWordValid(STC007DataBlock::WORD_L1);
-                    word_right_state = in_block->isWordValid(STC007DataBlock::WORD_R1);
-                }
-                else
-                {
-                    block_state = false;
-                    word_left_state = word_right_state = false;
-                    word_left_fixed = word_right_fixed = false;
-                }
-                sample_pair.setSamplePair(in_block->getSample(STC007DataBlock::WORD_L1), in_block->getSample(STC007DataBlock::WORD_R1),
-                                          block_state, block_state,
-                                          word_left_state, word_right_state,
-                                          word_left_fixed, word_right_fixed);
-                out_samples->push_back(sample_pair);
+                outputSamplePair(in_block, STC007DataBlock::WORD_L1, STC007DataBlock::WORD_R1);
                 // Output L2+R2 samples.
-                if(in_block->isDataBroken()==false)
-                {
-                    block_state = in_block->isBlockValid();
-                    if(block_state==false)
-                    {
-                        word_left_fixed = word_right_fixed = false;
-                    }
-                    else
-                    {
-                        word_left_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_L2);
-                        word_right_fixed = in_block->isWordLineCRCOk(STC007DataBlock::WORD_R2);
-                    }
-                    word_left_state = in_block->isWordValid(STC007DataBlock::WORD_L2);
-                    word_right_state = in_block->isWordValid(STC007DataBlock::WORD_R2);
-                }
-                else
-                {
-                    block_state = false;
-                    word_left_state = word_right_state = false;
-                    word_left_fixed = word_right_fixed = false;
-                }
-                sample_pair.setSamplePair(in_block->getSample(STC007DataBlock::WORD_L2), in_block->getSample(STC007DataBlock::WORD_R2),
-                                          block_state, block_state,
-                                          word_left_state, word_right_state,
-                                          word_left_fixed, word_right_fixed);
-                out_samples->push_back(sample_pair);
+                outputSamplePair(in_block, STC007DataBlock::WORD_L2, STC007DataBlock::WORD_R2);
                 mtx_samples->unlock();
 
                 if(size_lock!=false)
@@ -6705,6 +6645,8 @@ void STC007DataStitcher::performDeinterleave()
         //pcm_block.setEmphasis();
         // Set sample rate for data block.
         setBlockSampleRate(&pcm_block);
+        // Set sample format.
+        pcm_block.setM2Format(mode_m2);
 
         // Remove first line from the input queue.
         conv_queue.pop_front();
@@ -7002,6 +6944,28 @@ void STC007DataStitcher::setCWDCorrection(bool in_set)
     }
 #endif
     enable_CWD = in_set;
+}
+
+//------------------------ Enable/disable M2 sample format (13/16-bits in 14-bit words).
+void STC007DataStitcher::setM2SampleFormat(bool in_m2)
+{
+#ifdef DI_EN_DBG_OUT
+    if(mode_m2!=in_m2)
+    {
+        if((log_level&LOG_SETTINGS)!=0)
+        {
+            if(in_m2==false)
+            {
+                qInfo()<<"[L2B-007] M2 sample format set to 'disabled'.";
+            }
+            else
+            {
+                qInfo()<<"[L2B-007] M2 sample format set to 'enabled'.";
+            }
+        }
+    }
+#endif
+    mode_m2 = in_m2;
 }
 
 //------------------------ Preset audio resolution.

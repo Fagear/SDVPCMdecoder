@@ -15,6 +15,7 @@ STC007Line::STC007Line(const STC007Line &in_object) : PCMLine(in_object)
     marker_start_bg_coord = in_object.marker_start_bg_coord;
     marker_start_ed_coord = in_object.marker_start_ed_coord;
     marker_stop_ed_coord = in_object.marker_stop_ed_coord;
+    m2_format = in_object.m2_format;
     // Copy data words.
     for(uint8_t index=0;index<WORD_CNT;index++)
     {
@@ -44,6 +45,7 @@ STC007Line& STC007Line::operator= (const STC007Line &in_object)
     marker_start_bg_coord = in_object.marker_start_bg_coord;
     marker_start_ed_coord = in_object.marker_start_ed_coord;
     marker_stop_ed_coord = in_object.marker_stop_ed_coord;
+    m2_format = in_object.m2_format;
     // Copy data words.
     for(uint8_t index=0;index<WORD_CNT;index++)
     {
@@ -72,6 +74,7 @@ void STC007Line::clear()
     mark_st_stage = MARK_ST_START;
     mark_ed_stage = MARK_ED_START;
     marker_start_bg_coord = marker_start_ed_coord = marker_stop_ed_coord = 0;
+    m2_format = false;
     // Reset data words.
     setSilent();
     for(uint8_t index=0;index<WORD_CNT;index++)
@@ -134,9 +137,19 @@ void STC007Line::setSourceCRC(uint16_t in_crc)
 //------------------------ Zero out all data words.
 void STC007Line::setSilent()
 {
-    for(uint8_t i=WORD_L_SH0;i<=WORD_Q_SH336;i++)
+    if(m2_format==false)
     {
-        words[i] = 0;
+        for(uint8_t i=WORD_L_SH0;i<=WORD_Q_SH336;i++)
+        {
+            words[i] = 0;
+        }
+    }
+    else
+    {
+        for(uint8_t i=WORD_L_SH0;i<=WORD_Q_SH336;i++)
+        {
+            words[i] = BIT_M2_RANGE_POS;
+        }
     }
     calcCRC();
 }
@@ -158,6 +171,12 @@ void STC007Line::setFixed(uint8_t index)
     {
         word_valid[index] = true;
     }
+}
+
+//------------------------ Set sample format (normal/M2).
+void STC007Line::setM2Format(bool in_set)
+{
+    m2_format = in_set;
 }
 
 //------------------------ Force set marker detection stages to "markers exist" to bypass checks.
@@ -229,7 +248,7 @@ uint16_t STC007Line::getSourceCRC()
     return words[WORD_CRCC_SH0];
 }
 
-//------------------------ Get the type of PCM to determine class derived from [PCMLine];
+//------------------------ Get the type of PCM to determine class derived from [PCMLine].
 uint8_t STC007Line::getPCMType()
 {
     return TYPE_STC007;
@@ -238,19 +257,45 @@ uint8_t STC007Line::getPCMType()
 //------------------------ Convert one 14-bit word to a 16-bit sample.
 int16_t STC007Line::getSample(uint8_t index)
 {
-    uint16_t data_word;
-
-    if(index<WORD_P_SH288)
+    if(index>WORD_R_SH238)
     {
-        data_word = words[index];
+        // Index out-of-bounds.
+        return 0;
+    }
+
+    uint16_t data_word;
+    data_word = words[index];
+
+    if(m2_format==false)
+    {
         // Convert 14-bit word to a 16-bit word.
         data_word = (data_word<<2);
     }
     else
     {
-        // Index out-of-bounds.
-        data_word = 0;
+        bool is_positive;
+        // Check 14th bit for range (R bit).
+        if((data_word&BIT_M2_RANGE_POS)==0)
+        {
+            // Higher range.
+            // Move 3 bits left (VALUE x8) to fill up 16-bit MSBs.
+            data_word = (data_word<<3);
+        }
+        else
+        {
+            // Lower range.
+            // Pick sign of the value.
+            is_positive = ((data_word&BIT_M2_SIGN_POS)==0);
+            // Remove range bit.
+            data_word = data_word&(~BIT_M2_RANGE_POS);
+            if(is_positive==false)
+            {
+                // Fill all MSBs following negative sign.
+                data_word|=(1<<15)|(1<<14)|(1<<13);
+            }
+        }
     }
+
     return (int16_t)data_word;
 }
 
@@ -347,10 +392,7 @@ bool STC007Line::hasStartMarker()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Was PCM STOP-marker found in the line?
@@ -360,30 +402,22 @@ bool STC007Line::hasStopMarker()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Were both PCM markers found in the line?
 bool STC007Line::hasMarkers()
 {
-    if((mark_st_stage==MARK_ST_BOT_2)&&(mark_ed_stage==MARK_ED_LEN_OK))
+    if((hasStartMarker()!=false)&&(hasStopMarker()!=false))
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Does provided line have the same words?
 bool STC007Line::hasSameWords(STC007Line *in_line)
 {
-    bool equal;
-    equal = true;
     if(in_line==NULL)
     {
         return false;
@@ -394,11 +428,10 @@ bool STC007Line::hasSameWords(STC007Line *in_line)
         {
             if(words[index]!=in_line->words[index])
             {
-                equal = false;
-                break;
+                return false;
             }
         }
-        return equal;
+        return true;
     }
 }
 
@@ -410,10 +443,7 @@ bool STC007Line::hasControlBlock()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Is CRC valid (re-calculated CRC is the same as read one)?
@@ -423,10 +453,20 @@ bool STC007Line::isCRCValidIgnoreForced()
     {
         return true;
     }
-    else
+    return false;
+}
+
+//------------------------ Presence of M2 sample format (13/16-bits in 14-bit words).
+bool STC007Line::isCtrlFormatM2()
+{
+    if(isServCtrlBlk()!=false)
     {
-        return false;
+        if((words[WORD_CB_CTRL]&CTRL_FMT_ID)==CTRL_FMT_M2)
+        {
+            return true;
+        }
     }
+    return false;
 }
 
 //------------------------ Prohibition of digital dubbing.
@@ -501,31 +541,26 @@ bool STC007Line::isNearSilence(uint8_t index)
 //------------------------ Are audio samples in both channels near zero?
 bool STC007Line::isAlmostSilent()
 {
-    bool silent;
-    silent = false;
     // Check if both channels are close to silence.
     if(((isNearSilence(WORD_L_SH0)!=false)||(isNearSilence(WORD_L_SH95)!=false)||(isNearSilence(WORD_L_SH190)!=false))&&
         ((isNearSilence(WORD_R_SH48)!=false)||(isNearSilence(WORD_R_SH143)!=false)||(isNearSilence(WORD_R_SH238)!=false)))
     {
-        silent = true;
+        return true;
     }
-    return silent;
+    return false;
 }
 
 //------------------------ Are all audio words zeroed?
 bool STC007Line::isSilent()
 {
-    bool zero;
-    zero = true;
     for(uint8_t index=WORD_L_SH0;index<=WORD_R_SH238;index++)
     {
         if(getSample(index)!=0)
         {
-            zero = false;
-            break;
+            return false;
         }
     }
-    return zero;
+    return true;
 }
 
 //------------------------ Check if the line was fixed by CWD.
@@ -824,25 +859,25 @@ std::string STC007Line::dumpContentString()
 
         if(isDataByRefSweep()!=false)
         {
-            sprintf(c_buf, "R>[%03u|%03u|%03u] S", ref_low, ref_level, ref_high);
+            sprintf(c_buf, "R>[%03u|%03u|%03u] ", ref_low, ref_level, ref_high);
         }
         else if(isDataBySkip()!=false)
         {
-            sprintf(c_buf, "R=[%03u|%03u|%03u] S", ref_low, ref_level, ref_high);
+            sprintf(c_buf, "R=[%03u|%03u|%03u] ", ref_low, ref_level, ref_high);
         }
         else
         {
-            sprintf(c_buf, "R?[%03u|%03u|%03u] S", ref_low, ref_level, ref_high);
+            sprintf(c_buf, "R?[%03u|%03u|%03u] ", ref_low, ref_level, ref_high);
         }
         text_out += c_buf;
         if(hasStartMarker()==false)
         {
-            sprintf(c_buf, "%01u", mark_st_stage);
+            sprintf(c_buf, "S%01u", mark_st_stage);
             text_out += c_buf;
         }
         else
         {
-            text_out += "+";
+            text_out += "S+";
         }
         if((isDataBySkip()!=false)&&(hasStartMarker()!=false))
         {
@@ -965,6 +1000,6 @@ void STC007Line::calcCoordinates(uint8_t in_shift)
 {
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
-        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixelC(bit, in_shift, 3);
+        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixelC(bit, in_shift, (BITS_START-1));
     }
 }

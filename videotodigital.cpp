@@ -11,7 +11,8 @@ VideoToDigital::VideoToDigital(QObject *parent) : QObject(parent)
     mtx_pcm16x0 = NULL;
     mtx_stc007 = NULL;
     log_level = 0;
-    pcm_type = PCMLine::TYPE_STC007;
+    pcm_type = TYPE_STC007;
+    pcm_sample_fmt = PCM_FMT_NOT_SET;
     binarization_mode = Binarizer::MODE_NORMAL;
     signal_quality.clear();
     line_dump_help_done = false;
@@ -157,14 +158,18 @@ CoordinatePair VideoToDigital::prescanCoordinates(uint8_t *out_ref)
     STC007Line stc007_line;
     PCMLine *work_line;
     CoordinatePair final_coords;
+    bin_preset_t bin_set;
 
     suppress_log = ((log_level&(Binarizer::LOG_PROCESS))==0);
     //suppress_log = false;
 
     lines_cnt = frame_buf.size();
 
-    if((lines_cnt>COORD_CHECK_PARTS)&&(pcm_type!=PCMLine::TYPE_STC007)&&
-        ((binarization_mode==Binarizer::MODE_DRAFT)||(binarization_mode==Binarizer::MODE_FAST)))
+    bin_set = line_converter.getCurrentFineSettings();
+
+    if((lines_cnt>COORD_CHECK_PARTS)
+       &&(pcm_type!=TYPE_STC007)
+       &&(bin_set.en_force_coords==false))
     {
         scan_ofs.resize(COORD_CHECK_LINES);
         refs_list.reserve(COORD_CHECK_LINES);
@@ -198,14 +203,14 @@ CoordinatePair VideoToDigital::prescanCoordinates(uint8_t *out_ref)
         line_converter.setGoodParameters();
         // Enable coordinates search.
         line_converter.setCoordinatesSearch(true);
-        if(pcm_type==PCMLine::TYPE_PCM1)
+        if(pcm_type==TYPE_PCM1)
         {
             // Process video line as single PCM line.
             line_converter.setLinePartMode(Binarizer::FULL_LINE);
             // Take pointer to PCM-1 line object.
             work_line = static_cast<PCMLine *>(&pcm1_line);
         }
-        else if(pcm_type==PCMLine::TYPE_PCM16X0)
+        else if(pcm_type==TYPE_PCM16X0)
         {
             // Right part of the video line (it usually has narrower window of good coordinates).
             line_converter.setLinePartMode(Binarizer::PART_PCM16X0_RIGHT);
@@ -524,35 +529,46 @@ void VideoToDigital::setLogLevel(uint8_t new_log)
 //------------------------ Set PCM type in source video.
 void VideoToDigital::setPCMType(uint8_t in_pcm)
 {
-    if(pcm_type!=in_pcm)
-    {
-        line_dump_help_done = false;
+    line_dump_help_done = false;
 #ifdef LB_EN_DBG_OUT
-        if((log_level&Binarizer::LOG_SETTINGS)!=0)
+    if((log_level&Binarizer::LOG_SETTINGS)!=0)
+    {
+        if(in_pcm==TYPE_PCM1)
         {
-            if(in_pcm==PCMLine::TYPE_PCM1)
-            {
-                qInfo()<<"[V2D] PCM type set to 'PCM-1'.";
-            }
-            else if(in_pcm==PCMLine::TYPE_PCM16X0)
-            {
-                qInfo()<<"[V2D] PCM type set to 'PCM-1600/1610/1630'.";
-            }
-            else if(in_pcm==PCMLine::TYPE_STC007)
-            {
-                qInfo()<<"[V2D] PCM type set to 'STC-007/008/PCM-F1'.";
-            }
-            else
-            {
-                qInfo()<<"[V2D] Unknown PCM type provided, ignored!";
-            }
+            qInfo()<<"[V2D] PCM type set to 'PCM-1'.";
         }
-#endif
+        else if(in_pcm==TYPE_PCM16X0)
+        {
+            qInfo()<<"[V2D] PCM type set to 'PCM-1600/1610/1630'.";
+        }
+        else if(in_pcm==TYPE_STC007)
+        {
+            qInfo()<<"[V2D] PCM type set to 'STC-007/008/PCM-F1'.";
+        }
+        else if(in_pcm==TYPE_M2)
+        {
+            qInfo()<<"[V2D] PCM type set to 'M2'.";
+        }
+        else
+        {
+            qInfo()<<"[V2D] Unknown PCM type provided, ignored!";
+        }
     }
-    if(in_pcm<PCMLine::TYPE_MAX)
+#endif
+    if(in_pcm<TYPE_MAX)
     {
         // Set value from the input.
         pcm_type = in_pcm;
+        // Special case for M2, using STC-007 processing but with different sample format.
+        if(pcm_type==TYPE_M2)
+        {
+            pcm_type = TYPE_STC007;
+            pcm_sample_fmt = PCM_FMT_M2;
+        }
+        else
+        {
+            pcm_sample_fmt = PCM_FMT_NOT_SET;
+        }
         // Reset "good" settings.
         line_converter.setGoodParameters();
         // Clear stats.
@@ -675,6 +691,7 @@ void VideoToDigital::doBinarize()
     PCM1Line last_pcm1_line;
     PCM16X0SubLine last_pcm16x0_p0_line, last_pcm16x0_p1_line, last_pcm16x0_p2_line;
     STC007Line last_stc007_line;
+    ArVidLine arvid_line;
 
 #ifdef LB_EN_DBG_OUT
     qInfo()<<"[V2D] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
@@ -748,7 +765,7 @@ void VideoToDigital::doBinarize()
                 }
 
                 // Find average coordinates for the buffer (usefull for markerless PCM formats).
-                //frame_avg = prescanCoordinates(&prescan_ref);
+                frame_avg = prescanCoordinates(&prescan_ref);
                 frame_avg.clear();
                 // Check if frame prescan returned valid coordinates.
                 if(frame_avg.areValid()==false)
@@ -783,7 +800,7 @@ void VideoToDigital::doBinarize()
                     line_converter.setMode(binarization_mode);
                     line_converter.setSource(&source_line);
 
-                    if(pcm_type==PCMLine::TYPE_PCM16X0)
+                    if(pcm_type==TYPE_PCM16X0)
                     {
                         // Preset number of passes on one video line for PCM-16x0.
                         sub_line_cnt = PCM16X0SubLine::SUBLINES_PER_LINE;
@@ -800,8 +817,12 @@ void VideoToDigital::doBinarize()
                     {
                         sub_line_cnt--;
                         time_per_line.start();
+
+                        // Debug
+                        //pcm_type = PCMLine::TYPE_ARVA;
+
                         // Preset settings for binarizator for selected PCM type.
-                        if(pcm_type==PCMLine::TYPE_PCM1)
+                        if(pcm_type==TYPE_PCM1)
                         {
                             // Process video line as single PCM-1 line.
                             line_converter.setLinePartMode(Binarizer::FULL_LINE);
@@ -834,7 +855,7 @@ void VideoToDigital::doBinarize()
                             // Make pointer to PCM-1 line object.
                             work_line = static_cast<PCMLine *>(&pcm1_line);
                         }
-                        else if(pcm_type==PCMLine::TYPE_PCM16X0)
+                        else if(pcm_type==TYPE_PCM16X0)
                         {
                             // In this format one video line contains three PCM-16x0 sub-lines.
                             // Pick part of the line to process.
@@ -863,7 +884,7 @@ void VideoToDigital::doBinarize()
                             if((binarization_mode==Binarizer::MODE_DRAFT)||(binarization_mode==Binarizer::MODE_FAST))
                             {
                                 // Let binarizator run data search until enough lines has passed.
-                                if((good_coords_in_field>3)||(pcm_lines_in_field>12))
+                                if((good_coords_in_field>9)||(pcm_lines_in_field>15))
                                 {
                                     // Disable coordinates search for fast modes if good enough coordinates were found.
                                     line_converter.setCoordinatesSearch(false);
@@ -888,7 +909,7 @@ void VideoToDigital::doBinarize()
                             // Make pointer to PCM-16X0 line object.
                             work_line = static_cast<PCMLine *>(&pcm16x0_line);
                         }
-                        else if(pcm_type==PCMLine::TYPE_STC007)
+                        else if(pcm_type==TYPE_STC007)
                         {
                             // Process video line as single PCM line.
                             line_converter.setLinePartMode(Binarizer::FULL_LINE);
@@ -897,6 +918,15 @@ void VideoToDigital::doBinarize()
                             // Take pointer to STC-007 line object.
                             work_line = static_cast<PCMLine *>(&stc007_line);
                         }
+                        /*else if(pcm_type==TYPE_ARVA)
+                        {
+                            // Process video line as single PCM line.
+                            line_converter.setLinePartMode(Binarizer::FULL_LINE);
+                            // Always enable coordinates search, it's fast for STC-007 because of markers.
+                            line_converter.setCoordinatesSearch(false);
+                            // Take pointer to ArVid Audio line object.
+                            work_line = static_cast<PCMLine *>(&arvid_line);
+                        }*/
                         else
                         {
                             qWarning()<<DBG_ANCHOR<<"[V2D] Unknown PCM type provided:"<<pcm_type;
@@ -1061,10 +1091,6 @@ void VideoToDigital::doBinarize()
                             bool count_has_pcm;
                             count_has_pcm = false;
 
-                            /*if(field_state==FIELD_NEW)
-                            {
-                                coord_delta.setToZero();
-                            }*/
                             // Determine if current line should be count as having PCM data in it.
                             if(work_line->getPCMType()==PCMLine::TYPE_PCM1)
                             {
@@ -1094,7 +1120,18 @@ void VideoToDigital::doBinarize()
                                     // CRC is valid or at least PCM markers were found.
                                     count_has_pcm = true;
                                 }
+                                // Set M2 sample format to correctly process silent samples.
+                                if(pcm_sample_fmt==PCM_FMT_M2)
+                                {
+                                    stc007_line.setM2Format(true);
+                                }
+                                else
+                                {
+                                    stc007_line.setM2Format(false);
+                                }
                             }
+
+                            // Check if line contains PCM data.
                             if(count_has_pcm!=false)
                             {
                                 // Count lines with PCM.
@@ -1133,8 +1170,11 @@ void VideoToDigital::doBinarize()
                             // Check if valid audio data was found.
                             if(work_line->isCRCValid()!=false)
                             {
+                                // Line has VALID CRC.
                                 // Increase counter of good CRCs in frame to disable data coordinates search.
                                 good_coords_in_field++;
+                                // Update line length.
+                                signal_quality.line_length = (uint16_t)source_line.pixel_data.size();
                                 // Check if line-copy detection is enabled.
                                 if(check_line_copy!=false)
                                 {
@@ -1148,15 +1188,6 @@ void VideoToDigital::doBinarize()
                                         // Force bad state for the line.
                                         work_line->setForcedBad();
                                         force_bad_line = true;
-                                        // Count bad CRCs.
-                                        if(even_line==false)
-                                        {
-                                            signal_quality.lines_bad_odd++;
-                                        }
-                                        else
-                                        {
-                                            signal_quality.lines_bad_even++;
-                                        }
 #ifdef LB_EN_DBG_OUT
                                         if(((log_level&Binarizer::LOG_PROCESS)!=0)||((log_level&Binarizer::LOG_LINE_DUMP)!=0))
                                         {
@@ -1205,12 +1236,10 @@ void VideoToDigital::doBinarize()
                                             // Count bad CRCs and duplicated lines.
                                             if(even_line==false)
                                             {
-                                                signal_quality.lines_bad_odd++;
                                                 signal_quality.lines_dup_odd++;
                                             }
                                             else
                                             {
-                                                signal_quality.lines_bad_even++;
                                                 signal_quality.lines_dup_even++;
                                             }
 #ifdef LB_EN_DBG_OUT
@@ -1291,15 +1320,6 @@ void VideoToDigital::doBinarize()
                                                 // Make this line invalid.
                                                 work_line->setForcedBad();
                                                 force_bad_line = true;
-                                                // Count bad CRCs.
-                                                if(even_line==false)
-                                                {
-                                                    signal_quality.lines_bad_odd++;
-                                                }
-                                                else
-                                                {
-                                                    signal_quality.lines_bad_even++;
-                                                }
 #ifdef LB_EN_DBG_OUT
                                                 if((log_level&Binarizer::LOG_PROCESS)!=0)
                                                 {
@@ -1322,7 +1342,19 @@ void VideoToDigital::doBinarize()
                                     // Update "good" binarizing parameters (BW levels, ref. level, data coordinates) if CRC is OK.
                                     line_converter.setGoodParameters(work_line);
                                 }
-                                // Update last line for future comparison.
+                                else
+                                {
+                                    // Count bad CRCs.
+                                    if(even_line==false)
+                                    {
+                                        signal_quality.lines_bad_odd++;
+                                    }
+                                    else
+                                    {
+                                        signal_quality.lines_bad_even++;
+                                    }
+                                }
+                                // Update last line for future comparisons.
                                 if(work_line->getPCMType()==PCMLine::TYPE_PCM1)
                                 {
                                     // Update stored last line.
@@ -1365,6 +1397,11 @@ void VideoToDigital::doBinarize()
                                 // CRC was invalid.
                                 bool count_bad_crc;
                                 count_bad_crc = false;
+                                if(signal_quality.line_length==0)
+                                {
+                                    // Update line length if not set by valid lines yet.
+                                    signal_quality.line_length = (uint16_t)source_line.pixel_data.size();
+                                }
                                 // Update last line data to compare next time.
                                 if(work_line->getPCMType()==PCMLine::TYPE_PCM1)
                                 {
@@ -1411,6 +1448,16 @@ void VideoToDigital::doBinarize()
                                 // Check if any PCM data was registered.
                                 if(count_bad_crc!=false)
                                 {
+                                    // CRC was bad, count it.
+                                    if(even_line==false)
+                                    {
+                                        signal_quality.lines_bad_odd++;
+                                    }
+                                    else
+                                    {
+                                        signal_quality.lines_bad_even++;
+                                    }
+
                                     // Some data probably is there but CRC is invalid.
                                     CoordinatePair preset_coords;
                                     // First, preset for median if last valid coordinates.
@@ -1420,16 +1467,6 @@ void VideoToDigital::doBinarize()
                                     {
                                         // Set to last frame median coordinates.
                                         preset_coords = frame_avg;
-                                    }
-
-                                    // CRC was bad, count it.
-                                    if(even_line==false)
-                                    {
-                                        signal_quality.lines_bad_odd++;
-                                    }
-                                    else
-                                    {
-                                        signal_quality.lines_bad_even++;
                                     }
 #ifdef LB_EN_DBG_OUT
                                     if(((log_level&Binarizer::LOG_PROCESS)!=0)||((log_level&Binarizer::LOG_LINE_DUMP)!=0))
@@ -1450,6 +1487,15 @@ void VideoToDigital::doBinarize()
                                         {
                                             // Begining of the field has passed.
                                             field_state = FIELD_INIT;
+#ifdef LB_EN_DBG_OUT
+                                            if((log_level&Binarizer::LOG_PROCESS)!=0)
+                                            {
+                                                QString log_line;
+                                                log_line.sprintf("[V2D] No valid data found, last sub-line passed, set default coordinates to [%03d|%04d]",
+                                                                 preset_coords.data_start, preset_coords.data_stop);
+                                                qInfo()<<log_line;
+                                            }
+#endif
                                             // Try to get a result next time with averaged coordinates.
                                             line_converter.setDataCoordinates(preset_coords);
                                             // Reset preset BW levels.
@@ -1463,11 +1509,29 @@ void VideoToDigital::doBinarize()
                                             //if((work_line->isCRCValidIgnoreForced()!=false)||(source_line.scan_done!=false))
                                             if(source_line.scan_done!=false)
                                             {
+#ifdef LB_EN_DBG_OUT
+                                                if((log_level&Binarizer::LOG_PROCESS)!=0)
+                                                {
+                                                    QString log_line;
+                                                    log_line.sprintf("[V2D] No valid data found, currently processing sub-line from one line, set default coordinates as to previous part at [%03d|%04d]",
+                                                                     work_line->coords.data_start, work_line->coords.data_stop);
+                                                    qInfo()<<log_line;
+                                                }
+#endif
                                                 // Try to get a result for next sub-line time with already valid coordinates.
                                                 line_converter.setDataCoordinates(work_line->coords);
                                             }
                                             else
                                             {
+#ifdef LB_EN_DBG_OUT
+                                                if((log_level&Binarizer::LOG_PROCESS)!=0)
+                                                {
+                                                    QString log_line;
+                                                    log_line.sprintf("[V2D] No valid data found, currently processing sub-line from one line, set default coordinates to [%03d|%04d]",
+                                                                     preset_coords.data_start, preset_coords.data_stop);
+                                                    qInfo()<<log_line;
+                                                }
+#endif
                                                 // Try to get a result next time with averaged coordinates.
                                                 line_converter.setDataCoordinates(preset_coords);
                                             }
@@ -1485,7 +1549,7 @@ void VideoToDigital::doBinarize()
                                 }
                             }
                             line_in_field_cnt++;
-                        }
+                        }   // service tag presence check
                         // Check if frame ended.
                         if(work_line->isServEndFrame()!=false)
                         {
@@ -1505,12 +1569,12 @@ void VideoToDigital::doBinarize()
                             // Reset frame coordinates stats.
                             frame_coord_stats.clear();
 
-                            if(pcm_type==PCMLine::TYPE_PCM1)
+                            if(pcm_type==TYPE_PCM1)
                             {
                                 // Limit number of lines with PCM to standard.
                                 signal_quality.lines_odd = signal_quality.lines_even = PCM1DataStitcher::LINES_PF;
                             }
-                            else if(pcm_type==PCMLine::TYPE_PCM16X0)
+                            else if(pcm_type==TYPE_PCM16X0)
                             {
                                 // Limit number of lines with PCM to standard.
                                 signal_quality.lines_odd = signal_quality.lines_even = PCM16X0DataStitcher::LINES_PF;

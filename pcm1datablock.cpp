@@ -295,7 +295,7 @@ uint16_t PCM1DataBlock::getWord(uint8_t index)
     }
 }
 
-//------------------------ Get audio sample.
+//------------------------ Get audio sample (convert to 16 bits).
 int16_t PCM1DataBlock::getSample(uint8_t index)
 {
     if(index<getWordCount())

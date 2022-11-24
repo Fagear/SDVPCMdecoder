@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-// 16-bit audio sample to VU level (8-bit) conversion table.
+// Rectified 16-bit audio sample to VU level (8-bit) conversion table.
 const uint8_t sample2vu[32768] =
 {
 	 0,	 2,	 3,	 3,	 4,	 4,	 5,	 5,

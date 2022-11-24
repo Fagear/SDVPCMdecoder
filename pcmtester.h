@@ -44,6 +44,7 @@ private:
 public slots:
     void testCRCC();
     void testDataBlock();
+    void testHamming();
 
 signals:
     void testOk();

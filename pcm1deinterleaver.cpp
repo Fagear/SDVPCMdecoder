@@ -245,16 +245,20 @@ void PCM1Deinterleaver::setWordData(uint16_t itl_block_num, bool even_stripe, bo
         {
             tmp_subline = (*input_vector)[subline_ofs];
         }
+        // Preset that CRC is ok.
+        subline_crc_ok  = true;
         // Check if CRC should be ignored.
         if(ignore_crc==false)
         {
+            // Word CRCs must be checked.
             // Take CRC state from the sub-line.
             subline_crc_ok = tmp_subline.isCRCValid();
         }
         else
         {
-            // Always assume that CRC is ok.
-            subline_crc_ok  = true;
+            // CRC skip is allowed.
+            // Check word statuses by subline state (filler or not).
+            subline_crc_ok = tmp_subline.hasBWSet();
         }
 #ifdef DI_EN_DBG_OUT
         if(suppress_log==false)

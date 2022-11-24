@@ -1133,7 +1133,8 @@ void STC007Deinterleaver::setWordData(STC007Line *line_L0, STC007Line *line_R0,
     word1_crc_ok = word2_crc_ok = word3_crc_ok = word4_crc_ok = word5_crc_ok = word6_crc_ok = word7_crc_ok = word8_crc_ok = true;
     if(ignore_crc==false)
     {
-        // Take CRC states for the words.
+        // Word CRCs must be checked.
+        // Take CRC states from the words.
         word1_crc_ok = line_L0->isWordCRCOk(STC007Line::WORD_L_SH0);
         word2_crc_ok = line_R0->isWordCRCOk(STC007Line::WORD_R_SH48);
         word3_crc_ok = line_L1->isWordCRCOk(STC007Line::WORD_L_SH95);
@@ -1142,6 +1143,19 @@ void STC007Deinterleaver::setWordData(STC007Line *line_L0, STC007Line *line_R0,
         word6_crc_ok = line_R2->isWordCRCOk(STC007Line::WORD_R_SH238);
         word7_crc_ok = line_P0->isWordCRCOk(STC007Line::WORD_P_SH288);
         word8_crc_ok = line_Q0->isWordCRCOk(STC007Line::WORD_Q_SH336);
+    }
+    else
+    {
+        // CRC skip is allowed.
+        // Check word statuses by line state (filler or not).
+        word1_crc_ok = line_L0->coords.areValid()&&line_L0->hasBWSet();
+        word2_crc_ok = line_R0->coords.areValid()&&line_R0->hasBWSet();
+        word3_crc_ok = line_L1->coords.areValid()&&line_L1->hasBWSet();
+        word4_crc_ok = line_R1->coords.areValid()&&line_R1->hasBWSet();
+        word5_crc_ok = line_L2->coords.areValid()&&line_L2->hasBWSet();
+        word6_crc_ok = line_R2->coords.areValid()&&line_R2->hasBWSet();
+        word7_crc_ok = line_P0->coords.areValid()&&line_P0->hasBWSet();
+        word8_crc_ok = line_Q0->coords.areValid()&&line_Q0->hasBWSet();
     }
 
     // Check provided resolution.
@@ -1183,7 +1197,8 @@ void STC007Deinterleaver::setWordData(STC007Line *line_L0, STC007Line *line_R0,
         // Check if CRC should be ignored.
         if(ignore_crc==false)
         {
-            // Take CRC states for the Q/S-words.
+            // Word CRCs must be checked.
+            // Take CRC states from the Q/S-words.
             sword1_crc_ok = line_L0->isWordCRCOk(STC007Line::WORD_Q_SH336);
             sword2_crc_ok = line_R0->isWordCRCOk(STC007Line::WORD_Q_SH336);
             sword3_crc_ok = line_L1->isWordCRCOk(STC007Line::WORD_Q_SH336);
@@ -1191,6 +1206,18 @@ void STC007Deinterleaver::setWordData(STC007Line *line_L0, STC007Line *line_R0,
             sword5_crc_ok = line_L2->isWordCRCOk(STC007Line::WORD_Q_SH336);
             sword6_crc_ok = line_R2->isWordCRCOk(STC007Line::WORD_Q_SH336);
             sword7_crc_ok = line_P0->isWordCRCOk(STC007Line::WORD_Q_SH336);
+        }
+        else
+        {
+            // CRC skip is allowed.
+            // Check word statuses by line state (filler or not).
+            sword1_crc_ok = line_L0->coords.areValid()&&line_L0->hasBWSet();
+            sword2_crc_ok = line_R0->coords.areValid()&&line_R0->hasBWSet();
+            sword3_crc_ok = line_L1->coords.areValid()&&line_L1->hasBWSet();
+            sword4_crc_ok = line_R1->coords.areValid()&&line_R1->hasBWSet();
+            sword5_crc_ok = line_L2->coords.areValid()&&line_L2->hasBWSet();
+            sword6_crc_ok = line_R2->coords.areValid()&&line_R2->hasBWSet();
+            sword7_crc_ok = line_P0->coords.areValid()&&line_P0->hasBWSet();
         }
 
         // Copy L0.

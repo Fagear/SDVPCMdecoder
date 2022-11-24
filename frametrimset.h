@@ -46,6 +46,7 @@ class FrameBinDescriptor
 {
 public:
     uint32_t frame_id;          // Frame number.
+    uint16_t line_length;       // Number of pixels in single line of the frame.
     uint16_t lines_odd;         // Number of lines in the odd field with video data.
     uint16_t lines_even;        // Number of lines in the even field with video data.
     uint16_t lines_pcm_odd;     // Number of lines in the odd field, containing PCM data (has valid CRC or has markers).

@@ -112,6 +112,7 @@
 #include <string>
 #include <vector>
 #include "config.h"
+#include "arvidline.h"
 #include "bin_preset_t.h"
 #include "frametrimset.h"
 #include "pcm1line.h"
@@ -143,26 +144,41 @@ typedef struct
 } crc_handler_t;
 
 //------------------------ Single-line binarizer class.
-// TODO: add counters for left/right bits instead of [en_bit_picker] in [bin_preset_t] and fine settings in GUI
-// TODO: add preset/override for data coordinates and reference level in [bin_preset_t] and fine settings in GUI
 class Binarizer
 {
 public:
-    // Results.
+
+    // Console logging options for [setLogLevel()] and [log_level] (can be used simultaneously).
     enum
     {
-        LB_RET_OK,              // Success.
-        LB_RET_NULL_VIDEO,      // Null poiner to input video line was provided, unable to process.
-        LB_RET_NULL_PCM,        // Null poiner to output PCM line was provided, unable to process.
-        LB_RET_SHORT_LINE,      // Provided video line is too short to have PCM data.
-        LB_RET_NO_COORD,        // PCM data coordinates were not detected.
+        LOG_SETTINGS = (1<<0),  // External operations with settings.
+        LOG_PROCESS = (1<<1),   // General stage-by-stage logging.
+        LOG_BRIGHT = (1<<2),    // Output brightness spread data.
+        LOG_REF_SWEEP = (1<<3), // Output full process of reference level sweeping.
+        LOG_COORD = (1<<4),     // Data coordinates search.
+        LOG_RAWBIN = (1<<5),    // Output string of raw binarized data.
+        LOG_READING = (1<<6),   // Final binarization run.
+        LOG_LINE_DUMP = (1<<7), // Output resulting line.
     };
 
-    // Pixel Per Bit (PPB) limits.
+    // Binarization modes for [setMode()] and [bin_mode].
     enum
     {
-        PPB_MAX = 50,           // Maximum PPB for processing.
-        PPB_EQ_PASSES_MAX = 7   // Maximum number of PPB equalization tries per line in [calcRefLevelByPPB()].
+        MODE_DRAFT,             // Maximum speed, level sweep and pixel shifting stages are disbled.
+        MODE_FAST,              // Pretty fast, some pixel shifting stages are enabled, but level sweeping is disabled.
+        MODE_NORMAL,            // Fast on good files, sluggish on noisy ones (level sweep is enabled, limited count of pixel shifting stages are enabled).
+        MODE_INSANE,            // Incredibly slow on noisy files (level sweeping and all pixel shifting stages are enabled).
+        MODE_MAX                // Limiter for mode operations.
+    };
+
+    // Line part setting for [setLinePartMode()] and [line_part_mode].
+    enum
+    {
+        FULL_LINE,              // Binarize full video line (for PCM-1 and STC-007).
+        PART_PCM16X0_LEFT,      // Binarize 1st part of video line (for PCM-16x0).
+        PART_PCM16X0_MIDDLE,    // Binarize 2nd part of video line (for PCM-16x0).
+        PART_PCM16X0_RIGHT,     // Binarize 3rd part of video line (for PCM-16x0).
+        PART_MAX                // Limiter for setting validation.
     };
 
     // CRC limits.
@@ -206,46 +222,14 @@ public:
         PCM16X0_SEARCH_STEP_CNT = ((PCM16X0_SEARCH_MAX_OFS+1)*2),   // Number of steps for full coordinate sweep.
     };
 
-    // Bit Picker defaults.
+    // Results.
     enum
     {
-        PCM1_PICKBITS_MAX_LEFT = 4,     // Maximum number of bits from the left side of the PCM-1 line to pick.
-        PCM1_PICKBITS_MAX_RIGHT = 2,    // Maximum number of bits from the right side of the PCM-1 line to pick.
-        PCM16X0_PICKBITS_MAX_LEFT = 8,  // Maximum number of bits from the left side of the PCM-16x0 line to pick.
-        PCM16X0_PICKBITS_MAX_RIGHT = 5  // Maximum number of bits from the right side of the PCM-16x0 line to pick.
-    };
-
-    // Console logging options for [setLogLevel()] and [log_level] (can be used simultaneously).
-    enum
-    {
-        LOG_SETTINGS = (1<<0),  // External operations with settings.
-        LOG_PROCESS = (1<<1),   // General stage-by-stage logging.
-        LOG_BRIGHT = (1<<2),    // Output brightness spread data.
-        LOG_REF_SWEEP = (1<<3), // Output full process of reference level sweeping.
-        LOG_COORD = (1<<4),     // Data coordinates search.
-        LOG_RAWBIN = (1<<5),    // Output string of raw binarized data.
-        LOG_READING = (1<<6),   // Final binarization run.
-        LOG_LINE_DUMP = (1<<7), // Output resulting line.
-    };
-
-    // Binarization modes for [setMode()] and [bin_mode].
-    enum
-    {
-        MODE_DRAFT,             // Maximum speed, level sweep and pixel shifting stages are disbled.
-        MODE_FAST,              // Pretty fast, some pixel shifting stages are enabled, but level sweeping is disabled.
-        MODE_NORMAL,            // Fast on good files, sluggish on noisy ones (level sweep is enabled, limited count of pixel shifting stages are enabled).
-        MODE_INSANE,            // Incredibly slow on noisy files (level sweeping and all pixel shifting stages are enabled).
-        MODE_MAX                // Limiter for mode operations.
-    };
-
-    // Line part setting for [setLinePartMode()] and [line_part_mode].
-    enum
-    {
-        FULL_LINE,              // Binarize full video line (for PCM-1 and STC-007).
-        PART_PCM16X0_LEFT,      // Binarize 1st part of video line (for PCM-16x0).
-        PART_PCM16X0_MIDDLE,    // Binarize 2nd part of video line (for PCM-16x0).
-        PART_PCM16X0_RIGHT,     // Binarize 3rd part of video line (for PCM-16x0).
-        PART_MAX                // Limiter for setting validation.
+        LB_RET_OK,              // Success.
+        LB_RET_NULL_VIDEO,      // Null poiner to input video line was provided, unable to process.
+        LB_RET_NULL_PCM,        // Null poiner to output PCM line was provided, unable to process.
+        LB_RET_SHORT_LINE,      // Provided video line is too short to have PCM data.
+        LB_RET_NO_COORD,        // PCM data coordinates were not detected.
     };
 
     // Stages of main state machine for [proc_state].
@@ -306,8 +290,6 @@ private:
     uint16_t mark_end_min;              // Minimum pixel coordinate of the STOP marker search area (for STC-007).
     uint16_t estimated_ppb;             // Estimated or calculated PPB for marker coordinates verify.
     bool was_BW_scanned;                // Was [findBlackWhite()] called at least once while processing the line?
-    uint16_t brightness_spread[256];    // Brightness spread statistics.
-    crc_handler_t scan_sweep_crcs[256];             // CRC data for reference level sweep stats.
     crc_handler_t shift_crcs[SHIFT_STAGES_MAX+1];   // CRC data for pixel shifting.
     crc_handler_t hyst_crcs[HYST_DEPTH_MAX+1];      // CRC data for hysteresis sweep.
     crc_handler_t crc_stats[MAX_COLL_CRCS+1];       // CRC stats and counters.
@@ -352,15 +334,18 @@ private:
                                 uint8_t target_result = REF_CRC_OK, uint8_t max_hyst = HYST_DEPTH_MAX, uint8_t max_shift = SHIFT_STAGES_MAX);
     void textDumpCRCSweep(crc_handler_t *crc_array, uint8_t low_level, uint8_t high_level, uint16_t target1 = 0xFFFF, uint16_t target2 = 0xFFFF);
     // BLACK and WHITE levels detection (AGC).
-    uint16_t getMostFrequentBrightnessCount();
-    uint8_t getUsefullLowLevel();
-    uint8_t getUsefullHighLevel();
+    uint16_t getMostFrequentBrightnessCount(const uint16_t *brght_sprd);
+    uint8_t getUsefullLowLevel(const uint16_t *brght_sprd);
+    uint8_t getUsefullHighLevel(const uint16_t *brght_sprd);
+    void findPCM1BW(uint16_t *brght_sprd);
+    void findPCM16X0BW(uint16_t *brght_sprd);
+    void findSTC007BW(uint16_t *brght_sprd);
+    void findArVidBW(uint16_t *brght_sprd);
     bool findBlackWhite();
     // Reference level detection.
     uint8_t getLowLevel(uint8_t in_lvl, uint8_t diff);
     uint8_t getHighLevel(uint8_t in_lvl, uint8_t diff);
     uint8_t pickCenterRefLevel(uint8_t lvl_black, uint8_t lvl_white);
-    uint8_t calcRefLevelByPPB(uint8_t lvl_black, uint8_t lvl_white);
     void sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res);
     void calcRefLevelBySweep(PCMLine *pcm_line = NULL);
     // Data coordinates detection (Macro-TBC).
@@ -377,6 +362,7 @@ private:
     uint8_t fillPCM1(PCM1Line *fill_pcm_line, uint8_t ref_delta = 0, uint8_t shift_stg = 0, bool no_log = false);
     uint8_t fillPCM16X0(PCM16X0SubLine *fill_pcm_line, uint8_t ref_delta = 0, uint8_t shift_stg = 0, bool no_log = false);
     uint8_t fillSTC007(STC007Line *fill_pcm_line, uint8_t ref_delta = 0, uint8_t shift_stg = 0, bool no_log = false);
+    uint8_t fillArVidAudio(ArVidLine *fill_pcm_line, uint8_t ref_delta = 0, uint8_t shift_stg = 0, bool no_log = false);
     uint8_t fillDataWords(PCMLine *fill_pcm_line, uint8_t ref_delta = 0, uint8_t shift_stg = 0, bool no_log = false);
     void readPCMdata(PCMLine *fill_pcm_line, uint8_t thread_id = 0, bool no_log = false);
 };

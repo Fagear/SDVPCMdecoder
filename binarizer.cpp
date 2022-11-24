@@ -29,8 +29,6 @@ Binarizer::Binarizer()
     estimated_ppb = 0;
     was_BW_scanned = false;
 
-    fillArray(brightness_spread, 256);
-    resetCRCStats(scan_sweep_crcs, 256);
     resetCRCStats(shift_crcs, SHIFT_STAGES_MAX+1);
     resetCRCStats(hyst_crcs, HYST_DEPTH_MAX+1);
     resetCRCStats(crc_stats, MAX_COLL_CRCS+1);
@@ -383,6 +381,7 @@ uint8_t Binarizer::processLine()
     bool suppress_log;
     uint8_t stage_count;
     uint32_t tmp_calc;
+    CoordinatePair forced_coords;
 
     // Measure processing time for debuging.
 #ifdef QT_VERSION
@@ -418,12 +417,14 @@ uint8_t Binarizer::processLine()
     // Clear internal line structure according to PCM type.
     if(out_pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
     {
+        // PCM-1.
         PCM1Line *temp_pcm_ptr;
         temp_pcm_ptr = static_cast<PCM1Line *>(out_pcm_line);
         temp_pcm_ptr->clear();
     }
     else if(out_pcm_line->getPCMType()==PCMLine::TYPE_PCM16X0)
     {
+        // PCM-1600/1610/1630.
         PCM16X0SubLine *temp_pcm_ptr;
         temp_pcm_ptr = static_cast<PCM16X0SubLine *>(out_pcm_line);
         temp_pcm_ptr->clear();
@@ -446,12 +447,21 @@ uint8_t Binarizer::processLine()
     }
     else if(out_pcm_line->getPCMType()==PCMLine::TYPE_STC007)
     {
+        // STC-007/PCM-F1.
         STC007Line *temp_pcm_ptr;
         temp_pcm_ptr = static_cast<STC007Line *>(out_pcm_line);
         temp_pcm_ptr->clear();
     }
+    else if(out_pcm_line->getPCMType()==PCMLine::TYPE_ARVA)
+    {
+        // ArVid Audio.
+        ArVidLine *temp_pcm_ptr;
+        temp_pcm_ptr = static_cast<ArVidLine *>(out_pcm_line);
+        temp_pcm_ptr->clear();
+    }
     else
     {
+        // Unsupported PCM type.
         out_pcm_line->clear();
     }
 
@@ -497,7 +507,7 @@ uint8_t Binarizer::processLine()
     {
         // Calculate line length, limits for PCM START and PCM STOP markers search, estimate PPB (Pixels Per Bit) value.
         // Save current video line length in pixels.
-        line_length = video_line->pixel_data.size();
+        line_length = (uint16_t)video_line->pixel_data.size();
         out_pcm_line->setFromDoubledState(video_line->isDoubleWidth());
         // Set line scan limits.
         scan_start = 0;
@@ -548,12 +558,32 @@ uint8_t Binarizer::processLine()
         // Integer calculation magic.
         tmp_calc = line_length*PCMLine::INT_CALC_MULT;
         // Take all valueable bits in video line.
-        tmp_calc = tmp_calc/out_pcm_line->getBitsBetweenDataCoordinates();
+        tmp_calc = tmp_calc/out_pcm_line->getBitsPerSourceLine();
         // Estimate minimum bit length (PPB = Pixels Per Bit).
         estimated_ppb = (uint16_t)((tmp_calc+(PCMLine::INT_CALC_MULT/2))/PCMLine::INT_CALC_MULT);
 
         // Set preliminary data coordinates at the boundaries of scan range.
         out_pcm_line->coords.setCoordinates(scan_start, scan_end);
+        forced_coords.clear();
+        if(digi_set.en_force_coords!=false)
+        {
+            // Calculate forced data coordinates.
+            forced_coords.data_start = (int16_t)scan_start+digi_set.horiz_coords.data_start;
+            forced_coords.data_stop = (int16_t)scan_end-digi_set.horiz_coords.data_stop;
+            if(video_line->isDoubleWidth()!=false)
+            {
+                forced_coords.data_start += digi_set.horiz_coords.data_start;
+                forced_coords.data_stop -= digi_set.horiz_coords.data_stop;
+            }
+            //qDebug()<<scan_start<<forced_coords.data_start<<forced_coords.data_stop<<scan_end;
+            if(forced_coords.areValid()!=false)
+            {
+                // Apply forced coordinates.
+                out_pcm_line->coords = forced_coords;
+                out_pcm_line->setDataCoordinatesState(true);
+            }
+        }
+
 #ifdef LB_EN_DBG_OUT
         if(suppress_log==false)
         {
@@ -566,8 +596,16 @@ uint8_t Binarizer::processLine()
             {
                 log_line += " (line is resized to double the length)";
             }
-            sprint_line.sprintf(", scan area: [%03u:%04u], est. PPB: [%u]",
-                             out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop, estimated_ppb);
+            if(forced_coords.areValid()==false)
+            {
+                sprint_line.sprintf(", scan area: [%03d:%04d], est. PPB: [%u]",
+                                    out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop, estimated_ppb);
+            }
+            else
+            {
+                sprint_line.sprintf(", forced coordinated: [%03d:%04d], est. PPB: [%u]",
+                                    out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop, estimated_ppb);
+            }
             log_line += sprint_line;
             qInfo()<<log_line;
             if(out_pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
@@ -581,6 +619,10 @@ uint8_t Binarizer::processLine()
             else if(out_pcm_line->getPCMType()==PCMLine::TYPE_STC007)
             {
                 qInfo()<<"[LB] PCM type set to STC-007/Sony PCM-F1";
+            }
+            else if(out_pcm_line->getPCMType()==PCMLine::TYPE_ARVA)
+            {
+                qInfo()<<"[LB] PCM type set to ArVid Audio";
             }
             else
             {
@@ -680,8 +722,13 @@ uint8_t Binarizer::processLine()
                     // Find WHITE and BLACK levels for hysteresis calculations or [readPCMdata()] will fail.
                     findBlackWhite();
                 }
-                // Preset data coordinates from input.
-                out_pcm_line->coords = in_def_coord;
+                // Check if forced coordinates are preset.
+                if(forced_coords.areValid()==false)
+                {
+                    // No forced coordinates.
+                    // Preset data coordinates from input.
+                    out_pcm_line->coords = in_def_coord;
+                }
                 // Preset reference level from input.
                 out_pcm_line->ref_level = in_def_reference;
                 // Reference level sweep is disabled for this pass.
@@ -722,7 +769,7 @@ uint8_t Binarizer::processLine()
                         bool force_level_find;
                         force_level_find = false;
                         // Check if coordinates search is allowed.
-                        if(do_coord_search!=false)
+                        if((do_coord_search!=false)&&(forced_coords.areValid()==false))
                         {
                             // Coordinates search is allowed.
                             if(out_pcm_line->getPCMType()==PCMLine::TYPE_STC007)
@@ -790,9 +837,10 @@ uint8_t Binarizer::processLine()
                         else
                         {
                             // Check PCM format to determine next step.
-                            if(out_pcm_line->getPCMType()==PCMLine::TYPE_STC007)
+                            if((out_pcm_line->getPCMType()==PCMLine::TYPE_STC007)&&(forced_coords.areValid()==false))
                             {
                                 // No valid data, let's try to find PCM data with only preset reference level.
+                                // Skip that step is coordinates are forced.
                                 proc_state = STG_INPUT_LEVEL;
                             }
                             else
@@ -826,8 +874,11 @@ uint8_t Binarizer::processLine()
                     // Find WHITE and BLACK levels for hysteresis calculations or [readPCMdata()] will fail.
                     findBlackWhite();
                 }
-                // Reset data coordinates.
-                out_pcm_line->coords.setCoordinates(scan_start, scan_end);
+                if(forced_coords.areValid()==false)
+                {
+                    // Reset data coordinates.
+                    out_pcm_line->coords.setCoordinates(scan_start, scan_end);
+                }
                 // Preset reference level from input.
                 out_pcm_line->ref_level = in_def_reference;
                 // Reference level sweep is disabled for this pass.
@@ -1025,6 +1076,8 @@ uint8_t Binarizer::processLine()
                         shift_stages_lim = SHIFT_STAGES_MIN;
                         // Preset next step to final data decoding.
                         proc_state = STG_READ_PCM;
+                        // Fast and simple pick between BLACK and WHITE.
+                        out_pcm_line->ref_level = pickCenterRefLevel(out_pcm_line->black_level, out_pcm_line->white_level);
                         // Check PCM format.
                         if(out_pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
                         {
@@ -1032,11 +1085,6 @@ uint8_t Binarizer::processLine()
                             // Markers are unavailable for current PCM type.
                             PCM1Line *temp_pcm1;
                             temp_pcm1 = static_cast<PCM1Line *>(out_pcm_line);
-                            //if(bin_mode==MODE_DRAFT)
-                            {
-                                // Fast and simple pick between BLACK and WHITE.
-                                out_pcm_line->ref_level = pickCenterRefLevel(out_pcm_line->black_level, out_pcm_line->white_level);
-                            }
 #ifdef LB_EN_DBG_OUT
                             if(suppress_log==false)
                             {
@@ -1045,49 +1093,62 @@ uint8_t Binarizer::processLine()
                             }
 #endif
                             // Select fallback data coordinates.
-                            if(in_def_coord.areValid()==false)
+                            if(forced_coords.areValid()!=false)
                             {
-                                // No coordinates are preset externally.
-                                // Set default coordinates as full video line.
-                                out_pcm_line->coords.setCoordinates(scan_start, scan_end);
+                                // Set forced coordinates.
+                                out_pcm_line->coords = forced_coords;
+                                out_pcm_line->setDataCoordinatesState(true);
                             }
                             else
                             {
-                                // Set external coordinates.
-                                out_pcm_line->coords = in_def_coord;
+                                if(in_def_coord.areValid()==false)
+                                {
+                                    // No coordinates are preset externally.
+                                    // Set default coordinates as full video line.
+                                    out_pcm_line->coords.setCoordinates(scan_start, scan_end);
+                                }
+                                else
+                                {
+                                    // Set external coordinates.
+                                    out_pcm_line->coords = in_def_coord;
+                                }
+                                // Check if data coordinates search is enabled.
+                                if((digi_set.en_coord_search!=false)&&(do_coord_search!=false))
+                                {
+                                    // Try to find data coordinates.
+                                    findPCM1Coordinates(temp_pcm1, in_def_coord);
+                                }
+#ifdef LB_EN_DBG_OUT
+                                else
+                                {
+                                    if(suppress_log==false)
+                                    {
+                                        if(digi_set.en_coord_search==false)
+                                        {
+                                            qInfo()<<"[LB] PCM-1 data search is disabled";
+                                        }
+                                        if(do_coord_search==false)
+                                        {
+                                            qInfo()<<"[LB] Data coordinates search is now allowed for the line";
+                                        }
+                                        if(forced_coords.areValid()!=false)
+                                        {
+                                            log_line.sprintf("[LB] Presetting data coordinates to forced ones: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
+                                        }
+                                        else if(in_def_coord.areValid()==false)
+                                        {
+                                            log_line.sprintf("[LB] Presetting data coordinates by scan limits: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
+                                        }
+                                        else
+                                        {
+                                            log_line.sprintf("[LB] Presetting data coordinates by history: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
+                                        }
+                                        qInfo()<<log_line;
+                                    }
+                                }
+#endif
                             }
 
-                            // Check if data coordinates search is enabled.
-                            if((digi_set.en_coord_search!=false)&&(do_coord_search!=false))
-                            {
-                                // Try to find data coordinates.
-                                findPCM1Coordinates(temp_pcm1, in_def_coord);
-                            }
-#ifdef LB_EN_DBG_OUT
-                            else
-                            {
-                                if(suppress_log==false)
-                                {
-                                    if(digi_set.en_coord_search==false)
-                                    {
-                                        qInfo()<<"[LB] PCM-1 data search is disabled";
-                                    }
-                                    if(do_coord_search==false)
-                                    {
-                                        qInfo()<<"[LB] Data coordinates search is now allowed for the line";
-                                    }
-                                    if(in_def_coord.areValid()==false)
-                                    {
-                                        log_line.sprintf("[LB] Presetting data coordinates by scan limits: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
-                                    }
-                                    else
-                                    {
-                                        log_line.sprintf("[LB] Presetting data coordinates by history: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
-                                    }
-                                    qInfo()<<log_line;
-                                }
-                            }
-#endif
                             // Check if valid data coordinates were found.
                             if(temp_pcm1->hasDataCoordSet()==false)
                             {
@@ -1108,16 +1169,6 @@ uint8_t Binarizer::processLine()
                             // Markers are unavailable for current PCM type.
                             PCM16X0SubLine *temp_pcm16x0;
                             temp_pcm16x0 = static_cast<PCM16X0SubLine *>(out_pcm_line);
-                            //if(bin_mode==MODE_DRAFT)
-                            {
-                                // Fast and simple pick between BLACK and WHITE.
-                                out_pcm_line->ref_level = pickCenterRefLevel(out_pcm_line->black_level, out_pcm_line->white_level);
-                            }
-                            /*else
-                            {
-                                // Calculate reference level with PPB equalizing.
-                                out_pcm_line->ref_level = calcRefLevelByPPB(out_pcm_line->black_level, out_pcm_line->white_level);
-                            }*/
 #ifdef LB_EN_DBG_OUT
                             if(suppress_log==false)
                             {
@@ -1126,49 +1177,62 @@ uint8_t Binarizer::processLine()
                             }
 #endif
                             // Select fallback data coordinates.
-                            if(in_def_coord.areValid()==false)
+                            if(forced_coords.areValid()!=false)
                             {
-                                // No coordinates are preset externally.
-                                // Set default coordinates as full video line.
-                                out_pcm_line->coords.setCoordinates(scan_start, scan_end);
+                                // Set forced coordinates.
+                                out_pcm_line->coords = forced_coords;
+                                out_pcm_line->setDataCoordinatesState(true);
                             }
                             else
                             {
-                                // Set external coordinates.
-                                out_pcm_line->coords = in_def_coord;
+                                if(in_def_coord.areValid()==false)
+                                {
+                                    // No coordinates are preset externally.
+                                    // Set default coordinates as full video line.
+                                    out_pcm_line->coords.setCoordinates(scan_start, scan_end);
+                                }
+                                else
+                                {
+                                    // Set external coordinates.
+                                    out_pcm_line->coords = in_def_coord;
+                                }
+                                // Check if data coordinates search is enabled.
+                                if((digi_set.en_coord_search!=false)&&(do_coord_search!=false))
+                                {
+                                    // Perform coordinate search (only once per video line).
+                                    findPCM16X0Coordinates(temp_pcm16x0, in_def_coord);
+                                }
+#ifdef LB_EN_DBG_OUT
+                                else
+                                {
+                                    if(suppress_log==false)
+                                    {
+                                        if(digi_set.en_coord_search==false)
+                                        {
+                                            qInfo()<<"[LB] PCM-16x0 data search is disabled";
+                                        }
+                                        if(do_coord_search==false)
+                                        {
+                                            qInfo()<<"[LB] Data coordinates search is now allowed for the line";
+                                        }
+                                        if(forced_coords.areValid()!=false)
+                                        {
+                                            log_line.sprintf("[LB] Presetting data coordinates to forced ones: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
+                                        }
+                                        else if(in_def_coord.areValid()==false)
+                                        {
+                                            log_line.sprintf("[LB] Presetting data coordinates by scan limits: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
+                                        }
+                                        else
+                                        {
+                                            log_line.sprintf("[LB] Presetting data coordinates by history: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
+                                        }
+                                        qInfo()<<log_line;
+                                    }
+                                }
+#endif
                             }
 
-                            // Check if data coordinates search is enabled.
-                            if((digi_set.en_coord_search!=false)&&(do_coord_search!=false))
-                            {
-                                // Perform coordinate search (only once per video line).
-                                findPCM16X0Coordinates(temp_pcm16x0, in_def_coord);
-                            }
-#ifdef LB_EN_DBG_OUT
-                            else
-                            {
-                                if(suppress_log==false)
-                                {
-                                    if(digi_set.en_coord_search==false)
-                                    {
-                                        qInfo()<<"[LB] PCM-16x0 data search is disabled";
-                                    }
-                                    if(do_coord_search==false)
-                                    {
-                                        qInfo()<<"[LB] Data coordinates search is now allowed for the line";
-                                    }
-                                    if(in_def_coord.areValid()==false)
-                                    {
-                                        log_line.sprintf("[LB] Presetting data coordinates by scan limits: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
-                                    }
-                                    else
-                                    {
-                                        log_line.sprintf("[LB] Presetting data coordinates by history: [%03d:%04d]", out_pcm_line->coords.data_start, out_pcm_line->coords.data_stop);
-                                    }
-                                    qInfo()<<log_line;
-                                }
-                            }
-#endif
                             // Check if valid data coordinates were found.
                             if(temp_pcm16x0->hasDataCoordSet()==false)
                             {
@@ -1197,9 +1261,6 @@ uint8_t Binarizer::processLine()
                             // Markers are available for current PCM type.
                             STC007Line *temp_stc;
                             temp_stc = static_cast<STC007Line *>(out_pcm_line);
-                            // Calculate reference level with PPB equalizing.
-                            //out_pcm_line->ref_level = calcRefLevelByPPB(out_pcm_line->black_level, out_pcm_line->white_level);
-                            out_pcm_line->ref_level = pickCenterRefLevel(out_pcm_line->black_level, out_pcm_line->white_level);
 #ifdef LB_EN_DBG_OUT
                             if(suppress_log==false)
                             {
@@ -1207,37 +1268,47 @@ uint8_t Binarizer::processLine()
                                 qInfo()<<log_line;
                             }
 #endif
-                            // Check if data coordinates search is enabled.
-                            if(do_coord_search==false)
+                            if(forced_coords.areValid()!=false)
                             {
-                                if(in_def_coord.areValid()==false)
+                                // Set forced coordinates.
+                                //out_pcm_line->coords.setCoordinates(forced_coords.data_start+estimated_ppb, forced_coords.data_stop-(4*estimated_ppb));
+                                out_pcm_line->coords = forced_coords;
+                                out_pcm_line->setDataCoordinatesState(true);
+                            }
+                            else
+                            {
+                                // Check if data coordinates search is enabled.
+                                if(do_coord_search==false)
                                 {
-                                    // Estimate coordinates.
-                                    out_pcm_line->coords.setCoordinates((scan_start+estimated_ppb), (scan_end-(4*estimated_ppb)));
+                                    if(in_def_coord.areValid()==false)
+                                    {
+                                        // Estimate coordinates.
+                                        out_pcm_line->coords.setCoordinates((scan_start+estimated_ppb), (scan_end-(4*estimated_ppb)));
+                                    }
+                                    else
+                                    {
+                                        // Set external coordinates.
+                                        out_pcm_line->coords = in_def_coord;
+                                    }
                                 }
                                 else
                                 {
-                                    // Set external coordinates.
-                                    out_pcm_line->coords = in_def_coord;
+                                    // Try to find PCM markers in the line.
+                                    findSTC007Coordinates(temp_stc);
                                 }
-                            }
-                            else
-                            {
-                                // Try to find PCM markers in the line.
-                                findSTC007Coordinates(temp_stc);
-                            }
-                            if(temp_stc->hasMarkers()==false)
-                            {
-                                // Limit processing on possible failure.
-                                hysteresis_depth_lim = HYST_DEPTH_SAFE;
-                                shift_stages_lim = SHIFT_STAGES_MIN;
-                            }
-                            else
-                            {
-                                // Markers were found, there should be PCM data.
-                                // Set maximum stages per preset mode for reading.
-                                hysteresis_depth_lim = in_max_hysteresis_depth;
-                                shift_stages_lim = in_max_shift_stages;
+                                if(temp_stc->hasMarkers()==false)
+                                {
+                                    // Limit processing on possible failure.
+                                    hysteresis_depth_lim = HYST_DEPTH_SAFE;
+                                    shift_stages_lim = SHIFT_STAGES_MIN;
+                                }
+                                else
+                                {
+                                    // Markers were found, there should be PCM data.
+                                    // Set maximum stages per preset mode for reading.
+                                    hysteresis_depth_lim = in_max_hysteresis_depth;
+                                    shift_stages_lim = in_max_shift_stages;
+                                }
                             }
                         }
 #ifdef LB_EN_DBG_OUT
@@ -1311,6 +1382,12 @@ uint8_t Binarizer::processLine()
                     }
                 }
 #endif
+                if(forced_coords.areValid()!=false)
+                {
+                    // Disable binarization helpers for forced coordinates.
+                    hysteresis_depth_lim = HYST_DEPTH_SAFE;
+                    shift_stages_lim = SHIFT_STAGES_MIN;
+                }
                 // Reading PCM data with calculated parameters.
                 if(out_pcm_line->hasDataCoordSet()!=false)
                 {
@@ -1327,7 +1404,8 @@ uint8_t Binarizer::processLine()
                 {
                     // No valid PCM data found.
                     // Check if data coordinates were provided.
-                    if((in_def_coord.areValid()!=false)&&(out_pcm_line->isForcedBad()==false)&&(do_ref_lvl_sweep==false))
+                    if((in_def_coord.areValid()!=false)&&(forced_coords.areValid()==false)&&(do_ref_lvl_sweep==false)
+                       &&(out_pcm_line->isForcedBad()==false)&&(out_pcm_line->hasDataCoordSet()==false))
                     {
                         // Data coordinates are provided externally.
                         // Check if provided data coordinates differ from current ones.
@@ -1499,6 +1577,11 @@ uint8_t Binarizer::processLine()
                     temp_pcm_ptr = static_cast<STC007Line *>(out_pcm_line);
                     // Propagate CRC state to all word statuses.
                     temp_pcm_ptr->applyCRCStatePerWord();
+                    if((forced_coords.areValid()!=false)&&(temp_pcm_ptr->hasBWSet()!=false))
+                    {
+                        // Force marker presence is coordinates are forced and no valid CRC.
+                        temp_pcm_ptr->forceMarkersOk();
+                    }
                 }
 #ifdef LB_EN_DBG_OUT
                 if(suppress_log==false)
@@ -2294,7 +2377,7 @@ void Binarizer::textDumpCRCSweep(crc_handler_t *crc_array, uint8_t low_level, ui
 }
 
 //------------------------ Find number of encounters of the most frequent brightness.
-uint16_t Binarizer::getMostFrequentBrightnessCount()
+uint16_t Binarizer::getMostFrequentBrightnessCount(const uint16_t *brght_sprd)
 {
     uint8_t brt_lev;
     uint16_t highest_freq;
@@ -2303,10 +2386,10 @@ uint16_t Binarizer::getMostFrequentBrightnessCount()
     // Search for highest non-zero value.
     while(1)
     {
-        if(brightness_spread[brt_lev]>highest_freq)
+        if(brght_sprd[brt_lev]>highest_freq)
         {
             // Store maximum for useful data.
-            highest_freq = brightness_spread[brt_lev];
+            highest_freq = brght_sprd[brt_lev];
         }
         if(brt_lev==0) break;
         brt_lev--;
@@ -2315,7 +2398,7 @@ uint16_t Binarizer::getMostFrequentBrightnessCount()
 }
 
 //------------------------ Find lowest non-zero value in the array.
-uint8_t Binarizer::getUsefullLowLevel()
+uint8_t Binarizer::getUsefullLowLevel(const uint16_t *brght_sprd)
 {
     bool filtered_found;
     uint8_t brt_lev, lowest_lev;
@@ -2324,13 +2407,13 @@ uint8_t Binarizer::getUsefullLowLevel()
     filtered_found = false;
     lowest_lev = brt_lev = 0;
     // Get most frequent brightness encounters.
-    min_freq = getMostFrequentBrightnessCount();
+    min_freq = getMostFrequentBrightnessCount(brght_sprd);
     // Calculate limit to cut noise.
     min_freq = min_freq/64;
     // Search for lowest non-zero value.
     while(brt_lev<digi_set.max_black_lvl)
     {
-        if(brightness_spread[brt_lev]>min_freq)
+        if(brght_sprd[brt_lev]>min_freq)
         {
             // Store minimum for useful data.
             lowest_lev = brt_lev;
@@ -2346,7 +2429,7 @@ uint8_t Binarizer::getUsefullLowLevel()
         // Repeat search without filtering.
         while(brt_lev<digi_set.max_black_lvl)
         {
-            if(brightness_spread[brt_lev]>0)
+            if(brght_sprd[brt_lev]>0)
             {
                 // Store minimum for useful data.
                 lowest_lev = brt_lev;
@@ -2360,7 +2443,7 @@ uint8_t Binarizer::getUsefullLowLevel()
 }
 
 //------------------------ Find highest non-zero value in the array.
-uint8_t Binarizer::getUsefullHighLevel()
+uint8_t Binarizer::getUsefullHighLevel(const uint16_t *brght_sprd)
 {
     bool filtered_found;
     uint8_t brt_lev, highest_lev;
@@ -2369,13 +2452,13 @@ uint8_t Binarizer::getUsefullHighLevel()
     filtered_found = false;
     highest_lev = brt_lev = 255;
     // Get most frequent brightness encounters.
-    min_freq = getMostFrequentBrightnessCount();
+    min_freq = getMostFrequentBrightnessCount(brght_sprd);
     // Calculate limit to cut noise.
     min_freq = min_freq/64;
     // Search for highest non-zero value.
     while(brt_lev>=digi_set.min_white_lvl)
     {
-        if(brightness_spread[brt_lev]>min_freq)
+        if(brght_sprd[brt_lev]>min_freq)
         {
             // Store maximum for useful data.
             highest_lev = brt_lev;
@@ -2390,7 +2473,7 @@ uint8_t Binarizer::getUsefullHighLevel()
         // Repeat search without filtering.
         while(brt_lev>=digi_set.min_white_lvl)
         {
-            if(brightness_spread[brt_lev]>0)
+            if(brght_sprd[brt_lev]>0)
             {
                 // Store maximum for useful data.
                 highest_lev = brt_lev;
@@ -2403,18 +2486,573 @@ uint8_t Binarizer::getUsefullHighLevel()
     return highest_lev;
 }
 
+//------------------------ Find WHITE and BLACK levels for [PCM1Line].
+void Binarizer::findPCM1BW(uint16_t *brght_sprd)
+{
+    uint16_t pixel_limit;
+    uint16_t search_lim;
+    uint32_t temp_calc;
+    bool suppress_log;
+
+#ifdef LB_EN_DBG_OUT
+    QString log_line;
+#endif
+    suppress_log = !((log_level&LOG_PROCESS)!=0);
+
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        qInfo()<<"[LB] ---------- B&W levels search started (for PCM-1)...";
+    }
+#endif
+
+    // Calculate available length of source line.
+    pixel_limit = scan_end - scan_start;
+    // Calculate margin from the right edge of the line.
+    temp_calc = pixel_limit/32;
+    search_lim = scan_end-(uint16_t)temp_calc;
+    // Calculate margin from the left edge of the line.
+    temp_calc = pixel_limit/8;
+    pixel_limit = scan_start+(uint16_t)temp_calc;
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB] Scanning video line pixels [%03u:%04u] for brightness levels...",
+                         pixel_limit, search_lim);
+        qInfo()<<log_line;
+    }
+#endif
+    // Calculate spread of brightness for the video line.
+    for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
+    {
+        brght_sprd[getPixelBrightness(pixel)]++;
+    }
+}
+
+//------------------------ Find WHITE and BLACK levels for [PCM16X0SubLine].
+void Binarizer::findPCM16X0BW(uint16_t *brght_sprd)
+{
+    uint16_t pixel_limit;
+    uint16_t search_lim;
+    uint32_t temp_calc;
+    bool suppress_log;
+
+#ifdef LB_EN_DBG_OUT
+    QString log_line;
+#endif
+    suppress_log = !((log_level&LOG_PROCESS)!=0);
+
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        qInfo()<<"[LB] ---------- B&W levels search started (for PCM-16x0)...";
+    }
+#endif
+
+    // Calculate available length of source line.
+    pixel_limit = scan_end - scan_start;
+    // PCM-16x0 silent pattern has many black pixels some white ones at three CRC areas.
+    // Limit scan area to prevent BLACK level saturating encounters.
+    // Calculate width of CRC area and some.
+    temp_calc = pixel_limit/8;
+    // Calculate offset to the left CRC area.
+    pixel_limit = pixel_limit/5;
+    // Offset CRC area.
+    search_lim = pixel_limit+(uint16_t)temp_calc;
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB] Scanning left part of video line pixels [%03u:%04u] for brightness levels...",
+                         pixel_limit, search_lim);
+        qInfo()<<log_line;
+    }
+#endif
+    // Calculate spread of brightness for the first CRC area.
+    for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
+    {
+        brght_sprd[getPixelBrightness(pixel)]++;
+    }
+    // Calculate offset to the middle CRC area.
+    pixel_limit = (uint16_t)temp_calc*4;
+    pixel_limit += (uint16_t)temp_calc/2;
+    // Offset CRC area.
+    search_lim = pixel_limit+(uint16_t)temp_calc;
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB] Scanning middle part of video line pixels [%03u:%04u] for brightness levels...",
+                         pixel_limit, search_lim);
+        qInfo()<<log_line;
+    }
+#endif
+    // Calculate spread of brightness for the first CRC area.
+    for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
+    {
+        brght_sprd[getPixelBrightness(pixel)]++;
+    }
+    // Calculate available length of source line.
+    pixel_limit = scan_end - scan_start;
+    // Calculate margin from the left edge of the line.
+    search_lim = scan_end-pixel_limit/64;
+    pixel_limit = search_lim-(uint16_t)temp_calc;
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB] Scanning right part of video line pixels [%03u:%04u] for brightness levels...",
+                         pixel_limit, search_lim);
+        qInfo()<<log_line;
+    }
+#endif
+    // Calculate spread of brightness for the first CRC area.
+    for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
+    {
+        brght_sprd[getPixelBrightness(pixel)]++;
+    }
+}
+
+//------------------------ Find WHITE and BLACK levels for [STC007Line].
+void Binarizer::findSTC007BW(uint16_t *brght_sprd)
+{
+    uint8_t pixel_val, brt_lev, marker_detect_stage;
+    uint8_t br_black, br_mark_white, useful_low, useful_high;
+    uint8_t low_scan_limit, high_scan_limit, range_limit;
+    uint8_t bin_level, bin_low, bin_high;
+    uint16_t pixel, pixel_limit;
+    uint16_t mark_ed_bit_start,         // Pixel coordinate of the start of the "1111" STOP bits and of the end of the "0" STOP bit.
+             mark_ed_bit_end;           // Pixel coordinate of the end of the "1111" STOP bits.
+    uint16_t white_lvl_count, search_lim;
+    uint32_t temp_calc;
+    bool suppress_log, white_level_detected;
+
+#ifdef LB_EN_DBG_OUT
+    QString log_line;
+#endif
+    suppress_log = !((log_level&LOG_PROCESS)!=0);
+
+    // Pre-calculate rough brightness spread (can contain black borders and other garbage on a frame perimeter).
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        qInfo()<<"[LB] ---------- B&W levels search started (for STC-007)...";
+    }
+#endif
+
+    // Calculate brightness spread for the line and find WHITE level for the STOP marker.
+    // Set the coordinate limit for scan.
+    search_lim = scan_start + estimated_ppb*10;        // Calculate spread of brightness for the left side of the video line (containing PCM START marker).
+#ifdef LB_LOG_BW_VERBOSE
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB] Scanning left side [%03u:%03u] pixels for brightness levels...",
+                         scan_start, search_lim);
+        qInfo()<<log_line;
+    }
+#endif
+    for(uint16_t pixel=scan_start;pixel<search_lim;pixel++)
+    {
+        brght_sprd[getPixelBrightness(pixel)]++;
+    }
+    // Calculate spread of brightness for the right side of the video line (containing PCM STOP marker).
+    // Set the coordinate limit for scan.
+    search_lim = scan_end - estimated_ppb*20;
+#ifdef LB_LOG_BW_VERBOSE
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB] Scanning right side [%04u:%04u] pixels for brightness levels...",
+                         search_lim, scan_end);
+        qInfo()<<log_line;
+    }
+#endif
+    for(uint16_t pixel=search_lim;pixel<=scan_end;pixel++)
+    {
+        brght_sprd[getPixelBrightness(pixel)]++;
+    }
+#ifdef LB_EN_DBG_OUT
+    if(((log_level&LOG_BRIGHT)!=0)/*&&(suppress_log==false)*/)
+    {
+        QString stats;
+        for(uint16_t index=0;index<256;index++)
+        {
+            stats += QString::number(brght_sprd[index]);
+            if(index!=255)
+            {
+                stats += ",";
+            }
+        }
+        qInfo()<<"[LB] Borders brighness spread:"<<stats;
+    }
+#endif
+
+    // Find span of non-zero brightness encounters.
+    useful_low = low_scan_limit = br_black = getUsefullLowLevel(brght_sprd);
+    useful_high = high_scan_limit = br_mark_white = getUsefullHighLevel(brght_sprd);
+    // Calculate range of brightnesses.
+    range_limit = high_scan_limit-low_scan_limit;
+    // Calculte limits for WHITE peak search.
+    high_scan_limit -= (range_limit/4);
+    // Calculate delta distance limits.
+    bin_high = range_limit/8;       // Re-purpose variables that are not needed now.
+
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB] Useful borders brightness data at: [%03u:%03u]", useful_low, useful_high);
+        qInfo()<<log_line;
+        log_line.sprintf("[LB] WHITE peak search limits: [%03u:%03u]", high_scan_limit, useful_high);
+        qInfo()<<log_line;
+    }
+#endif
+#ifdef LB_LOG_BW_VERBOSE
+    if(suppress_log==false)
+    {
+        qInfo()<<"[LB] Searching WHITE peak...";
+    }
+#endif
+    // Find "white" level (via most frequent high-value).
+    brt_lev = useful_high;
+    white_lvl_count = 0;
+    white_level_detected = false;
+    // Perform encounters search from "white" downwards.
+    while(brt_lev>=high_scan_limit)
+    {
+        // Search for maximum encounters in high brightness.
+        if(brght_sprd[brt_lev]>white_lvl_count)
+        {
+            // Store current encounters of WHITE level.
+            white_lvl_count = brght_sprd[brt_lev];
+            // Store new WHITE level (as coordinate of peak encounters).
+            br_mark_white = brt_lev;
+            // Store "WHITE level found" flag.
+            white_level_detected = true;
+        }
+#ifdef LB_LOG_BW_VERBOSE
+        if(suppress_log==false)
+        {
+            log_line.sprintf("[LB] Step: %03u (%03u), enc.: %03u pcs. at %03u, det.: %u",
+                             brt_lev, brght_sprd[brt_lev], white_lvl_count, br_mark_white, white_level_detected?1:0);
+            qInfo()<<log_line;
+        }
+#endif
+        if(white_level_detected!=false)
+        {
+            // If white level was found in process, check for current distance from that peak.
+            if((br_mark_white-brt_lev)>=bin_high)
+            {
+                // No need to search so far from found peak.
+#ifdef LB_LOG_BW_VERBOSE
+                if(suppress_log==false)
+                {
+                    log_line.sprintf("[LB] Too far from WHITE peak (%03u->%03u), stopping search...",
+                                     br_mark_white, brt_lev);
+                    qInfo()<<log_line;
+                }
+#endif
+                break;
+            }
+        }
+        brt_lev--;
+    }
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        if(white_level_detected==false)
+        {
+            log_line.sprintf("[LB] WHITE level was NOT detected!");
+            qInfo()<<log_line;
+        }
+        else
+        {
+            log_line.sprintf("[LB] WHITE level detected as [%03u] with [%03u] encounters", br_mark_white, white_lvl_count);
+            qInfo()<<log_line;
+        }
+    }
+    else if((log_level&LOG_BRIGHT)!=0)
+    {
+        log_line.sprintf("[LB] WHITE level for STOP marker: [%03u] with [%03u] encounters", br_mark_white, white_lvl_count);
+        qInfo()<<log_line;
+    }
+#endif
+    // Refill brightness statistics to fallback to.
+    // Calculate available length of source line.
+    pixel_limit = scan_end - scan_start;
+    // Calculate margin from sides of the line (to exclude markers).
+    temp_calc = pixel_limit/8;
+    // Calculate stats gathering range.
+    pixel_limit = scan_start + (uint16_t)temp_calc;
+    search_lim = scan_end - (uint16_t)temp_calc;
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB] Trying to gather brightness stats data between [%03u:%03u]...",
+                         pixel_limit, search_lim);
+        qInfo()<<log_line;
+    }
+#endif
+    // Calculate spread of brightness for the video line without marker areas.
+    fillArray(brght_sprd, 256);
+    for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
+    {
+        brght_sprd[getPixelBrightness(pixel)]++;
+    }
+
+    // Detect presence and coordinates of PCM STOP marker,
+    // if found, recalculate brightness spread for CRC part of the line, excluding white line.
+    marker_detect_stage = STC007Line::MARK_ED_START;
+    mark_ed_bit_start = mark_ed_bit_end = 0;
+    // Check if white level was detected (if not - markers can not be found).
+    if(white_level_detected!=false)
+    {
+        // Define rough reference level for white detection.
+        bin_level = pickCenterRefLevel(useful_low, br_mark_white);
+        bin_high = bin_low = bin_level;
+#ifdef LB_EN_DBG_OUT
+        if(suppress_log==false)
+        {
+            log_line.sprintf("[LB] Rough ref. level: %03u (B&W)", bin_level);
+            qInfo()<<log_line;
+        }
+#endif
+        // Calculate minimum pixel number for the marker search.
+        if(mark_end_min>(estimated_ppb*6))
+        {
+            pixel_limit = mark_end_min-estimated_ppb*6;
+        }
+        else
+        {
+            pixel_limit = 0;
+        }
+        pixel = scan_end;
+#ifdef LB_EN_DBG_OUT
+        if(suppress_log==false)
+        {
+            log_line.sprintf("[LB] Searching STOP marker, detection in range [%04u...%04u], full marker in [%04u...%04u]",
+                             pixel, mark_end_min, pixel, pixel_limit);
+            qInfo()<<log_line;
+        }
+#endif
+        // Find position of PCM ending marker through backwards search.
+        while(pixel>pixel_limit)
+        {
+            // Get pixel brightness level (8 bit grayscale).
+            pixel_val = getPixelBrightness(pixel);
+#ifdef LB_LOG_BW_VERBOSE
+            if(suppress_log==false)
+            {
+                log_line.sprintf("[LB] Pixel [%04u] val.: [%03u], ref.: [%03u|%03u]",
+                                 pixel, pixel_val, bin_low, bin_high);
+                qInfo()<<log_line;
+            }
+#endif
+            if(marker_detect_stage==STC007Line::MARK_ED_START)
+            {
+                // Check additional limit on start of the STOP marker.
+                if(pixel<mark_end_min)
+                {
+#ifdef LB_EN_DBG_OUT
+                    if(suppress_log==false)
+                    {
+                        log_line.sprintf("[LB-%03u] No STOP maker started within limits [%03u:%03u], search stopped!", bin_level, scan_end, mark_end_min);
+                        qInfo()<<log_line;
+                    }
+#endif
+                    // Stop the search.
+                    break;
+                }
+                // Detect /\ transition to "1" marker bit.
+                if(pixel_val>=bin_low)
+                {
+                    // Save pixel coordinate of the end of STOP marker (4-bit wide).
+                    mark_ed_bit_end = pixel+1;
+                    // Update STOP marker detection stage.
+                    marker_detect_stage=STC007Line::MARK_ED_TOP;
+#ifdef LB_LOG_BW_VERBOSE
+                    if(suppress_log==false)
+                    {
+                        qInfo()<<"[LB] Got 0->1 transition from the end of STOP-marker";
+                    }
+#endif
+                }
+            }
+            else if(marker_detect_stage==STC007Line::MARK_ED_TOP)
+            {
+                // Detect \/ transition to "0" marker bit.
+                if(pixel_val<bin_high)
+                {
+                    // Save pixel coordinate of the beginning of STOP marker (4-bit wide).
+                    mark_ed_bit_start = pixel+1;
+                    // Update STOP marker detection stage.
+                    marker_detect_stage = STC007Line::MARK_ED_BOT;
+                    // Check if "1" bit length is more than twice of estimated PPB.
+                    if((mark_ed_bit_end-mark_ed_bit_start)>=(estimated_ppb*2))
+                    {
+                        // Update STOP marker detection stage.
+                        marker_detect_stage = STC007Line::MARK_ED_LEN_OK;
+#ifdef LB_EN_DBG_OUT
+                        if(suppress_log==false)
+                        {
+                            log_line.sprintf("[LB] STOP-marker found at [%03u:%03u]", mark_ed_bit_start, mark_ed_bit_end);
+                            qInfo()<<log_line;
+                        }
+#endif
+#ifdef LB_LOG_BW_VERBOSE
+                        if(suppress_log==false)
+                        {
+                            log_line.sprintf("[LB] STOP-marker length is ok (%03u>=%03u)", (mark_ed_bit_end-mark_ed_bit_start), (estimated_ppb*2));
+                            qInfo()<<log_line;
+                        }
+#endif
+                        // Finish STOP marker search.
+                        break;
+                    }
+                    else
+                    {
+                        // Wrong "1" bit length, probably noise - reset state machine.
+                        marker_detect_stage = STC007Line::MARK_ED_START;
+#ifdef LB_EN_DBG_OUT
+                        if(suppress_log==false)
+                        {
+                            log_line.sprintf("[LB] Erroneous STOP-marker at [%03u:%03u], restarting...", mark_ed_bit_start, mark_ed_bit_end);
+                            qInfo()<<log_line;
+                        }
+#endif
+#ifdef LB_LOG_BW_VERBOSE
+                        if(suppress_log==false)
+                        {
+                            log_line.sprintf("[LB] Insufficient STOP-marker length (%03u<%03u)", (mark_ed_bit_end-mark_ed_bit_start), (estimated_ppb*2));
+                            qInfo()<<log_line;
+                        }
+#endif
+                    }
+                }
+            }
+            // Go to previous pixel in the line.
+            pixel--;
+        }
+        STC007Line *temp_stc;
+        temp_stc = static_cast<STC007Line *>(out_pcm_line);
+        // Store final state.
+        temp_stc->mark_ed_stage = marker_detect_stage;
+        // Save coordinates.
+        temp_stc->coords.data_stop = mark_ed_bit_start;
+        temp_stc->marker_stop_ed_coord = mark_ed_bit_end;
+        // Check if PCM ending marker was found.
+        if(temp_stc->hasStopMarker()!=false)
+        {
+            uint16_t sprd_cnt;
+            // Set the limited distance (covering CRC, ECC and data area) from STOP-marker for brightness spread re-calc.
+            // ~64 PCM bits from STOP marker.
+            search_lim = estimated_ppb*64;
+            // Calculate negative coordinate offset from the STOP marker.
+            if(search_lim>mark_ed_bit_start)
+            {
+                search_lim = mark_start_max;
+            }
+            else
+            {
+                search_lim = mark_ed_bit_start-search_lim;
+            }
+            // Reset brightness spread data.
+            fillArray(brght_sprd, 256);
+#ifdef LB_EN_DBG_OUT
+            if(suppress_log==false)
+            {
+                log_line.sprintf("[LB] Re-gathering brightness stats data between [%04u:%04u]...",
+                                 search_lim, (mark_ed_bit_start-1));
+                qInfo()<<log_line;
+            }
+#endif
+            sprd_cnt = 0;
+            // Re-calculate spread of brighness for the end of the line (excluding black border and garbage).
+            for(uint16_t pixel=(mark_ed_bit_start-1);pixel>search_lim;pixel--)
+            {
+                brght_sprd[getPixelBrightness(pixel)]++;
+                sprd_cnt++;
+            }
+            if(sprd_cnt<32)
+            {
+                pixel_limit = scan_end - scan_start;
+                pixel_limit = pixel_limit/8;
+                search_lim = scan_end - pixel_limit;
+#ifdef LB_EN_DBG_OUT
+                if(suppress_log==false)
+                {
+                    log_line.sprintf("[LB] Re-gathering brightness stats data between [%04u:%04u]...",
+                                     pixel_limit, search_lim);
+                    qInfo()<<log_line;
+                }
+#endif
+                for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
+                {
+                    brght_sprd[getPixelBrightness(pixel)]++;
+                }
+            }
+        }
+#ifdef LB_EN_DBG_OUT
+        else
+        {
+            if(suppress_log==false)
+            {
+                qInfo()<<"[LB] STOP marker was NOT found!";
+            }
+        }
+#endif
+    }
+}
+
+//------------------------ Find WHITE and BLACK levels for [ArVidLine].
+void Binarizer::findArVidBW(uint16_t *brght_sprd)
+{
+    uint16_t pixel_limit;
+    uint16_t search_lim;
+    uint32_t temp_calc;
+    bool suppress_log;
+
+#ifdef LB_EN_DBG_OUT
+    QString log_line;
+#endif
+    suppress_log = !((log_level&LOG_PROCESS)!=0);
+
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        qInfo()<<"[LB] ---------- B&W levels search started (for ArVid Audio)...";
+    }
+#endif
+
+    // Calculate available length of source line.
+    pixel_limit = scan_end - scan_start;
+    // Calculate margin from the right edge of the line.
+    temp_calc = pixel_limit/4;
+    search_lim = scan_start+(uint16_t)temp_calc;
+    // Calculate margin from the left edge of the line.
+    temp_calc = pixel_limit/32;
+    pixel_limit = scan_start+(uint16_t)temp_calc;
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB] Scanning video line pixels [%03u:%04u] for brightness levels...",
+                         pixel_limit, search_lim);
+        qInfo()<<log_line;
+    }
+#endif
+    // Calculate spread of brightness for the video line.
+    for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
+    {
+        brght_sprd[getPixelBrightness(pixel)]++;
+    }
+}
+
 //------------------------ Find WHITE and BLACK levels.
 bool Binarizer::findBlackWhite()
 {
-    uint8_t pixel_val, brt_lev, marker_detect_stage;
+    uint8_t brt_lev;
     uint8_t br_black, br_white, br_mark_white, useful_low, useful_high;
     uint8_t low_scan_limit, high_scan_limit, range_limit;
-    uint8_t bin_level, bin_low, bin_high;
+    uint8_t bin_low, bin_high;
     uint16_t black_lvl_count, white_lvl_count, search_lim;
-    uint16_t pixel, pixel_limit;
-    uint16_t mark_ed_bit_start,     // Pixel coordinate of the start of the "1111" STOP bits and of the end of the "0" STOP bit.
-             mark_ed_bit_end;       // Pixel coordinate of the end of the "1111" STOP bits.
+    uint16_t pixel_limit;
     uint32_t temp_calc;
+    uint16_t brightness_spread[256];    // Brightness spread statistics.
     bool suppress_log, black_level_detected, white_level_detected;
 
     // Reset final BLACK and WHITE values.
@@ -2427,464 +3065,45 @@ bool Binarizer::findBlackWhite()
 #endif
     suppress_log = !((log_level&LOG_PROCESS)!=0);
 
-    // Check if markers are available for this PCM type.
-    if(out_pcm_line->getPCMType()==PCMLine::TYPE_STC007)
+    // Gather pixel brightness statistics.
+    // Select PCM type specific search algorythm.
+    if(out_pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
     {
-        // Current type of PCM has markers.
-        // Pre-calculate rough brightness spread (can contain black borders and other garbage on a frame perimeter).
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            qInfo()<<"[LB] ---------- B&W levels search started (for STC-007)...";
-        }
-#endif
-
-        // Calculate brightness spread for the line and find WHITE level for the STOP marker.
-        // Set the coordinate limit for scan.
-        search_lim = scan_start + estimated_ppb*10;        // Calculate spread of brightness for the left side of the video line (containing PCM START marker).
-#ifdef LB_LOG_BW_VERBOSE
-        if(suppress_log==false)
-        {
-            log_line.sprintf("[LB] Scanning left side [%03u:%03u] pixels for brightness levels...",
-                             scan_start, search_lim);
-            qInfo()<<log_line;
-        }
-#endif
-        for(uint16_t pixel=scan_start;pixel<search_lim;pixel++)
-        {
-            brightness_spread[getPixelBrightness(pixel)]++;
-        }
-        // Calculate spread of brightness for the right side of the video line (containing PCM STOP marker).
-        // Set the coordinate limit for scan.
-        search_lim = scan_end - estimated_ppb*20;
-#ifdef LB_LOG_BW_VERBOSE
-        if(suppress_log==false)
-        {
-            log_line.sprintf("[LB] Scanning right side [%04u:%04u] pixels for brightness levels...",
-                             search_lim, scan_end);
-            qInfo()<<log_line;
-        }
-#endif
-        for(uint16_t pixel=search_lim;pixel<=scan_end;pixel++)
-        {
-            brightness_spread[getPixelBrightness(pixel)]++;
-        }
-#ifdef LB_EN_DBG_OUT
-        if(((log_level&LOG_BRIGHT)!=0)/*&&(suppress_log==false)*/)
-        {
-            QString stats;
-            for(uint16_t index=0;index<256;index++)
-            {
-                stats += QString::number(brightness_spread[index]);
-                if(index!=255)
-                {
-                    stats += ",";
-                }
-            }
-            qInfo()<<"[LB] Borders brighness spread:"<<stats;
-        }
-#endif
-
-        // Find span of non-zero brightness encounters.
-        useful_low = low_scan_limit = br_black = getUsefullLowLevel();
-        useful_high = high_scan_limit = br_mark_white = getUsefullHighLevel();
-        // Calculate range of brightnesses.
-        range_limit = high_scan_limit-low_scan_limit;
-        // Calculte limits for WHITE peak search.
-        high_scan_limit -= (range_limit/4);
-        // Calculate delta distance limits.
-        bin_high = range_limit/8;       // Re-purpose variables that are not needed now.
-
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            log_line.sprintf("[LB] Useful borders brightness data at: [%03u:%03u]", useful_low, useful_high);
-            qInfo()<<log_line;
-            log_line.sprintf("[LB] WHITE peak search limits: [%03u:%03u]", high_scan_limit, useful_high);
-            qInfo()<<log_line;
-        }
-#endif
-#ifdef LB_LOG_BW_VERBOSE
-        if(suppress_log==false)
-        {
-            qInfo()<<"[LB] Searching WHITE peak...";
-        }
-#endif
-        // Find "white" level (via most frequent high-value).
-        brt_lev = useful_high;
-        white_lvl_count = 0;
-        white_level_detected = false;
-        // Perform encounters search from "white" downwards.
-        while(brt_lev>=high_scan_limit)
-        {
-            // Search for maximum encounters in high brightness.
-            if(brightness_spread[brt_lev]>white_lvl_count)
-            {
-                // Store current encounters of WHITE level.
-                white_lvl_count = brightness_spread[brt_lev];
-                // Store new WHITE level (as coordinate of peak encounters).
-                br_mark_white = brt_lev;
-                // Store "WHITE level found" flag.
-                white_level_detected = true;
-            }
-#ifdef LB_LOG_BW_VERBOSE
-            if(suppress_log==false)
-            {
-                log_line.sprintf("[LB] Step: %03u (%03u), enc.: %03u pcs. at %03u, det.: %u",
-                                 brt_lev, brightness_spread[brt_lev], white_lvl_count, br_mark_white, white_level_detected?1:0);
-                qInfo()<<log_line;
-            }
-#endif
-            if(white_level_detected!=false)
-            {
-                // If white level was found in process, check for current distance from that peak.
-                if((br_mark_white-brt_lev)>=bin_high)
-                {
-                    // No need to search so far from found peak.
-#ifdef LB_LOG_BW_VERBOSE
-                    if(suppress_log==false)
-                    {
-                        log_line.sprintf("[LB] Too far from WHITE peak (%03u->%03u), stopping search...",
-                                         br_mark_white, brt_lev);
-                        qInfo()<<log_line;
-                    }
-#endif
-                    break;
-                }
-            }
-            brt_lev--;
-        }
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            if(white_level_detected==false)
-            {
-                log_line.sprintf("[LB] WHITE level was NOT detected!");
-                qInfo()<<log_line;
-            }
-            else
-            {
-                log_line.sprintf("[LB] WHITE level detected as [%03u] with [%03u] encounters", br_mark_white, white_lvl_count);
-                qInfo()<<log_line;
-            }
-        }
-        else if((log_level&LOG_BRIGHT)!=0)
-        {
-            log_line.sprintf("[LB] WHITE level for STOP marker: [%03u] with [%03u] encounters", br_mark_white, white_lvl_count);
-            qInfo()<<log_line;
-        }
-#endif
-        // Refill brightness statistics to fallback to.
+        findPCM1BW(brightness_spread);
+    }
+    else if(out_pcm_line->getPCMType()==PCMLine::TYPE_PCM16X0)
+    {
+        findPCM16X0BW(brightness_spread);
+    }
+    else if(out_pcm_line->getPCMType()==PCMLine::TYPE_STC007)
+    {
+        findSTC007BW(brightness_spread);
+    }
+    else if(out_pcm_line->getPCMType()==PCMLine::TYPE_ARVA)
+    {
+        findArVidBW(brightness_spread);
+    }
+    else
+    {
+        // Unspecified PCM type.
         // Calculate available length of source line.
         pixel_limit = scan_end - scan_start;
-        // Calculate margin from sides of the line (to exclude markers).
-        temp_calc = pixel_limit/8;
-        // Calculate stats gathering range.
-        pixel_limit = scan_start + (uint16_t)temp_calc;
-        search_lim = scan_end - (uint16_t)temp_calc;
+        // Calculate margins from the edges of the line.
+        temp_calc = pixel_limit/16;
+        pixel_limit = scan_start+(uint16_t)temp_calc;
+        search_lim = scan_end-(uint16_t)temp_calc;
 #ifdef LB_EN_DBG_OUT
         if(suppress_log==false)
         {
-            log_line.sprintf("[LB] Trying to gather brightness stats data between [%03u:%03u]...",
+            log_line.sprintf("[LB] Scanning video line pixels [%03u:%04u] for brightness levels...",
                              pixel_limit, search_lim);
             qInfo()<<log_line;
         }
 #endif
-        // Calculate spread of brightness for the video line without marker areas.
-        fillArray(brightness_spread, 256);
+        // Calculate spread of brightness for the video line.
         for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
         {
             brightness_spread[getPixelBrightness(pixel)]++;
-        }
-
-        // Detect presence and coordinates of PCM STOP marker,
-        // if found, recalculate brightness spread for CRC part of the line, excluding white line.
-        marker_detect_stage = STC007Line::MARK_ED_START;
-        mark_ed_bit_start = mark_ed_bit_end = 0;
-        // Check if white level was detected (if not - markers can not be found).
-        if(white_level_detected!=false)
-        {
-            // Define rough reference level for white detection.
-            bin_level = pickCenterRefLevel(useful_low, br_mark_white);
-            bin_high = bin_low = bin_level;     // Tests revealed that ref. level hysteresis for marker detection produces worse results.
-#ifdef LB_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                log_line.sprintf("[LB] Rough ref. level: %03u (B&W)", bin_level);
-                qInfo()<<log_line;
-            }
-#endif
-            // Calculate minimum pixel number for the marker search.
-            if(mark_end_min>(estimated_ppb*6))
-            {
-                pixel_limit = mark_end_min-estimated_ppb*6;
-            }
-            else
-            {
-                pixel_limit = 0;
-            }
-            pixel = scan_end;
-#ifdef LB_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                log_line.sprintf("[LB] Searching STOP marker, detection in range [%04u...%04u], full marker in [%04u...%04u]",
-                                 pixel, mark_end_min, pixel, pixel_limit);
-                qInfo()<<log_line;
-            }
-#endif
-            // Find position of PCM ending marker through backwards search.
-            while(pixel>pixel_limit)
-            {
-                // Get pixel brightness level (8 bit grayscale).
-                pixel_val = getPixelBrightness(pixel);
-#ifdef LB_LOG_BW_VERBOSE
-                if(suppress_log==false)
-                {
-                    log_line.sprintf("[LB] Pixel [%04u] val.: [%03u], ref.: [%03u|%03u]",
-                                     pixel, pixel_val, bin_low, bin_high);
-                    qInfo()<<log_line;
-                }
-#endif
-                if(marker_detect_stage==STC007Line::MARK_ED_START)
-                {
-                    // Check additional limit on start of the STOP marker.
-                    if(pixel<mark_end_min)
-                    {
-#ifdef LB_EN_DBG_OUT
-                        if(suppress_log==false)
-                        {
-                            log_line.sprintf("[LB-%03u] No STOP maker started within limits [%03u:%03u], search stopped!", bin_level, scan_end, mark_end_min);
-                            qInfo()<<log_line;
-                        }
-#endif
-                        // Stop the search.
-                        break;
-                    }
-                    // Detect /\ transition to "1" marker bit.
-                    if(pixel_val>=bin_low)
-                    {
-                        // Save pixel coordinate of the end of STOP marker (4-bit wide).
-                        mark_ed_bit_end = pixel+1;
-                        // Update STOP marker detection stage.
-                        marker_detect_stage=STC007Line::MARK_ED_TOP;
-#ifdef LB_LOG_BW_VERBOSE
-                        if(suppress_log==false)
-                        {
-                            qInfo()<<"[LB] Got 0->1 transition from the end of STOP-marker";
-                        }
-#endif
-                    }
-                }
-                else if(marker_detect_stage==STC007Line::MARK_ED_TOP)
-                {
-                    // Detect \/ transition to "0" marker bit.
-                    if(pixel_val<bin_high)
-                    {
-                        // Save pixel coordinate of the beginning of STOP marker (4-bit wide).
-                        mark_ed_bit_start = pixel+1;
-                        // Update STOP marker detection stage.
-                        marker_detect_stage = STC007Line::MARK_ED_BOT;
-                        // Check if "1" bit length is more than twice of estimated PPB.
-                        if((mark_ed_bit_end-mark_ed_bit_start)>=(estimated_ppb*2))
-                        {
-                            // Update STOP marker detection stage.
-                            marker_detect_stage = STC007Line::MARK_ED_LEN_OK;
-#ifdef LB_EN_DBG_OUT
-                            if(suppress_log==false)
-                            {
-                                log_line.sprintf("[LB] STOP-marker found at [%03u:%03u]", mark_ed_bit_start, mark_ed_bit_end);
-                                qInfo()<<log_line;
-                            }
-#endif
-#ifdef LB_LOG_BW_VERBOSE
-                            if(suppress_log==false)
-                            {
-                                log_line.sprintf("[LB] STOP-marker length is ok (%03u>=%03u)", (mark_ed_bit_end-mark_ed_bit_start), (estimated_ppb*2));
-                                qInfo()<<log_line;
-                            }
-#endif
-                            // Set the limited distance (covering CRC, ECC and data area) from STOP-marker for brightness spread re-calc.
-                            // ~64 PCM bits from STOP marker.
-                            search_lim = estimated_ppb*64;
-                            // Calculate negative coordinate offset from the STOP marker.
-                            if(search_lim>mark_ed_bit_start)
-                            {
-                                search_lim = mark_start_max;
-                            }
-                            else
-                            {
-                                search_lim = mark_ed_bit_start-search_lim;
-                            }
-                            // Reset brightness spread data.
-                            fillArray(brightness_spread, 256);
-                            // Re-calculate spread of brighness for the end of the line (excluding black border and garbage).
-                            for(uint16_t pixel=(mark_ed_bit_start-1);pixel>search_lim;pixel--)
-                            {
-                                brightness_spread[getPixelBrightness(pixel)]++;
-                            }
-                            // Finish STOP marker search.
-                            break;
-                        }
-                        else
-                        {
-                            // Wrong "1" bit length, probably noise - reset state machine.
-                            marker_detect_stage = STC007Line::MARK_ED_START;
-#ifdef LB_EN_DBG_OUT
-                            if(suppress_log==false)
-                            {
-                                log_line.sprintf("[LB] Erroneous STOP-marker at [%03u:%03u], restarting...", mark_ed_bit_start, mark_ed_bit_end);
-                                qInfo()<<log_line;
-                            }
-#endif
-#ifdef LB_LOG_BW_VERBOSE
-                            if(suppress_log==false)
-                            {
-                                log_line.sprintf("[LB] Insufficient STOP-marker length (%03u<%03u)", (mark_ed_bit_end-mark_ed_bit_start), (estimated_ppb*2));
-                                qInfo()<<log_line;
-                            }
-#endif
-                        }
-                    }
-                }
-                // Go to previous pixel in the line.
-                pixel--;
-            }
-            STC007Line *temp_stc;
-            temp_stc = static_cast<STC007Line *>(out_pcm_line);
-            // Store final state.
-            temp_stc->mark_ed_stage = marker_detect_stage;
-            // Save coordinates.
-            temp_stc->coords.data_stop = mark_ed_bit_start;
-            temp_stc->marker_stop_ed_coord = mark_ed_bit_end;
-#ifdef LB_EN_DBG_OUT
-            // Check if PCM ending marker was found.
-            if(temp_stc->hasStopMarker()==false)
-            {
-                if(suppress_log==false)
-                {
-                    qInfo()<<"[LB] STOP marker was NOT found!";
-                }
-            }
-#endif
-        }
-    }
-    else
-    {
-        // No markers are available in this PCM type.
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            qInfo()<<"[LB] ---------- B&W levels search started (for PCM-1/PCM-16x0)...";
-        }
-#endif
-        // Calculate brightness spread for almost the whole line.
-        // Calculate available length of source line.
-        pixel_limit = scan_end - scan_start;
-        if(out_pcm_line->getPCMType()==PCMLine::TYPE_PCM16X0)
-        {
-            // PCM-16x0 silent pattern has many black pixels some white ones at three CRC areas.
-            // Limit scan area to prevent BLACK level saturating encounters.
-            // Calculate width of CRC area and some.
-            temp_calc = pixel_limit/8;
-            // Calculate offset to the left CRC area.
-            pixel_limit = pixel_limit/5;
-            // Offset CRC area.
-            search_lim = pixel_limit+(uint16_t)temp_calc;
-#ifdef LB_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                log_line.sprintf("[LB] Scanning left part of video line pixels [%03u:%04u] for brightness levels...",
-                                 pixel_limit, search_lim);
-                qInfo()<<log_line;
-            }
-#endif
-            // Calculate spread of brightness for the first CRC area.
-            for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
-            {
-                brightness_spread[getPixelBrightness(pixel)]++;
-            }
-            // Calculate available length of source line.
-            //pixel_limit = scan_end - scan_start;
-            // Calculate offset to the middle CRC area.
-            pixel_limit = (uint16_t)temp_calc*4;
-            pixel_limit += (uint16_t)temp_calc/2;
-            // Offset CRC area.
-            search_lim = pixel_limit+(uint16_t)temp_calc;
-#ifdef LB_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                log_line.sprintf("[LB] Scanning middle part of video line pixels [%03u:%04u] for brightness levels...",
-                                 pixel_limit, search_lim);
-                qInfo()<<log_line;
-            }
-#endif
-            // Calculate spread of brightness for the first CRC area.
-            for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
-            {
-                brightness_spread[getPixelBrightness(pixel)]++;
-            }
-            // Calculate available length of source line.
-            pixel_limit = scan_end - scan_start;
-            // Calculate margin from the left edge of the line.
-            search_lim = scan_end-pixel_limit/64;
-            pixel_limit = search_lim-(uint16_t)temp_calc;
-#ifdef LB_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                log_line.sprintf("[LB] Scanning right part of video line pixels [%03u:%04u] for brightness levels...",
-                                 pixel_limit, search_lim);
-                qInfo()<<log_line;
-            }
-#endif
-            // Calculate spread of brightness for the first CRC area.
-            for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
-            {
-                brightness_spread[getPixelBrightness(pixel)]++;
-            }
-        }
-        else if(out_pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
-        {
-            // PCM-1.
-            // Calculate margin from the right edge of the line.
-            temp_calc = pixel_limit/32;
-            search_lim = scan_end-(uint16_t)temp_calc;
-            // Calculate margin from the left edge of the line.
-            temp_calc = pixel_limit/8;
-            pixel_limit = scan_start+(uint16_t)temp_calc;
-#ifdef LB_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                log_line.sprintf("[LB] Scanning video line pixels [%03u:%04u] for brightness levels...",
-                                 pixel_limit, search_lim);
-                qInfo()<<log_line;
-            }
-#endif
-            // Calculate spread of brightness for the video line.
-            for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
-            {
-                brightness_spread[getPixelBrightness(pixel)]++;
-            }
-        }
-        else
-        {
-            // Unspecified PCM type.
-            // Calculate margins from the edges of the line.
-            temp_calc = pixel_limit/8;
-            pixel_limit = scan_start+(uint16_t)temp_calc;
-            search_lim = scan_end-(uint16_t)temp_calc;
-#ifdef LB_EN_DBG_OUT
-            if(suppress_log==false)
-            {
-                log_line.sprintf("[LB] Scanning video line pixels [%03u:%04u] for brightness levels...",
-                                 pixel_limit, search_lim);
-                qInfo()<<log_line;
-            }
-#endif
-            // Calculate spread of brightness for the video line.
-            for(uint16_t pixel=pixel_limit;pixel<search_lim;pixel++)
-            {
-                brightness_spread[getPixelBrightness(pixel)]++;
-            }
         }
     }
 
@@ -2906,8 +3125,8 @@ bool Binarizer::findBlackWhite()
 #endif
 
     // Find span of non-zero brightness encounters.
-    useful_low = low_scan_limit = br_black = getUsefullLowLevel();
-    useful_high = high_scan_limit = br_white = getUsefullHighLevel();
+    useful_low = low_scan_limit = br_black = getUsefullLowLevel(brightness_spread);
+    useful_high = high_scan_limit = br_white = getUsefullHighLevel(brightness_spread);
     // Calculate range of brightnesses.
     range_limit = high_scan_limit-low_scan_limit;
     // Calculte limits for BLACK and WHITE peak searches.
@@ -2923,13 +3142,13 @@ bool Binarizer::findBlackWhite()
     temp_calc = temp_calc*12/100;
     bin_high = (uint8_t)temp_calc;      // Re-purpose variables that are not needed now.
     // Calculate lowest possible encounter count.
-    search_lim = getMostFrequentBrightnessCount();
+    search_lim = getMostFrequentBrightnessCount(brightness_spread);
     search_lim = search_lim/64;         // Re-purpose variables that are not needed now.
 
 #ifdef LB_EN_DBG_OUT
     if(suppress_log==false)
     {
-        log_line.sprintf("[LB] Most frequent brightness encounters: [%03u], encounter limit: [%03u]", getMostFrequentBrightnessCount(), search_lim);
+        log_line.sprintf("[LB] Most frequent brightness encounters: [%03u], encounter limit: [%03u]", getMostFrequentBrightnessCount(brightness_spread), search_lim);
         qInfo()<<log_line;
         log_line.sprintf("[LB] Useful brightness data at: [%03u:%03u]", useful_low, useful_high);
         qInfo()<<log_line;
@@ -3258,360 +3477,6 @@ uint8_t Binarizer::pickCenterRefLevel(uint8_t lvl_black, uint8_t lvl_white)
     return res_lvl;
 }
 
-//------------------------ Calculate reference level, equalizing PPBs for "0" and "1".
-uint8_t Binarizer::calcRefLevelByPPB(uint8_t lvl_black, uint8_t lvl_white)
-{
-    uint16_t bit0_ppb_spread[PPB_MAX];  // Bit "0" PPB spread statistics.
-    uint16_t bit1_ppb_spread[PPB_MAX];  // Bit "1" PPB spread statistics.
-    uint8_t low_ref, high_ref, lvl_ref;
-    uint8_t pixel_val = 0;
-    uint8_t iterations = 0;
-    uint8_t min_ppb = 0;
-    uint8_t max_ppb = 0;
-    uint8_t hyst_lvl = 1;
-    uint16_t used_length = 0;
-    uint16_t ppb_enc_by0 = 0;
-    uint16_t ppb_enc_by1 = 0;
-    uint16_t last_transition = 0;
-    uint16_t last_bit_width = 0;
-    uint16_t est_ppb_by0 = 0;
-    uint16_t est_ppb_by1 = 0;
-    bool prev_high = false;
-    bool dir_up_fix = false;
-    bool dir_down_fix = false;
-
-#ifdef LB_EN_DBG_OUT
-    QString log_line, stats;
-#endif
-
-    // Calculate usable length of the video line.
-    used_length = scan_end - scan_start;
-
-    // Calculate minimum PPB (PCM-16x0: 193 bits per line).
-    min_ppb = (used_length*9/10)/193;
-    // Calculate maximum PPB (PCM-1: 96 bits per line).
-    max_ppb = (used_length/90)+1;
-    // Keep PPB within limits.
-    if(max_ppb>PPB_MAX)
-    {
-        max_ppb = PPB_MAX;
-    }
-
-#ifdef LB_EN_DBG_OUT
-    if((log_level&LOG_PROCESS)!=0)
-    {
-        log_line.sprintf("[LB] Min/max PPB: [%03u|%03u] for the line of [%03u] pixels", min_ppb, max_ppb, used_length);
-        qInfo()<<log_line;
-    }
-#endif
-
-    // Calculate rough reference level.
-    lvl_ref = pickCenterRefLevel(lvl_black, lvl_white);
-
-    // Run equalization until average "0"-bit and "1"-bit PPBs are equal.
-    do
-    {
-        // Reset data.
-        last_transition = ppb_enc_by0 = ppb_enc_by1 = est_ppb_by0 = est_ppb_by1 = 0;
-        prev_high = false;
-        // Calculate low and high levels for hysteresis.
-        low_ref = getLowLevel(lvl_ref, hyst_lvl);
-        high_ref = getHighLevel(lvl_ref, hyst_lvl);
-        // Check levels for clipping against BLACK and WHITE levels.
-        if(low_ref<=lvl_black)
-        {
-#ifdef LB_EN_DBG_OUT
-            if((log_level&LOG_PROCESS)!=0)
-            {
-                log_line.sprintf("[LB] Low ref. level clipping: %03u", low_ref);
-                qInfo()<<log_line;
-            }
-#endif
-            low_ref = lvl_black+1;
-        }
-        if(high_ref>=lvl_white)
-        {
-#ifdef LB_EN_DBG_OUT
-            if((log_level&LOG_PROCESS)!=0)
-            {
-                log_line.sprintf("[LB] High ref. level clipping: %03u", high_ref);
-                qInfo()<<log_line;
-            }
-#endif
-            high_ref = lvl_white-1;
-        }
-#ifdef LB_EN_DBG_OUT
-        if((log_level&LOG_PROCESS)!=0)
-        {
-            log_line.sprintf("[LB] Levels: [%03u|%03u] -> %03u [%03u|%03u]", lvl_black, lvl_white, lvl_ref, low_ref, high_ref);
-            qInfo()<<log_line;
-        }
-#endif
-
-        // Reset PPB stats data.
-        fillArray(bit0_ppb_spread, PPB_MAX);
-        fillArray(bit1_ppb_spread, PPB_MAX);
-        // Go through the whole video line.
-        for(uint16_t pixel=scan_start;pixel<=scan_end;pixel++)
-        {
-            // Pick the pixel brightness.
-            pixel_val = getPixelBrightness(pixel);
-
-            // Perform binarization with hysteresis.
-            if(prev_high==false)
-            {
-                // Previous bit was "0".
-                if(pixel_val>=low_ref)
-                {
-                    // Value is more than low reference.
-                    // Register "0->1" transition.
-                    last_bit_width = pixel - last_transition;
-                    // Update last transition coordinate.
-                    last_transition = pixel;
-                    // Invert last bit state.
-                    prev_high = !prev_high;
-                    // Check bit width limits.
-                    if(last_bit_width<PPB_MAX)
-                    {
-                        // Update bit 0 width stats.
-                        bit0_ppb_spread[last_bit_width]++;
-                    }
-                }
-            }
-            else
-            {
-                // Previous bit was "1".
-                if(pixel_val<high_ref)
-                {
-                    // Value is less than high reference.
-                    // Register "1->0" transition.
-                    last_bit_width = pixel - last_transition;
-                    // Update last transition coordinate.
-                    last_transition = pixel;
-                    // Invert last bit state.
-                    prev_high = !prev_high;
-                    // Check bit width limits.
-                    if(last_bit_width<PPB_MAX)
-                    {
-                        // Update bit 1 width stats.
-                        bit1_ppb_spread[last_bit_width]++;
-                    }
-                }
-            }
-        }
-
-        // Perform widths encounters search.
-        for(uint16_t ppb=2;ppb<max_ppb;ppb++)
-        {
-            // Search for maximum encounters.
-            if(bit0_ppb_spread[ppb]>ppb_enc_by0)
-            {
-                // Update current encounter of "0"-bit PPB.
-                ppb_enc_by0 = bit0_ppb_spread[ppb];
-                est_ppb_by0 = ppb;
-            }
-            if(bit1_ppb_spread[ppb]>ppb_enc_by1)
-            {
-                // Update current encounter of "1"-bit PPB.
-                ppb_enc_by1 = bit1_ppb_spread[ppb];
-                est_ppb_by1 = ppb;
-            }
-        }
-
-#ifdef LB_EN_DBG_OUT
-        if(((log_level&LOG_BRIGHT)!=0)&&((log_level&LOG_PROCESS)!=0))
-        {
-            stats.clear();
-            for(uint16_t index=0;index<PPB_MAX;index++)
-            {
-                stats += QString::number(bit0_ppb_spread[index])+",";
-            }
-            qInfo()<<"[LB] Bit 0 width spread:"<<stats<<" ("<<est_ppb_by0<<"pixels @"<<ppb_enc_by0<<"encounters)";
-            stats.clear();
-            for(uint16_t index=0;index<PPB_MAX;index++)
-            {
-                stats += QString::number(bit1_ppb_spread[index])+",";
-            }
-            qInfo()<<"[LB] Bit 1 width spread:"<<stats<<" ("<<est_ppb_by1<<"pixels @"<<ppb_enc_by1<<"encounters)";
-        }
-#endif
-
-        if(est_ppb_by0==est_ppb_by1)
-        {
-            // PPBs are equalized.
-            break;
-        }
-        else
-        {
-            if(est_ppb_by0>est_ppb_by1)
-            {
-                // Width of "0"-bit is larger than width of "1"-bit: reference level is too high.
-                // Check if there was other locked direction.
-                if(dir_up_fix==false)
-                {
-                    // Lock this direction.
-                    dir_down_fix = true;
-                    // Decrease reference level.
-                    if(lvl_ref>(lvl_black+hyst_lvl+1))
-                    {
-                        lvl_ref--;
-                    }
-                    else
-                    {
-#ifdef LB_EN_DBG_OUT
-                        if((log_level&LOG_PROCESS)!=0)
-                        {
-                            qInfo()<<"[LB] Lowest reference reached, unable to equalize, stopped.";
-                        }
-#endif
-                        break;
-                    }
-                }
-                else
-                {
-#ifdef LB_EN_DBG_OUT
-                    if((log_level&LOG_PROCESS)!=0)
-                    {
-                        qInfo()<<"[LB] PPB ratio inverted, unable to equalize, stopped.";
-                    }
-#endif
-                    break;
-                }
-            }
-            else
-            {
-                // Width of "0"-bit is less than width of "1"-bit: reference level is too low.
-                // Check if there was other locked direction.
-                if(dir_down_fix==false)
-                {
-                    // Lock this direction.
-                    dir_up_fix = true;
-                    // Increase reference level.
-                    if(lvl_ref<(lvl_white-hyst_lvl-1))
-                    {
-                        lvl_ref++;
-                    }
-                    else
-                    {
-#ifdef LB_EN_DBG_OUT
-                        if((log_level&LOG_PROCESS)!=0)
-                        {
-                            qInfo()<<"[LB] Highest reference reached, unable to equalize, stopped.";
-                        }
-#endif
-                        break;
-                    }
-                }
-                else
-                {
-#ifdef LB_EN_DBG_OUT
-                    if((log_level&LOG_PROCESS)!=0)
-                    {
-                        qInfo()<<"[LB] PPB ratio inverted, unable to equalize, stopped.";
-                    }
-#endif
-                    break;
-                }
-            }
-        }
-        // Count cycle runs.
-        iterations++;
-        if(iterations>PPB_EQ_PASSES_MAX)
-        {
-#ifdef LB_EN_DBG_OUT
-            if((log_level&LOG_PROCESS)!=0)
-            {
-                qInfo()<<"[LB] Too many iterations, stopped.";
-            }
-#endif
-            break;
-        }
-    }
-    while(1);
-
-    // Perform limited encounters search.
-    ppb_enc_by0 = ppb_enc_by1 = est_ppb_by0 = est_ppb_by1 = 0;
-    for(uint16_t ppb=min_ppb;ppb<max_ppb;ppb++)
-    {
-        // Search for maximum encounters.
-        if(bit0_ppb_spread[ppb]>ppb_enc_by0)
-        {
-            // Store current encounter of "0"-bit PPB.
-            ppb_enc_by0 = bit0_ppb_spread[ppb];
-            est_ppb_by0 = ppb;
-        }
-        if(bit1_ppb_spread[ppb]>ppb_enc_by1)
-        {
-            // Store current encounter of "1"-bit PPB.
-            ppb_enc_by1 = bit1_ppb_spread[ppb];
-            est_ppb_by1 = ppb;
-        }
-    }
-
-    // Pick lowest PPB of the two.
-    if(est_ppb_by0==est_ppb_by1)
-    {
-        // Combine encounters if PPBs are the same.
-        ppb_enc_by0 += ppb_enc_by1;
-    }
-    else if((est_ppb_by0>est_ppb_by1)&&(est_ppb_by1!=0))
-    {
-        // Store values in "0"-bit variables if "1"-bit has narrower encounters that are not zero.
-        est_ppb_by0 = est_ppb_by1;
-        ppb_enc_by0 = ppb_enc_by1;
-    }
-
-    // Check if any valid encounters were found.
-    if(est_ppb_by0==0)
-    {
-        // No valid PPBs.
-        // Reset reference level.
-        lvl_ref = pickCenterRefLevel(lvl_black, lvl_white);
-    }
-
-#ifdef LB_EN_DBG_OUT
-    // PCM-1: 94 bits
-    // STC-007: 137 bits
-    // ArVid Audio: 155 bits
-    // PCM-16x0: 193 bits
-    if(((log_level&LOG_RAWBIN)!=0)||((log_level&LOG_PROCESS)!=0))
-    {
-        if(est_ppb_by0==0)
-        {
-            qInfo()<<"[LB] No PPB was detected!";
-        }
-        else
-        {
-            uint16_t est_pixels;
-            est_pixels = used_length/est_ppb_by0;
-            qInfo()<<"[LB] Estimated PPB:"<<est_ppb_by0<<"with"<<ppb_enc_by0<<"encounters at"<<lvl_ref<<"reference level (~"<<est_pixels<<"bits per line)";
-            if(est_pixels>245)
-            {
-                qInfo()<<"[LB] Unknown high-density data";
-            }
-            else if(est_pixels>175)
-            {
-                qInfo()<<"[LB] Data may (or may not) contain PCM-16x0 audio...";
-            }
-            else if(est_pixels>145)
-            {
-                qInfo()<<"[LB] Data may (or may not) contain ArVid audio...";
-            }
-            else if(est_pixels>110)
-            {
-                qInfo()<<"[LB] Data may (or may not) contain STC-007 PCM audio...";
-            }
-            else
-            {
-                qInfo()<<"[LB] Data may (or may not) contain PCM-1 audio...";
-            }
-        }
-    }
-#endif
-
-    return lvl_ref;
-}
-
 //------------------------ Perform reference level sweep from one level to another (multithreadable).
 void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
 {
@@ -3622,6 +3487,7 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
     PCM16X0SubLine temp_pcm16x0;
     STC007Line temp_stc;
     PCMLine *dummy_line;
+    CoordinatePair forced_coords;
 
     suppress_log = !(((log_level&LOG_PROCESS)!=0)&&((log_level&LOG_REF_SWEEP)!=0));
 
@@ -3644,6 +3510,19 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
     else
     {
         return;
+    }
+
+    // Check if data coordinates are forced.
+    if(digi_set.en_force_coords!=false)
+    {
+        // Calculate forced data coordinates.
+        forced_coords.data_start = (int16_t)scan_start+digi_set.horiz_coords.data_start;
+        forced_coords.data_stop = (int16_t)scan_end-digi_set.horiz_coords.data_stop;
+        if(video_line->isDoubleWidth()!=false)
+        {
+            forced_coords.data_start += digi_set.horiz_coords.data_start;
+            forced_coords.data_stop -= digi_set.horiz_coords.data_stop;
+        }
     }
 
     // Take scan span from B&W levels.
@@ -3686,43 +3565,48 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
         dummy_line->white_level = high_lvl;
         // Preset current reference level.
         dummy_line->ref_level = ref_index;
-        // Check if data coordinates are preset.
-        if(in_def_coord.areValid()!=false)
+        // Check if data coordinates are forced.
+        if(forced_coords.areValid()==false)
         {
-            // There are externally provided coordinates.
-            skip_bin = false;
-            if(pcm_line->getPCMType()==PCMLine::TYPE_STC007)
+            // Check if data coordinates are preset.
+            if(in_def_coord.areValid()!=false)
             {
+                // There are externally provided coordinates.
                 // Try provided coordinates first, because there is a possibility
                 // that current data coordinates will not be found due to marker corruption.
-                if(digi_set.en_good_no_marker!=false)
+                skip_bin = false;
+                if(pcm_line->getPCMType()==PCMLine::TYPE_STC007)
                 {
-                    // Both markers are required to produce valid CRC.
-                    // Find coordinates for PCM START and STOP markers with current reference level.
-                    findSTC007Coordinates(&temp_stc, suppress_log);
-                    if(temp_stc.hasMarkers()==false)
+                    // Check if all markers must be present for valid CRC.
+                    if(digi_set.en_good_no_marker!=false)
                     {
-                        // At least one marker was not found.
-                        skip_bin = true;
+                        // Both markers are required to produce valid CRC.
+                        // Find coordinates for PCM START and STOP markers with current reference level.
+                        findSTC007Coordinates(&temp_stc, suppress_log);
+                        if(temp_stc.hasMarkers()==false)
+                        {
+                            // At least one marker was not found.
+                            skip_bin = true;
+                        }
                     }
                 }
-            }
-            // Check if fast run is allowed.
-            if(skip_bin!=false)
-            {
-                // Both markers are present or are not required.
-#ifdef LB_EN_DBG_OUT
-                if((log_level&LOG_REF_SWEEP)!=0)
+                // Check if fast run is allowed.
+                if(skip_bin!=false)
                 {
-                    log_line.sprintf("[LB] External coordinates for first-try run provided: [%03u|%04u]", in_def_coord.data_start, in_def_coord.data_stop);
-                    qInfo()<<log_line;
-                }
+                    // Both markers are present or are not required.
+#ifdef LB_EN_DBG_OUT
+                    if((log_level&LOG_REF_SWEEP)!=0)
+                    {
+                        log_line.sprintf("[LB] External coordinates for first-try run provided: [%03u|%04u]", in_def_coord.data_start, in_def_coord.data_stop);
+                        qInfo()<<log_line;
+                    }
 #endif
-                // Preset data coordinates.
-                dummy_line->coords = in_def_coord;
-                // Try to read data with preset coordinates
-                // (even if markers are damaged and can not be found)
-                readPCMdata(dummy_line, 0, suppress_log);
+                    // Preset data coordinates.
+                    dummy_line->coords = in_def_coord;
+                    // Try to read data with preset coordinates
+                    // (even if markers are damaged and can not be found)
+                    readPCMdata(dummy_line, 0, suppress_log);
+                }
             }
         }
         // Check if preset coordinates produced a valid CRC.
@@ -3734,23 +3618,35 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
                 qInfo()<<"[LB] Searching for data coordinates...";
             }
 #endif
-            //skip_bin = false;
-            if(pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
+            // Check if data coordinates are forced.
+            if(forced_coords.areValid()==false)
             {
-                // Brute-force sweep data coordinates until those fit.
-                findPCM1Coordinates(&temp_pcm1, in_def_coord);
+                // No forced coordinates are set.
+                // Perform data coordinates search.
+                if(pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
+                {
+                    // Brute-force sweep data coordinates until those fit.
+                    findPCM1Coordinates(&temp_pcm1, in_def_coord);
+                }
+                else if(pcm_line->getPCMType()==PCMLine::TYPE_PCM16X0)
+                {
+                    // Reset coordinate scan flag.
+                    video_line->scan_done = false;
+                    // Brute-force sweep data coordinates until those fit.
+                    findPCM16X0Coordinates(&temp_pcm16x0, in_def_coord);
+                }
+                else if(pcm_line->getPCMType()==PCMLine::TYPE_STC007)
+                {
+                    // Find coordinates for PCM START and STOP markers with current reference level.
+                    findSTC007Coordinates(&temp_stc, suppress_log);
+                }
             }
-            else if(pcm_line->getPCMType()==PCMLine::TYPE_PCM16X0)
+            else
             {
-                // Reset coordinate scan flag.
-                video_line->scan_done = false;
-                // Brute-force sweep data coordinates until those fit.
-                findPCM16X0Coordinates(&temp_pcm16x0, in_def_coord);
-            }
-            else if(pcm_line->getPCMType()==PCMLine::TYPE_STC007)
-            {
-                // Find coordinates for PCM START and STOP markers with current reference level.
-                findSTC007Coordinates(&temp_stc, suppress_log);
+                // Data coordinates are forced, don't perform the search.
+                // Apply forced coordinates.
+                dummy_line->coords = forced_coords;
+                dummy_line->setDataCoordinatesState(true);
             }
             if(dummy_line->hasDataCoordSet()!=false)
             {
@@ -3764,6 +3660,8 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
                 readPCMdata(dummy_line, 0, suppress_log);
             }
         }
+        // Increase hysteresis depth in case of picked bits in the line
+        // to make this run less desirable for selection from the stats.
         if(pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
         {
             if((temp_pcm1.hasPickedLeft()!=false)&&(temp_pcm1.hasPickedRight()!=false))
@@ -3773,7 +3671,7 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
             }
             else if(temp_pcm1.hasPickedRight()!=false)
             {
-                // Picked bits only in CRC: can be easily picked than data word.
+                // Picked bits only in CRC: can be more easily picked than a data word.
                 dummy_line->hysteresis_depth += (HYST_DEPTH_MAX+2);
             }
             else if(temp_pcm1.hasPickedLeft()!=false)
@@ -3786,7 +3684,7 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
         {
             if(temp_pcm16x0.hasPickedRight()!=false)
             {
-                // Picked bits only in CRC: can be easily picked than data word.
+                // Picked bits only in CRC: can be more easily picked than a data word.
                 dummy_line->hysteresis_depth += (HYST_DEPTH_MAX+2);
             }
             else if(temp_pcm16x0.hasPickedLeft()!=false)
@@ -3795,10 +3693,12 @@ void Binarizer::sweepRefLevel(PCMLine *pcm_line, crc_handler_t *crc_res)
                 dummy_line->hysteresis_depth += (HYST_DEPTH_MAX+1);
             }
         }
+        // Clamp hysteresis depth.
         if(dummy_line->hysteresis_depth>0x0F)
         {
             dummy_line->hysteresis_depth = 0x0F;
         }
+        // Preset "no valid CRC" result.
         read_result = REF_NO_PCM;
         // Check and store final decode result in stats data.
         if((dummy_line->isCRCValid()!=false)&&(dummy_line->coords.areValid()!=false))
@@ -3852,6 +3752,8 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
 {
     bool suppress_log;
     uint8_t fast_ref, bin_level, valid_crc_cnt, span_res/*, thread_cnt, lvls_per_thread*/;
+    crc_handler_t scan_sweep_crcs[256];                 // CRC data for reference level sweep stats.
+    CoordinatePair forced_coords;
 
     suppress_log = !((log_level&LOG_PROCESS)!=0);
 
@@ -3876,6 +3778,18 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
     {
         hysteresis_depth_lim = 0;
         shift_stages_lim = SHIFT_STAGES_SAFE;
+    }
+
+    if(digi_set.en_force_coords!=false)
+    {
+        // Calculate forced data coordinates.
+        forced_coords.data_start = (int16_t)scan_start+digi_set.horiz_coords.data_start;
+        forced_coords.data_stop = (int16_t)scan_end-digi_set.horiz_coords.data_stop;
+        if(video_line->isDoubleWidth()!=false)
+        {
+            forced_coords.data_start += digi_set.horiz_coords.data_start;
+            forced_coords.data_stop -= digi_set.horiz_coords.data_stop;
+        }
     }
 
     // Reset resulting reference level array.
@@ -3962,7 +3876,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
         // Copy data coordinates from CRC stats into the PCM line.
         pcm_line->coords.setCoordinates(target_settings.data_start, target_settings.data_stop);
         pcm_line->setDataCoordinatesState(true);
-        if(pcm_line->getPCMType()==PCMLine::TYPE_STC007)
+        if((pcm_line->getPCMType()==PCMLine::TYPE_STC007)&&(forced_coords.areValid()==false))
         {
             STC007Line *temp_stc;
             temp_stc = static_cast<STC007Line *>(pcm_line);
@@ -3976,30 +3890,6 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
             hysteresis_depth_lim = HYST_DEPTH_MAX;
         }
         shift_stages_lim = target_settings.shift_stg;
-
-        // Find CRC data for picked reference level.
-        /*for(uint16_t index=0;index<256;index++)
-        {
-            if(index==pcm_line->ref_level)
-            {
-                if(pcm_line->getPCMType()==PCMLine::TYPE_STC007)
-                {
-                    STC007Line *temp_stc;
-                    temp_stc = static_cast<STC007Line *>(pcm_line);
-                    // Set marker statuses.
-                    findSTC007Markers(temp_stc, suppress_log);
-                }
-                // Copy data coordinates from CRC stats into the PCM line.
-                pcm_line->coords.data_start = scan_sweep_crcs[index].data_start;
-                pcm_line->coords.data_stop = scan_sweep_crcs[index].data_stop;
-                pcm_line->setDataCoordinatesState(true);
-                // Limit final [readPCMdata()] stages to that of the picked level.
-                hysteresis_depth_lim = scan_sweep_crcs[index].hyst_dph;
-                shift_stages_lim = scan_sweep_crcs[index].shift_stg;
-                // Search is done.
-                break;
-            }
-        }*/
 #ifdef LB_EN_DBG_OUT
         if((suppress_log==false)||((log_level&LOG_REF_SWEEP)!=0))
         {
@@ -4063,7 +3953,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
             // Copy data coordinates from CRC stats into the PCM line.
             pcm_line->coords.setCoordinates(target_settings.data_start, target_settings.data_stop);
             pcm_line->setDataCoordinatesState(true);
-            if(pcm_line->getPCMType()==PCMLine::TYPE_STC007)
+            if((pcm_line->getPCMType()==PCMLine::TYPE_STC007)&&(forced_coords.areValid()==false))
             {
                 STC007Line *temp_stc;
                 temp_stc = static_cast<STC007Line *>(pcm_line);
@@ -5650,7 +5540,7 @@ bool Binarizer::findPCM1Coordinates(PCM1Line *pcm1_line, CoordinatePair coord_hi
     if((suppress_log==false)||((log_level&LOG_PROCESS)!=0))
     {
         qInfo()<<"[LB] ---------- Starting search for PCM-1 data...";
-        if(digi_set.en_bit_picker==false)
+        if((digi_set.left_bit_pick==0)&&(digi_set.right_bit_pick==0))
         {
             qInfo()<<"[LB] Bit Picker is disabled";
         }
@@ -5868,7 +5758,7 @@ bool Binarizer::findPCM16X0Coordinates(PCM16X0SubLine *pcm16x0_line, CoordinateP
     if((suppress_log==false)||((log_level&LOG_PROCESS)!=0))
     {
         qInfo()<<"[LB] ---------- Starting search for PCM-16x0 data...";
-        if(digi_set.en_bit_picker==false)
+        if((digi_set.left_bit_pick==0)&&(digi_set.right_bit_pick==0))
         {
             qInfo()<<"[LB] Bit Picker is disabled";
         }
@@ -6175,26 +6065,22 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
     left_fix_word = right_fix_word = 0;
 
     // Detect how many bits are missing from the left of the line.
-#ifdef LB_EN_DBG_OUT
-    if(suppress_log==false)
+    // Determine limit for number of picked bits.
+    max_cut_bits = digi_set.left_bit_pick;
+    if(bin_mode==MODE_DRAFT)
     {
-        qInfo()<<"[LB] Detecting number of bits cut from the left of the line"<<pcm_line->line_number;
+        // Halve allowed bit count in ultra-fast mode.
+        max_cut_bits = max_cut_bits/2;
     }
-#endif
     // Get leftmost bit pixel coordinate.
     first_pixel_coord = scan_start;
 #ifdef LB_EN_DBG_OUT
     if(suppress_log==false)
     {
         coords = QString::number(first_pixel_coord)+" (start) | ";
+        qInfo()<<"[LB] Detecting number of bits cut from the left of the line"<<pcm_line->line_number<<"(maximum:"<<max_cut_bits<<")";
     }
 #endif
-    // Determine limit for number of picked bits.
-    max_cut_bits = PCM1_PICKBITS_MAX_LEFT;
-    if(bin_mode==MODE_DRAFT)
-    {
-        max_cut_bits = max_cut_bits/2;
-    }
     // Find first bit with different coordinate.
     for(index=0;index<max_cut_bits;index++)
     {
@@ -6245,26 +6131,22 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
 #endif
 
     // Detect how many bits are missing from the right of the line.
-#ifdef LB_EN_DBG_OUT
-    if(suppress_log==false)
-    {
-        qInfo()<<"[LB] Detecting number of bits cut from the right of the line"<<pcm_line->line_number;
-    }
-#endif
     // Get rightmost bit pixel coordinate.
     first_pixel_coord = scan_end;
+    // Determine limit for number of picked bits.
+    max_cut_bits = digi_set.right_bit_pick;
+    if(bin_mode==MODE_DRAFT)
+    {
+        // Halve allowed bit count in ultra-fast mode.
+        max_cut_bits = max_cut_bits/2;
+    }
 #ifdef LB_EN_DBG_OUT
     if(suppress_log==false)
     {
         coords = QString::number(first_pixel_coord)+" (stop) | ";
+        qInfo()<<"[LB] Detecting number of bits cut from the right of the line"<<pcm_line->line_number<<"(maximum:"<<max_cut_bits<<")";
     }
 #endif
-    // Determine limit for number of picked bits.
-    max_cut_bits = PCM1_PICKBITS_MAX_RIGHT;
-    if(bin_mode==MODE_DRAFT)
-    {
-        max_cut_bits = max_cut_bits/2;
-    }
     // Find first bit with different coordinate (searching backwards).
     for(index=0;index<max_cut_bits;index++)
     {
@@ -6666,26 +6548,21 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
 
     if(line_part_mode==PART_PCM16X0_LEFT)
     {
-        // Determine limit for number of picked bits.
-        max_cut_bits = PCM16X0_PICKBITS_MAX_LEFT;
-        if(bin_mode==MODE_DRAFT)
-        {
-            // Half number of picking bits in draft mode.
-            max_cut_bits = max_cut_bits/2;
-        }
         // Detect how many bits are missing from the left of the line.
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            qInfo()<<"[LB] Starting to pick up bits for left side of the sub-line"<<pcm_line->line_number;
-        }
-#endif
         // Get leftmost bit pixel coordinate.
         first_pixel_coord = scan_start;
+        // Determine limit for number of picked bits.
+        max_cut_bits = digi_set.left_bit_pick;
+        if(bin_mode==MODE_DRAFT)
+        {
+            // Halve allowed bit count in ultra-fast mode.
+            max_cut_bits = max_cut_bits/2;
+        }
 #ifdef LB_EN_DBG_OUT
         if(suppress_log==false)
         {
             coords += QString::number(first_pixel_coord)+" (start) | ";
+            qInfo()<<"[LB] Starting to pick up bits for left side of the sub-line"<<pcm_line->line_number<<"(maximum:"<<max_cut_bits<<")";
         }
 #endif
         // Find first bit with different coordinate.
@@ -6867,26 +6744,21 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
     }
     else if(line_part_mode==PART_PCM16X0_RIGHT)
     {
+        // Detect how many bits are missing from the right of the line.
+        // Get rightmost bit pixel coordinate.
+        first_pixel_coord = scan_end;
         // Determine limit for number of picked bits.
-        max_cut_bits = PCM16X0_PICKBITS_MAX_RIGHT;
+        max_cut_bits = digi_set.right_bit_pick;
         if(bin_mode==MODE_DRAFT)
         {
+            // Halve allowed bit count in ultra-fast mode.
             max_cut_bits = max_cut_bits/2;
         }
-        // Detect how many bits are missing from the right of the line.
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            qInfo()<<"[LB] Starting to pick up bits for right side of the sub-line"<<pcm_line->line_number;
-        }
-#endif
-        // Get rightmost bit pixel coordinate.
-        //first_pixel_coord = pcm_line->getVideoPixelT((pcm_line->getBitsBetweenDataCoordinates()-1), 0);
-        first_pixel_coord = scan_end;
 #ifdef LB_EN_DBG_OUT
         if(suppress_log==false)
         {
             coords += QString::number(first_pixel_coord)+" (stop) | ";
+            qInfo()<<"[LB] Starting to pick up bits for right side of the sub-line"<<pcm_line->line_number<<"(maximum:"<<max_cut_bits<<")";
         }
 #endif
         // Find first bit with different coordinate (searching backwards).
@@ -7089,7 +6961,7 @@ uint8_t Binarizer::fillPCM1(PCM1Line *fill_pcm_line, uint8_t ref_delta, uint8_t 
                          fill_pcm_line->frame_number, fill_pcm_line->line_number, shift_stg, ref_delta);
         pcm_word = 0;
         word_bit_pos = 0;
-        for(pcm_bit=0;pcm_bit<=(PCM1Line::BITS_PCM_DATA-1);pcm_bit++)
+        for(pcm_bit=0;pcm_bit<fill_pcm_line->getBitsBetweenDataCoordinates();pcm_bit++)
         {
             pcm_word++;
             // Find bit coodinate in video line.
@@ -7107,51 +6979,9 @@ uint8_t Binarizer::fillPCM1(PCM1Line *fill_pcm_line, uint8_t ref_delta, uint8_t 
         qInfo()<<log_line;
     }
 #endif
-    // Calculate LOW and HIGH reference levels for hysteresis.
-    low_ref = getLowLevel(fill_pcm_line->ref_level, ref_delta);
-    high_ref = getHighLevel(fill_pcm_line->ref_level, ref_delta);
-    // Store actual reference levels.
-    fill_pcm_line->ref_low = low_ref;
-    fill_pcm_line->ref_high = high_ref;
-    // Check if levels are within limits.
-    if(low_ref<=(fill_pcm_line->black_level))
-    {
-        // Ref. levels clipping detected, force BAD CRC and exit.
-        fill_pcm_line->setInvalidCRC();
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            log_line.sprintf("[LB-%03u] Too low ref. within hysteresis! [%03u<=%03u]",
-                             fill_pcm_line->ref_level,
-                             low_ref,
-                             fill_pcm_line->black_level);
-            qInfo()<<log_line;
-        }
-#endif
-        return STG_NO_GOOD;
-    }
-    if(high_ref>=(fill_pcm_line->white_level))
-    {
-        // Ref. levels clipping detected, force BAD CRC and exit.
-        fill_pcm_line->setInvalidCRC();
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            log_line.sprintf("[LB-%03u] Too high ref. within hysteresis! [%03u>=%03u]",
-                             fill_pcm_line->ref_level,
-                             high_ref,
-                             fill_pcm_line->white_level);
-            qInfo()<<log_line;
-        }
-#endif
-        return STG_NO_GOOD;
-    }
 
-    // Store last hysteresis depth in PCM line.
-    fill_pcm_line->hysteresis_depth = ref_delta;
-    // Store last shift stage in PCM line.
-    fill_pcm_line->shift_stage = shift_stg;
-
+    low_ref = fill_pcm_line->ref_low;
+    high_ref = fill_pcm_line->ref_high;
     // Reset filling variables.
     prev_high = false;
     pcm_word = 0;
@@ -7323,51 +7153,9 @@ uint8_t Binarizer::fillPCM16X0(PCM16X0SubLine *fill_pcm_line, uint8_t ref_delta,
         qInfo()<<log_line;
     }
 #endif
-    // Calculate LOW and HIGH reference levels for hysteresis.
-    low_ref = getLowLevel(fill_pcm_line->ref_level, ref_delta);
-    high_ref = getHighLevel(fill_pcm_line->ref_level, ref_delta);
-    // Store actual reference levels.
-    fill_pcm_line->ref_low = low_ref;
-    fill_pcm_line->ref_high = high_ref;
-    // Check if levels are within limits.
-    if(low_ref<=(fill_pcm_line->black_level))
-    {
-        // Ref. levels clipping detected, force BAD CRC and exit.
-        fill_pcm_line->setInvalidCRC();
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            log_line.sprintf("[LB-%03u] Too low ref. within hysteresis! [%03u<=%03u]",
-                             fill_pcm_line->ref_level,
-                             low_ref,
-                             fill_pcm_line->black_level);
-            qInfo()<<log_line;
-        }
-#endif
-        return STG_NO_GOOD;
-    }
-    if(high_ref>=(fill_pcm_line->white_level))
-    {
-        // Ref. levels clipping detected, force BAD CRC and exit.
-        fill_pcm_line->setInvalidCRC();
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            log_line.sprintf("[LB-%03u] Too high ref. within hysteresis! [%03u>=%03u]",
-                             fill_pcm_line->ref_level,
-                             high_ref,
-                             fill_pcm_line->white_level);
-            qInfo()<<log_line;
-        }
-#endif
-        return STG_NO_GOOD;
-    }
 
-    // Store last hysteresis depth in PCM line.
-    fill_pcm_line->hysteresis_depth = ref_delta;
-    // Store last shift stage in PCM line.
-    fill_pcm_line->shift_stage = shift_stg;
-
+    low_ref = fill_pcm_line->ref_low;
+    high_ref = fill_pcm_line->ref_high;
     // Reset filling variables.
     prev_high = false;
     bit_count = 0;
@@ -7496,51 +7284,9 @@ uint8_t Binarizer::fillSTC007(STC007Line *fill_pcm_line, uint8_t ref_delta, uint
         qInfo()<<log_line;
     }
 #endif
-    // Calculate LOW and HIGH reference levels for hysteresis.
-    low_ref = getLowLevel(fill_pcm_line->ref_level, ref_delta);
-    high_ref = getHighLevel(fill_pcm_line->ref_level, ref_delta);
-    // Store actual reference levels.
-    fill_pcm_line->ref_low = low_ref;
-    fill_pcm_line->ref_high = high_ref;
-    // Check if levels are within limits.
-    if(low_ref<=(fill_pcm_line->black_level))
-    {
-        // Ref. levels clipping detected, force BAD CRC and exit.
-        fill_pcm_line->setInvalidCRC();
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            log_line.sprintf("[LB-%03u] Too low ref. within hysteresis! [%03u<=%03u]",
-                             fill_pcm_line->ref_level,
-                             low_ref,
-                             fill_pcm_line->black_level);
-            qInfo()<<log_line;
-        }
-#endif
-        return STG_NO_GOOD;
-    }
-    if(high_ref>=(fill_pcm_line->white_level))
-    {
-        // Ref. levels clipping detected, force BAD CRC and exit.
-        fill_pcm_line->setInvalidCRC();
-#ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            log_line.sprintf("[LB-%03u] Too high ref. within hysteresis! [%03u>=%03u]",
-                             fill_pcm_line->ref_level,
-                             high_ref,
-                             fill_pcm_line->white_level);
-            qInfo()<<log_line;
-        }
-#endif
-        return STG_NO_GOOD;
-    }
 
-    // Store last hysteresis depth in PCM line.
-    fill_pcm_line->hysteresis_depth = ref_delta;
-    // Store last shift stage in PCM line.
-    fill_pcm_line->shift_stage = shift_stg;
-
+    low_ref = fill_pcm_line->ref_low;
+    high_ref = fill_pcm_line->ref_high;
     // Reset filling variables.
     prev_high = false;
     pcm_word = 0;
@@ -7624,9 +7370,124 @@ uint8_t Binarizer::fillSTC007(STC007Line *fill_pcm_line, uint8_t ref_delta, uint
     return STG_DATA_OK;
 }
 
+//------------------------ Fill up data words for [ArVidLine] line object.
+uint8_t Binarizer::fillArVidAudio(ArVidLine *fill_pcm_line, uint8_t ref_delta, uint8_t shift_stg, bool no_log)
+{
+    bool suppress_log, prev_high;
+    uint8_t pcm_bit;
+    uint8_t pixel_val;
+    uint8_t low_ref, high_ref;
+
+    uint8_t word_bit_pos;
+    uint8_t word_index;
+    uint16_t pcm_word;
+
+    suppress_log = !(((log_level&LOG_PROCESS)!=0)&&(no_log==false));
+    //suppress_log = false;
+
+#ifdef LB_EN_DBG_OUT
+    QString log_line;
+    if(((log_level&LOG_RAWBIN)!=0)&&(no_log==false))
+    {
+        log_line.sprintf("[LB] Line [%03u:%03u] PS: [%01u], HL: [%01u], coords: ",
+                         fill_pcm_line->frame_number, fill_pcm_line->line_number, shift_stg, ref_delta);
+        pcm_word = 0;
+        word_bit_pos = 0;
+        for(pcm_bit=0;pcm_bit<fill_pcm_line->getBitsBetweenDataCoordinates();pcm_bit++)
+        {
+            pcm_word++;
+            // Find bit coodinate in video line.
+            log_line += QString::number(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg))+",";
+        }
+        log_line += " total: "+QString::number(pcm_word);
+        qInfo()<<log_line;
+    }
+    if(suppress_log==false)
+    {
+        log_line.sprintf("[LB-%03u] Binarizing ArVid Audio with hysteresis depth: %03u, pixel shift stage: %03u",
+                         fill_pcm_line->ref_level,
+                         ref_delta,
+                         shift_stg);
+        qInfo()<<log_line;
+    }
+#endif
+
+    low_ref = fill_pcm_line->ref_low;
+    high_ref = fill_pcm_line->ref_high;
+    // Reset filling variables.
+    prev_high = false;
+    pcm_word = 0;
+    word_bit_pos = (ArVidLine::BITS_PER_WORD-1);
+    word_index = 0;
+    pcm_bit = 0;
+    // Fill up words.
+    while(pcm_bit<=(ArVidLine::BITS_PCM_DATA-1))
+    {
+        // Pick the bit.
+        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg));
+
+        // Perform binarization with hysteresis.
+        if(prev_high==false)
+        {
+            // Previous bit was "0".
+            if(pixel_val>low_ref)
+            {
+                // Set the bit if presents at current bit position.
+                pcm_word |= (1<<word_bit_pos);
+                prev_high = true;
+            }
+        }
+        else
+        {
+            // Previous bit was "1".
+            if(pixel_val>=high_ref)
+            {
+                // Set the bit if presents at current bit position.
+                pcm_word |= (1<<word_bit_pos);
+            }
+            else
+            {
+                prev_high = false;
+            }
+        }
+
+        // Check if the word is complete.
+        if(word_bit_pos==0)
+        {
+            // Save completed word.
+            fill_pcm_line->words[word_index] = pcm_word;
+            // Reset bits in next word.
+            pcm_word = 0;
+            // Go to the next word.
+            word_index++;
+            // Check what number of bits to assemble next.
+            if(pcm_bit>(ArVidLine::BITS_PCM_DATA-ArVidLine::BITS_PER_WORD-1))
+            {
+                // CRC was read, line is finished, exit cycle.
+                break;
+            }
+            {
+                // Word was read, set next word.
+                word_bit_pos = ArVidLine::BITS_PER_WORD;
+            }
+        }
+        // Shift to the next bit (MSB -> LSB).
+        word_bit_pos--;
+        pcm_bit++;
+    }
+
+    // Calculate new CRCC for the data.
+    fill_pcm_line->calcCRC();
+
+    return STG_DATA_OK;
+}
+
 //------------------------ Fill up data words, recalculate CRC.
 uint8_t Binarizer::fillDataWords(PCMLine *fill_pcm_line, uint8_t ref_delta, uint8_t shift_stg, bool no_log)
 {
+    uint8_t low_ref, high_ref;
+    bool suppress_log;
+
     if(ref_delta>HYST_DEPTH_MAX)
     {
 #ifdef LB_EN_DBG_OUT
@@ -7642,7 +7503,55 @@ uint8_t Binarizer::fillDataWords(PCMLine *fill_pcm_line, uint8_t ref_delta, uint
         return STG_NO_GOOD;
     }
 
+    suppress_log = !(((log_level&LOG_PROCESS)!=0)&&(no_log==false));
     //no_log = false;
+
+    // Calculate LOW and HIGH reference levels for hysteresis.
+    low_ref = getLowLevel(fill_pcm_line->ref_level, ref_delta);
+    high_ref = getHighLevel(fill_pcm_line->ref_level, ref_delta);
+    // Store actual reference levels.
+    fill_pcm_line->ref_low = low_ref;
+    fill_pcm_line->ref_high = high_ref;
+    // Check if levels are within limits.
+    if(low_ref<=(fill_pcm_line->black_level))
+    {
+        // Ref. levels clipping detected, force BAD CRC and exit.
+        fill_pcm_line->setInvalidCRC();
+#ifdef LB_EN_DBG_OUT
+        if(suppress_log==false)
+        {
+            QString log_line;
+            log_line.sprintf("[LB-%03u] Too low ref. within hysteresis! [%03u<=%03u]",
+                             fill_pcm_line->ref_level,
+                             low_ref,
+                             fill_pcm_line->black_level);
+            qInfo()<<log_line;
+        }
+#endif
+        return STG_NO_GOOD;
+    }
+    if(high_ref>=(fill_pcm_line->white_level))
+    {
+        // Ref. levels clipping detected, force BAD CRC and exit.
+        fill_pcm_line->setInvalidCRC();
+#ifdef LB_EN_DBG_OUT
+        if(suppress_log==false)
+        {
+            QString log_line;
+            log_line.sprintf("[LB-%03u] Too high ref. within hysteresis! [%03u>=%03u]",
+                             fill_pcm_line->ref_level,
+                             high_ref,
+                             fill_pcm_line->white_level);
+            qInfo()<<log_line;
+        }
+#endif
+        return STG_NO_GOOD;
+    }
+
+    // Store last hysteresis depth in PCM line.
+    fill_pcm_line->hysteresis_depth = ref_delta;
+    // Store last shift stage in PCM line.
+    fill_pcm_line->shift_stage = shift_stg;
 
     if(fill_pcm_line->getPCMType()==PCMLine::TYPE_PCM1)
     {
@@ -7655,7 +7564,8 @@ uint8_t Binarizer::fillDataWords(PCMLine *fill_pcm_line, uint8_t ref_delta, uint
         {
             // Fill was performed ok.
             // Check if CRC is ok.
-            if(((temp_pcm_ptr->isCRCValid()==false)&&(temp_pcm_ptr->ref_level>digi_set.min_white_lvl)&&(digi_set.en_bit_picker!=false))||(force_bit_picker!=false))
+            if(((temp_pcm_ptr->isCRCValid()==false)&&(temp_pcm_ptr->ref_level>digi_set.min_white_lvl)
+                &&((digi_set.left_bit_pick!=0)||(digi_set.right_bit_pick!=0)))||(force_bit_picker!=false))
             {
                 // Allow bit-picking only if reference level is high enough and Bit Picker is enabled.
                 // Try to brute-force cut left and/or right pixels/bits with bit-picker.
@@ -7679,7 +7589,8 @@ uint8_t Binarizer::fillDataWords(PCMLine *fill_pcm_line, uint8_t ref_delta, uint
         {
             // Fill was performed ok.
             // Check if CRC is ok.
-            if(((temp_pcm_ptr->isCRCValid()==false)&&(temp_pcm_ptr->ref_level>digi_set.min_white_lvl)&&(digi_set.en_bit_picker!=false))||(force_bit_picker!=false))
+            if(((temp_pcm_ptr->isCRCValid()==false)&&(temp_pcm_ptr->ref_level>digi_set.min_white_lvl)
+                &&((digi_set.left_bit_pick!=0)||(digi_set.right_bit_pick!=0)))||(force_bit_picker!=false))
             {
                 // Allow bit-picking only if reference level is high enough and Bit Picker is enabled.
                 // Try to brute-force cut left or right pixels/bits with bit-picker.
@@ -7699,9 +7610,18 @@ uint8_t Binarizer::fillDataWords(PCMLine *fill_pcm_line, uint8_t ref_delta, uint
         temp_pcm_ptr = static_cast<STC007Line *>(fill_pcm_line);
         return fillSTC007(temp_pcm_ptr, ref_delta, shift_stg, no_log);
     }
+    else if(fill_pcm_line->getPCMType()==PCMLine::TYPE_ARVA)
+    {
+        ArVidLine *temp_pcm_ptr;
+        temp_pcm_ptr = static_cast<ArVidLine *>(fill_pcm_line);
+        return fillArVidAudio(temp_pcm_ptr, ref_delta, shift_stg, no_log);
+    }
     else
     {
         // Unsupported PCM type.
+#ifdef LB_EN_DBG_OUT
+        qWarning()<<DBG_ANCHOR<<"[LB] Unable to fill data for unknown PCM type";
+#endif
         return STG_NO_GOOD;
     }
 }

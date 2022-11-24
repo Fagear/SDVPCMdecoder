@@ -123,7 +123,8 @@ public:
     {
         LIST_TYPE_PCM1,
         LIST_TYPE_PCM16X0,
-        LIST_TYPE_STC007
+        LIST_TYPE_STC007,
+        LIST_TYPE_M2
     };
 
     // Field order list indexes for [lbxPCM1FieldOrder].
@@ -210,6 +211,45 @@ public:
         LIST_STC007_SRATE_44100
     };
 
+    // Video standard list indexes for [lbxM2VidStandard].
+    enum
+    {
+        LIST_M2_VID_AUTO,
+        LIST_M2_VID_NTSC,
+        LIST_M2_VID_PAL,
+    };
+
+    // Field order list indexes for [lbxM2FieldOrder].
+    enum
+    {
+        LIST_M2_FO_AUTO,
+        LIST_M2_FO_TFF,
+        LIST_M2_FO_BFF
+    };
+
+    // Enabled error correction stages for [lbxM2ECC].
+    enum
+    {
+        LIST_M2_ECC_FULL,
+        LIST_M2_ECC_PARITY,
+        LIST_M2_ECC_NONE
+    };
+
+    // Additional error-correction mode for [lbxM2CWD].
+    enum
+    {
+        LIST_M2_CWD_EN,
+        LIST_M2_CWD_DIS
+    };
+
+    // Sample rate list indexes for [lbxM2SampleRate].
+    enum
+    {
+        LIST_M2_SRATE_AUTO,
+        LIST_M2_SRATE_44056,
+        LIST_M2_SRATE_44100
+    };
+
     // Dropout action list indexes for [lbxDropAction].
     enum
     {
@@ -231,10 +271,6 @@ private:
     PCM16X0DataStitcher *L2B_PCM16X0_worker;
     STC007DataStitcher *L2B_STC007_worker;
     AudioProcessor *AP_worker;
-    //capt_sel *captureSelectDialog;
-    //fine_vidin_set *vipFineSetDialog;
-    //fine_bin_set *binFineSetDialog;
-    //fine_deint_set *deintFineSetDialog;
     frame_vis *visuSource;
     frame_vis *visuBin;
     frame_vis *visuAssembled;
@@ -254,14 +290,14 @@ private:
     std::deque<PCM16X0SubLine> pcm16x0_lines;  // Queue for PCM lines, binarized from video lines (in the same strict order).
     std::deque<STC007Line> stc007_lines;    // Queue for PCM lines, binarized from video lines (in the same strict order).
     std::deque<PCMSamplePair> audio_data;   // Queue for PCM sample pair, picked from assembled PCM data blocks.
-    QMutex vl_lock;                     // Protects [video_lines].
-    QMutex pcm1line_lock;               // Protects [pcm1_lines].
-    QMutex pcm16x0subline_lock;         // Protects [pcm16x0subline].
-    QMutex stcline_lock;                // Protects [stc007_lines].
-    QMutex audio_lock;                  // Protects [audio_data].
-    QPalette plt_redlabel;              // Red indicator palette.
-    QPalette plt_yellowlabel;           // Yellow indicator palette.
-    QPalette plt_greenlabel;            // Green indicator palette.
+    QMutex vl_lock;                         // Protects [video_lines].
+    QMutex pcm1line_lock;                   // Protects [pcm1_lines].
+    QMutex pcm16x0subline_lock;             // Protects [pcm16x0subline].
+    QMutex stcline_lock;                    // Protects [stc007_lines].
+    QMutex audio_lock;                      // Protects [audio_data].
+    QPalette plt_redlabel;                  // Red indicator palette.
+    QPalette plt_yellowlabel;               // Yellow indicator palette.
+    QPalette plt_greenlabel;                // Green indicator palette.
 
     bool shutdown_started;                  // Application exit procedure started.
     bool inhibit_setting_save;              // Disable updating settings.
@@ -274,6 +310,7 @@ private:
     FrameAsmPCM1 frame_asm_pcm1;            // PCM-1 frame assembling data for GUI.
     FrameAsmPCM16x0 frame_asm_pcm16x0;      // PCM-16x0 frame assembling data for GUI.
     FrameAsmSTC007 frame_asm_stc007;        // STC-007 frame assembling data for GUI.
+    FrameAsmSTC007 frame_asm_m2;            // M2 frame assembling data for GUI.
 
     // Internal statistics.
     uint8_t stat_dbg_index;
@@ -336,7 +373,7 @@ private:
     void applyGUISettings();                // Apply GUI settings to different modules.
     void readGUISettings();                 // Read settings into GUI.
 
-    CoordinatePair getCoordByFrameNo(uint32_t);     // Find and return coordinates from video tracking history.
+    FrameBinDescriptor getBinDescriptorByFrameNo(uint32_t);     // Find and return coordinates from video tracking history.
 
 private slots:
     //void dbgSlot(int);
@@ -405,6 +442,7 @@ private slots:
     void updatePCM1FrameData();             // Update PCM-1 frame assembling data.
     void updatePCM16x0FrameData();          // Update PCM-16x0 frame assembling data.
     void updateSTC007FrameData();           // Update STC-007 frame assembling data.
+    void updateM2FrameData();               // Update M2 frame assembling data.
 
     // Buffered receivers for visualizers.
     void receiveBinLine(PCM1Line);          // Receive and retransmit binarized PCM-1 line.
@@ -451,8 +489,8 @@ signals:
     // Signals for binarizer (video-to-digital) module.
     void newV2DLogLevel(uint8_t);           // Send new logging level for V2D thread.
     void newBinMode(uint8_t);               // Send new "binarization mode" setting for V2D.
+    void newBinPCMType(uint8_t);            // Send new "PCM type" setting for V2D.
     void newLineDupMode(bool);              // Send new "line duplication detection" setting for V2D.
-    void newPCMType(uint8_t);               // Send new "PCM type" setting for V2D.
     // Signals for deinterleaver (line-to-block) module.
     void newL2BLogLevel(uint16_t);          // Send new logging level for L2B thread.
     void newPCM1FieldOrder(uint8_t);        // Send new PCM-1 field order setting.
@@ -468,6 +506,7 @@ signals:
     void newSTC007PCorrection(bool);        // Send new STC-007 P-code correction setting.
     void newSTC007QCorrection(bool);        // Send new STC-007 Q-code correction setting.
     void newSTC007CWDCorrection(bool);      // Send new STC-007 CWD correction setting.
+    void newSTC007M2Sampling(bool);         // Send new STC-007/M2 sample mode setting.
     void newSTC007ResolutionPreset(uint8_t);    // Send new STC-007 "resolution mode" for L2B thread.
     void newSTC007SampleRatePreset(uint16_t);   // Send new STC-007 "sample rate" for L2B thread.
     void newUseCRC(bool);                   // Send new "ignore CRC" for L2B thread.

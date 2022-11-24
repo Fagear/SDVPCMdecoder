@@ -11,6 +11,7 @@
 //#define STC_LINE_EN_DBG_OUT     1     // Enable debug console output.
 #define STC_LINE_HELP_SIZE      15      // Number of lines in help dump.
 
+//TODO: update log legend
 static const std::string STC007_HELP_LIST[STC_LINE_HELP_SIZE]
 {
     "   >---Source frame number",
@@ -44,21 +45,23 @@ public:
         BITS_STOP = 5,          // Number of bits for PCM STOP marker.
         BITS_IN_LINE = (BITS_START+BITS_PCM_DATA+BITS_STOP),    // Total number of useful bits in one video line.
         BITS_LEFT_SHIFT = 24,   // Highest bit number for left part pixel-shifting.
-        BITS_RIGHT_SHIFT = 76   // Lowest bit number for right part pixel-shifting.
+        BITS_RIGHT_SHIFT = 76,  // Lowest bit number for right part pixel-shifting.
+        BIT_M2_RANGE_POS = (1<<13), // R bit, that determines value range of other bits for M2 sample format.
+        BIT_M2_SIGN_POS = (1<<12)   // Sign bit in the source 14-bit word for M2 sample format.
     };
 
     // Word order in the [words[]] for the line.
     enum
     {
-        WORD_L_SH0,         // Left channel 14-bit sample for current data block (line offset = 0).
-        WORD_R_SH48,        // Right channel 14-bit sample for data block at +48 words (line offset = 16).
-        WORD_L_SH95,        // Left channel 14-bit sample for data block at +95 words (line offset = 32).
-        WORD_R_SH143,       // Right channel 14-bit sample for data block at +143 words (line offset = 48).
-        WORD_L_SH190,       // Left channel 14-bit sample for data block at +190 words (line offset = 64).
-        WORD_R_SH238,       // Right channel 14-bit sample for data block at +238 words (line offset = 80).
-        WORD_P_SH288,       // P-word (parity) 14-bit sample for data block at +288 words (line offset = 96).
-        WORD_Q_SH336,       // Q-word (matrix-ECC) 14-bit sample for data block at +336 words (line offset = 112) or S-word for 16-bit mode.
-        WORD_CRCC_SH0,      // CRCC 16-bit sample for current line (line offset = 0).
+        WORD_L_SH0,         // Left channel 14-bit word for current data block (line offset = 0).
+        WORD_R_SH48,        // Right channel 14-bit word for data block at +48 words (line offset = 16).
+        WORD_L_SH95,        // Left channel 14-bit word for data block at +95 words (line offset = 32).
+        WORD_R_SH143,       // Right channel 14-bit word for data block at +143 words (line offset = 48).
+        WORD_L_SH190,       // Left channel 14-bit word for data block at +190 words (line offset = 64).
+        WORD_R_SH238,       // Right channel 14-bit word for data block at +238 words (line offset = 80).
+        WORD_P_SH288,       // P-word (parity) 14-bit word for data block at +288 words (line offset = 96).
+        WORD_Q_SH336,       // Q-word (matrix-ECC) 14-bit word for data block at +336 words (line offset = 112) or S-word for 16-bit mode.
+        WORD_CRCC_SH0,      // CRCC 16-bit word for current line (line offset = 0).
         WORD_CNT            // Limiter for word-operations.
     };
 
@@ -103,6 +106,8 @@ public:
     // Bit masks for Control Block.
     enum
     {
+        CTRL_FMT_ID    = 0x3000,    // Format ID.
+        CTRL_FMT_M2    = 0x1000,    // [CTRL_FMT_ID] for M2 sample format.
         CTRL_COPY_MASK = 0x0008,    // Prohibition of digital dubbing ("0" = allowed, "1" = prohibited).
         CTRL_EN_P_MASK = 0x0004,    // Presence of P-word ("0" = present, "1" = absent).
         CTRL_EN_Q_MASK = 0x0002,    // Presence of Q-word/14-16 bit mode ("0" = present [14-bit], "1" = absent [16-bit]).
@@ -117,6 +122,7 @@ public:
     uint16_t marker_stop_ed_coord;  // Pixel coordinate of PCM STOP marker.
 
 private:
+    bool m2_format;                 // Are samples formatted for M2?
     bool word_crc[WORD_CNT];        // Flags for each word (was word intact or not by CRC, used for CWD).
     bool word_valid[WORD_CNT];      // Flags for each word (is word intact after CWD correction).
     uint16_t words[WORD_CNT];       // 14 bit PCM words (2 MSBs unused) + 16 bit CRCC.
@@ -133,6 +139,7 @@ public:
     void setSilent();
     void setWord(uint8_t index, uint16_t in_word, bool in_valid = false);
     void setFixed(uint8_t index);
+    void setM2Format(bool in_set = false);
     void forceMarkersOk();
     void applyCRCStatePerWord();
     uint8_t getBitsPerSourceLine();
@@ -156,6 +163,7 @@ public:
     bool hasSameWords(STC007Line *in_line = NULL);
     bool hasControlBlock();
     bool isCRCValidIgnoreForced();
+    bool isCtrlFormatM2();
     bool isCtrlCopyProhibited();
     bool isCtrlEnabledP();
     bool isCtrlEnabledQ();

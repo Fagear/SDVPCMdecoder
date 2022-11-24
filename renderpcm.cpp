@@ -782,7 +782,7 @@ void RenderPCM::renderNewLine(PCM16X0SubLine in_line)
             // Draw service/skew bit.
             for(uint8_t j=0;j<pixel_width;j++)
             {
-                if(in_line.hasDataCoordSet()==false)
+                if((in_line.hasDataCoordSet()==false)||(in_line.isCRCValid()==false))
                 {
                     // Failed to detect data coordinates for the sub-line.
                     if(in_line.control_bit==false)

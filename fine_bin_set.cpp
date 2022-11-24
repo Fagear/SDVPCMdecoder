@@ -13,9 +13,13 @@ fine_bin_set::fine_bin_set(QWidget *parent) :
     connect(ui->spbMinRef, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
     connect(ui->spbMaxRef, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
     connect(ui->spbMinValidCRC, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
-    connect(ui->spbSearchWidth, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
+    connect(ui->cbxForceCoords, SIGNAL(toggled(bool)), this, SLOT(setChange()));
+    connect(ui->spbLeftDataOfs, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
+    connect(ui->spbRightDataOfs, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
     connect(ui->cbxCoordSearch, SIGNAL(toggled(bool)), this, SLOT(setChange()));
-    connect(ui->cbxBitPicker, SIGNAL(toggled(bool)), this, SLOT(setChange()));
+    connect(ui->spbPickLeft, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
+    connect(ui->spbPickRight, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
+    connect(ui->spbSearchWidth, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
     connect(ui->cbxAllowNoMarker, SIGNAL(toggled(bool)), this, SLOT(setChange()));
 
     connect(ui->btnClose, SIGNAL(clicked(bool)), this, SLOT(usrClose()));
@@ -83,10 +87,14 @@ void fine_bin_set::blockInputs()
     ui->spbMinRef->setEnabled(false);
     ui->spbMaxRef->setEnabled(false);
     ui->spbMinValidCRC->setEnabled(false);
-    ui->spbSearchWidth->setEnabled(false);
 
+    ui->cbxForceCoords->setEnabled(false);
+    ui->spbLeftDataOfs->setEnabled(false);
+    ui->spbRightDataOfs->setEnabled(false);
     ui->cbxCoordSearch->setEnabled(false);
-    ui->cbxBitPicker->setEnabled(false);
+    ui->spbPickLeft->setEnabled(false);
+    ui->spbPickRight->setEnabled(false);
+    ui->spbSearchWidth->setEnabled(false);
     ui->cbxAllowNoMarker->setEnabled(false);
 }
 
@@ -109,10 +117,24 @@ void fine_bin_set::enableInputs()
     ui->spbMinRef->setEnabled(true);
     ui->spbMaxRef->setEnabled(true);
     ui->spbMinValidCRC->setEnabled(true);
-    ui->spbSearchWidth->setEnabled(true);
 
-    ui->cbxCoordSearch->setEnabled(true);
-    ui->cbxBitPicker->setEnabled(true);
+    ui->cbxForceCoords->setEnabled(true);
+    if(ui->cbxForceCoords->isChecked()==false)
+    {
+        ui->cbxCoordSearch->setEnabled(true);
+        ui->spbSearchWidth->setEnabled(true);
+        ui->spbLeftDataOfs->setEnabled(false);
+        ui->spbRightDataOfs->setEnabled(false);
+    }
+    else
+    {
+        ui->cbxCoordSearch->setEnabled(false);
+        ui->spbSearchWidth->setEnabled(false);
+        ui->spbLeftDataOfs->setEnabled(true);
+        ui->spbRightDataOfs->setEnabled(true);
+    }
+    ui->spbPickLeft->setEnabled(true);
+    ui->spbPickRight->setEnabled(true);
     ui->cbxAllowNoMarker->setEnabled(true);
 }
 
@@ -130,13 +152,9 @@ void fine_bin_set::enableSave()
 //------------------------ React to any change of settings.
 void fine_bin_set::setChange()
 {
-    if(ui->cbxCoordSearch->isChecked()==false)
-    {
-        ui->cbxBitPicker->setChecked(false);
-    }
-
     no_change = false;
     enableSave();
+    enableInputs();
 }
 
 //------------------------ Request reset to defaults.
@@ -181,10 +199,14 @@ void fine_bin_set::usrSave()
     new_set.min_ref_lvl = (uint8_t)(ui->spbMinRef->value());
     new_set.max_ref_lvl = (uint8_t)(ui->spbMaxRef->value());
     new_set.min_valid_crcs = (uint8_t)(ui->spbMinValidCRC->value());
-    new_set.mark_max_dist = (uint8_t)(ui->spbSearchWidth->value());
 
+    new_set.en_force_coords = (bool)(ui->cbxForceCoords->isChecked());
+    new_set.horiz_coords.data_start = (int16_t)(ui->spbLeftDataOfs->value());
+    new_set.horiz_coords.data_stop = (int16_t)(ui->spbRightDataOfs->value());
     new_set.en_coord_search = (bool)(ui->cbxCoordSearch->isChecked());
-    new_set.en_bit_picker = (bool)(ui->cbxBitPicker->isChecked());
+    new_set.left_bit_pick = (uint8_t)(ui->spbPickLeft->value());
+    new_set.right_bit_pick = (uint8_t)(ui->spbPickRight->value());
+    new_set.mark_max_dist = (uint8_t)(ui->spbSearchWidth->value());
     new_set.en_good_no_marker = (bool)(ui->cbxAllowNoMarker->isChecked());
 
     // Block all inputs.
@@ -211,10 +233,14 @@ void fine_bin_set::newSettings(bin_preset_t in_set)
     ui->spbMinRef->setValue(new_set.min_ref_lvl);
     ui->spbMaxRef->setValue(new_set.max_ref_lvl);
     ui->spbMinValidCRC->setValue(new_set.min_valid_crcs);
-    ui->spbSearchWidth->setValue(new_set.mark_max_dist);
 
+    ui->cbxForceCoords->setChecked(new_set.en_force_coords);
+    ui->spbLeftDataOfs->setValue(new_set.horiz_coords.data_start);
+    ui->spbRightDataOfs->setValue(new_set.horiz_coords.data_stop);
     ui->cbxCoordSearch->setChecked(new_set.en_coord_search);
-    ui->cbxBitPicker->setChecked(new_set.en_bit_picker);
+    ui->spbPickLeft->setValue(new_set.left_bit_pick);
+    ui->spbPickRight->setValue(new_set.right_bit_pick);
+    ui->spbSearchWidth->setValue(new_set.mark_max_dist);
     ui->cbxAllowNoMarker->setChecked(new_set.en_good_no_marker);
 
     // Enable inputs.
