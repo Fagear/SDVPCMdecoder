@@ -1409,13 +1409,13 @@ void MainWindow::readGUISettings()
     ui->lbxSTC007VidStandard->setCurrentIndex(settings_hdl.value("stc007_video_std", LIST_STC007_VID_AUTO).toInt());
     ui->lbxSTC007FieldOrder->setCurrentIndex(settings_hdl.value("stc007_field_order", LIST_STC007_FO_AUTO).toInt());
     ui->lbxSTC007ECC->setCurrentIndex(settings_hdl.value("stc007_ecc", LIST_STC007_ECC_FULL).toInt());
-    ui->lbxSTC007CWD->setCurrentIndex(settings_hdl.value("stc007_cwd", LIST_STC007_CWD_DIS).toInt());
+    ui->lbxSTC007CWD->setCurrentIndex(settings_hdl.value("stc007_cwd", LIST_STC007_CWD_EN).toInt());
     ui->lbxSTC007Resolution->setCurrentIndex(settings_hdl.value("stc007_resolution", LIST_STC007_RES_AUTO).toInt());
     ui->lbxSTC007SampleRate->setCurrentIndex(settings_hdl.value("stc007_sample_rate", LIST_STC007_SRATE_AUTO).toInt());
     ui->lbxM2VidStandard->setCurrentIndex(settings_hdl.value("m2_video_std", LIST_M2_VID_AUTO).toInt());
     ui->lbxM2FieldOrder->setCurrentIndex(settings_hdl.value("m2_field_order", LIST_M2_FO_AUTO).toInt());
     ui->lbxM2ECC->setCurrentIndex(settings_hdl.value("m2_ecc", LIST_M2_ECC_FULL).toInt());
-    ui->lbxM2CWD->setCurrentIndex(settings_hdl.value("m2_cwd", LIST_M2_CWD_DIS).toInt());
+    ui->lbxM2CWD->setCurrentIndex(settings_hdl.value("m2_cwd", LIST_M2_CWD_EN).toInt());
     ui->lbxM2SampleRate->setCurrentIndex(settings_hdl.value("m2_sample_rate", LIST_M2_SRATE_AUTO).toInt());
     ui->lbxDropAction->setCurrentIndex(settings_hdl.value("drop_action", LIST_DOA_INTER_WORD).toInt());
     settings_hdl.endGroup();
