@@ -109,6 +109,15 @@ public:
         VDEC_PAUSE
     };
 
+    // Timers.
+    enum
+    {
+        TIM_WIN_POS_INT = 500,      // Window position/size update pause (ms).
+        TIM_GUI_INT = 20,           // GUI update period (ms)
+        TIM_FLAG_GREEN_CNT = 15,    // Number of GUI timer ticks to turn off green flags.
+        TIM_FLAG_RED_CNT = 60,      // Number of GUI timer ticks to turn off red/yellow flags.
+    };
+
     // Binarization quality indexes for [lbxBinQuality].
     enum
     {
@@ -318,6 +327,12 @@ private:
     uint8_t stat_tracking_index;
     circarray<FrameBinDescriptor, TRACKING_BUF_LEN> stat_tracking_arr;
     FrameBinDescriptor stat_video_tracking;
+    uint16_t flag_bad_stitch_cnt;
+    uint16_t flag_p_corr_cnt;
+    uint16_t flag_q_corr_cnt;
+    uint16_t flag_cwd_corr_cnt;
+    uint16_t flag_broken_cnt;
+    uint16_t flag_dropout_cnt;
     uint16_t stat_lines_per_frame;
     uint64_t stat_blocks_time_per_frame;
     uint32_t stat_min_di_time;
@@ -391,7 +406,7 @@ private slots:
     // GUI selection reactions.
     void updateGUISettings();               // Save settings for GUI options.
     void clearStat();                       // Clear decoder stats.
-    void sliderDisplayUpdate();
+    void sliderDisplayUpdate();             // Update PCM-1 vertical offset indicators.
 
     // Main menu reactions.
     void resetOptDecoder();                 // Confirm and reset decoder settings.
@@ -404,7 +419,7 @@ private slots:
     void showDeintFineSettings();           // Display deinterleaver fine settings dialog.
     void setDefaultFineSettings();          // Receive request for fine settings reset from video processor fine settings dialog.
     void requestCurrentFineSettings();      // Receive request for fine settings from video processor fine settings dialog.
-    void setFineDrawDeint(bool);
+    void setFineDrawDeint(bool);            // Save new fine setting for source drawing deinterlacing.
 
     void showVisSource(bool);               // Display source visualization window.
     void showVisBin(bool);                  // Display binarized visualization window.

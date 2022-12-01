@@ -28,41 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     set_pcm_type = LIST_TYPE_PCM1;
     pcm1_ofs_diff = 0;
 
-    stat_dbg_index = 0;
-    for(uint8_t i=0;i<DBG_AVG_LEN;i++)
-    {
-        stat_debug_avg[i] = 0;
-    }
-    ui->pgrDebug->setValue(0);
-    ui->pgrDebug->setMaximum(1);
-
-    while(stat_tracking_arr.empty()==false)
-    {
-        stat_tracking_arr.pop();
-    }
-    stat_video_tracking.clear();
-    stat_lines_per_frame = 0;
-    stat_blocks_time_per_frame = 0;
-    stat_min_di_time = 0xFFFFFFFF;
-    stat_max_di_time = 0;
-    stat_blocks_per_frame = 0;
-    stat_ref_level = 0;
-    stat_total_frame_cnt = 0;
-    stat_read_frame_cnt = 0;
-    stat_drop_frame_cnt = 0;
-    stat_no_pcm_cnt = 0;
-    stat_crc_err_cnt = 0;
-    stat_dup_err_cnt = 0;
-    stat_bad_stitch_cnt = 0;
-    stat_p_fix_cnt = stat_q_fix_cnt = stat_cwd_fix_cnt = 0;
-    stat_broken_block_cnt = 0;
-    stat_drop_block_cnt = 0;
-    stat_drop_sample_cnt = 0;
-    stat_mask_cnt = 0;
-    stat_processed_frame_cnt = 0;
-    stat_line_cnt = 0;
-
-    vu_left = vu_right = 0;
+    clearStat();
 
     ui->lblVersion->setText("v"+QString(APP_VERSION)+" ("+QString(COMPILE_DATE)+")");
 
@@ -82,13 +48,14 @@ MainWindow::MainWindow(QWidget *parent) :
     }*/
 #endif
 
+    // Window position/size update.
     timResizeUpd.setSingleShot(true);
-    timResizeUpd.setInterval(500);
+    timResizeUpd.setInterval(TIM_WIN_POS_INT);
     connect(&timResizeUpd, SIGNAL(timeout()), this, SLOT(updateWindowPosition()));
 
-    // 20 ms (50 Hz) GUI update.
+    // GUI update.
     timUIUpdate.setSingleShot(false);
-    timUIUpdate.setInterval(20);
+    timUIUpdate.setInterval(TIM_GUI_INT);
     connect(&timUIUpdate, SIGNAL(timeout()), this, SLOT(updateGUIByTimer()));
 
     qInfo()<<"[M] GUI thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId())<<", starting processing threads...";
@@ -124,7 +91,7 @@ MainWindow::MainWindow(QWidget *parent) :
     plt_yellowlabel.setBrush(QPalette::Inactive, QPalette::Window, brs_yellowlabel);
     plt_yellowlabel.setBrush(QPalette::Inactive, QPalette::WindowText, brs_blacktext);
 
-    ui->lblLivePB->setPalette(plt_redlabel);
+    ui->indLivePB->setPalette(plt_redlabel);
 
     // Create and link video input processor worker.
     input_FPU = NULL;
@@ -1136,11 +1103,11 @@ void MainWindow::applyGUISettings()
     // Toggle live playback indicator.
     if(ui->cbxLivePB->isChecked()==false)
     {
-        ui->lblLivePB->setEnabled(false);
+        ui->indLivePB->setEnabled(false);
     }
     else
     {
-        ui->lblLivePB->setEnabled(true);
+        ui->indLivePB->setEnabled(true);
     }
     // Toggle frame drop indicator.
     if(ui->cbxFrameDropout->isChecked()==false)
@@ -1695,19 +1662,18 @@ void MainWindow::clearStat()
         stat_tracking_arr.pop();
     }
     stat_video_tracking.clear();
-    stat_read_frame_cnt = 0;
-    stat_drop_frame_cnt = 0;
-    stat_no_pcm_cnt = 0;
-    stat_crc_err_cnt = 0;
-    stat_dup_err_cnt = 0;
+    flag_bad_stitch_cnt = flag_p_corr_cnt = flag_q_corr_cnt = flag_cwd_corr_cnt = flag_broken_cnt = flag_dropout_cnt = 0;
+    stat_total_frame_cnt = stat_read_frame_cnt = stat_drop_frame_cnt = 0;
+    stat_no_pcm_cnt = stat_crc_err_cnt = stat_dup_err_cnt = 0;
     stat_bad_stitch_cnt = 0;
     stat_p_fix_cnt = stat_q_fix_cnt = stat_cwd_fix_cnt = 0;
-    stat_broken_block_cnt = 0;
-    stat_drop_block_cnt = 0;
-    stat_drop_sample_cnt = 0;
-    stat_mask_cnt = 0;
+    stat_broken_block_cnt = stat_drop_block_cnt = 0;
+    stat_drop_sample_cnt = stat_mask_cnt = 0;
     stat_processed_frame_cnt = 0;
     stat_line_cnt = 0;
+    stat_min_di_time = 0xFFFFFFFF;
+    stat_max_di_time = 0;
+    vu_left = vu_right = 0;
     ui->lcdTotalNumber->display(0);
     ui->lcdReadFrames->display(0);
     ui->lcdRefLevel->display(0);
@@ -2476,11 +2442,11 @@ void MainWindow::livePBUpdate(bool flag)
 {
     if(flag==false)
     {
-        ui->lblLivePB->setPalette(plt_redlabel);
+        ui->indLivePB->setPalette(plt_redlabel);
     }
     else
     {
-        ui->lblLivePB->setPalette(plt_greenlabel);
+        ui->indLivePB->setPalette(plt_greenlabel);
     }
 }
 
@@ -2552,6 +2518,64 @@ void MainWindow::updateGUIByTimer()
     ui->lcdSampleDrops->display((int)stat_drop_sample_cnt);
     ui->lcdMask->display((int)stat_mask_cnt);
     ui->lcdProcessedFrames->display((int)stat_processed_frame_cnt);
+
+    // Update flag indicators.
+    if(flag_bad_stitch_cnt>0)
+    {
+        // Light indicator up.
+        ui->indBadStitch->setPalette(plt_yellowlabel);
+        flag_bad_stitch_cnt--;
+    }
+    else
+    {
+        // Reset indicator's palette to default.
+        ui->indBadStitch->setPalette(QApplication::palette());
+    }
+    if(flag_p_corr_cnt>0)
+    {
+        ui->indPCorr->setPalette(plt_greenlabel);
+        flag_p_corr_cnt--;
+    }
+    else
+    {
+        ui->indPCorr->setPalette(QApplication::palette());
+    }
+    if(flag_q_corr_cnt>0)
+    {
+        ui->indQCorr->setPalette(plt_greenlabel);
+        flag_q_corr_cnt--;
+    }
+    else
+    {
+        ui->indQCorr->setPalette(QApplication::palette());
+    }
+    if(flag_cwd_corr_cnt>0)
+    {
+        ui->indCWDCorr->setPalette(plt_greenlabel);
+        flag_cwd_corr_cnt--;
+    }
+    else
+    {
+        ui->indCWDCorr->setPalette(QApplication::palette());
+    }
+    if(flag_broken_cnt>0)
+    {
+        ui->indBroken->setPalette(plt_redlabel);
+        flag_broken_cnt--;
+    }
+    else
+    {
+        ui->indBroken->setPalette(QApplication::palette());
+    }
+    if(flag_dropout_cnt>0)
+    {
+        ui->indDropout->setPalette(plt_redlabel);
+        flag_dropout_cnt--;
+    }
+    else
+    {
+        ui->indDropout->setPalette(QApplication::palette());
+    }
 
     // Update VU-meters.
     ui->pgrVULeft->setValue(vu_left);
@@ -3312,7 +3336,11 @@ void MainWindow::updateStatsFrameAsm(FrameAsmPCM1 new_trim)
     stat_ref_level = frame_asm_pcm1.getAvgRef();
 
     // Count drops.
-    stat_drop_block_cnt += frame_asm_pcm1.blocks_drop;
+    if(frame_asm_pcm1.blocks_drop>0)
+    {
+        stat_drop_block_cnt += frame_asm_pcm1.blocks_drop;
+        flag_dropout_cnt = TIM_FLAG_RED_CNT;
+    }
     stat_drop_sample_cnt += frame_asm_pcm1.samples_drop;
 
     // Report the number of the assembled frame.
@@ -3332,10 +3360,22 @@ void MainWindow::updateStatsFrameAsm(FrameAsmPCM16x0 new_trim)
     stat_ref_level = frame_asm_pcm16x0.getAvgRef();
 
     // Count drops and fixes.
-    stat_p_fix_cnt += frame_asm_pcm16x0.blocks_fix_p;
-    stat_drop_block_cnt += frame_asm_pcm16x0.blocks_drop;
-    stat_broken_block_cnt += frame_asm_pcm16x0.blocks_broken;
+    if(frame_asm_pcm16x0.blocks_fix_p>0)
+    {
+        stat_p_fix_cnt += frame_asm_pcm16x0.blocks_fix_p;
+        flag_p_corr_cnt = TIM_FLAG_GREEN_CNT;
+    }
+    if(frame_asm_pcm16x0.blocks_drop>0)
+    {
+        stat_drop_block_cnt += frame_asm_pcm16x0.blocks_drop;
+        flag_dropout_cnt = TIM_FLAG_RED_CNT;
+    }
     stat_drop_sample_cnt += frame_asm_pcm16x0.samples_drop;
+    if(frame_asm_pcm16x0.blocks_broken>0)
+    {
+        stat_broken_block_cnt += frame_asm_pcm16x0.blocks_broken;
+        flag_broken_cnt = TIM_FLAG_RED_CNT;
+    }
 
     // Report video standard information for PCM-16x0.
     emit newVideoStandard(FrameAsmDescriptor::VID_NTSC);
@@ -3367,6 +3407,7 @@ void MainWindow::updateStatsFrameAsm(FrameAsmSTC007 new_trim)
         if(new_trim.inner_silence==false)
         {
             stat_bad_stitch_cnt++;
+            flag_bad_stitch_cnt = TIM_FLAG_RED_CNT;
         }
     }
     if(new_trim.outer_padding_ok==false)
@@ -3374,15 +3415,36 @@ void MainWindow::updateStatsFrameAsm(FrameAsmSTC007 new_trim)
         if(new_trim.outer_silence==false)
         {
             stat_bad_stitch_cnt++;
+            flag_bad_stitch_cnt = TIM_FLAG_RED_CNT;
         }
     }
     // Count drops and fixes.
-    stat_p_fix_cnt += new_trim.blocks_fix_p;
-    stat_q_fix_cnt += new_trim.blocks_fix_q;
-    stat_cwd_fix_cnt += new_trim.blocks_fix_cwd;
-    stat_drop_block_cnt += new_trim.blocks_drop;
-    stat_broken_block_cnt += new_trim.blocks_broken_field;
+    if(new_trim.blocks_fix_p>0)
+    {
+        stat_p_fix_cnt += new_trim.blocks_fix_p;
+        flag_p_corr_cnt = TIM_FLAG_GREEN_CNT;
+    }
+    if(new_trim.blocks_fix_q>0)
+    {
+        stat_q_fix_cnt += new_trim.blocks_fix_q;
+        flag_q_corr_cnt = TIM_FLAG_GREEN_CNT;
+    }
+    if(new_trim.blocks_fix_cwd>0)
+    {
+        stat_cwd_fix_cnt += new_trim.blocks_fix_cwd;
+        flag_cwd_corr_cnt = TIM_FLAG_GREEN_CNT;
+    }
+    if(new_trim.blocks_drop>0)
+    {
+        stat_drop_block_cnt += new_trim.blocks_drop;
+        flag_dropout_cnt = TIM_FLAG_RED_CNT;
+    }
     stat_drop_sample_cnt += new_trim.samples_drop;
+    if(new_trim.blocks_broken_field>0)
+    {
+        stat_broken_block_cnt += new_trim.blocks_broken_field;
+        flag_broken_cnt = TIM_FLAG_RED_CNT;
+    }
 
     // Report video standard information for STC-007/PCM-F1.
     emit newVideoStandard(new_trim.video_standard);

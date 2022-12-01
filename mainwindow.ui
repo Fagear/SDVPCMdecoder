@@ -188,9 +188,9 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="lblLivePB">
+            <widget class="QLabel" name="indLivePB">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>25</horstretch>
                <verstretch>20</verstretch>
               </sizepolicy>
@@ -211,22 +211,13 @@
               <bool>true</bool>
              </property>
              <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
+              <enum>QFrame::Box</enum>
              </property>
              <property name="frameShadow">
-              <enum>QFrame::Plain</enum>
-             </property>
-             <property name="lineWidth">
-              <number>2</number>
-             </property>
-             <property name="midLineWidth">
-              <number>2</number>
+              <enum>QFrame::Sunken</enum>
              </property>
              <property name="text">
-              <string/>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
+              <string notr="true"/>
              </property>
             </widget>
            </item>
@@ -287,7 +278,7 @@
          <item>
           <widget class="QCheckBox" name="cbxFrameStep">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -2071,7 +2062,7 @@
          <enum>QFrame::Plain</enum>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="pgPCM1Frame">
          <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -5452,16 +5443,112 @@
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout_9">
-         <item row="1" column="2">
-          <widget class="QLCDNumber" name="lcdBadStitch">
+         <item row="5" column="3">
+          <widget class="QLabel" name="indCWDCorr">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Box</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="3">
+          <widget class="QLabel" name="indQCorr">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Box</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="text">
+            <string notr="true"/>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="3">
+          <widget class="QLabel" name="indBroken">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Box</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="2">
+          <widget class="QLCDNumber" name="lcdDropout">
            <property name="palette">
             <palette>
              <active>
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>185</red>
-                 <green>185</green>
+                 <red>255</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </brush>
@@ -5471,8 +5558,8 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>185</red>
-                 <green>185</green>
+                 <red>255</red>
+                 <green>0</green>
                  <blue>0</blue>
                 </color>
                </brush>
@@ -5482,9 +5569,9 @@
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>120</red>
-                 <green>120</green>
-                 <blue>120</blue>
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
                 </color>
                </brush>
               </colorrole>
@@ -5492,10 +5579,10 @@
             </palette>
            </property>
            <property name="toolTip">
-            <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
            </property>
            <property name="statusTip">
-            <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
            </property>
            <property name="frameShadow">
             <enum>QFrame::Sunken</enum>
@@ -5505,6 +5592,25 @@
            </property>
            <property name="segmentStyle">
             <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="1" colspan="3">
+          <widget class="QProgressBar" name="pgrDeintTime">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="format">
+            <string notr="true">%p%</string>
            </property>
           </widget>
          </item>
@@ -5552,6 +5658,287 @@
            </property>
            <property name="statusTip">
             <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="2">
+          <widget class="QLCDNumber" name="lcdCWDCorr">
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>0</red>
+                 <green>170</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>0</red>
+                 <green>170</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>120</red>
+                 <green>120</green>
+                 <blue>120</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="digitCount">
+            <number>8</number>
+           </property>
+           <property name="segmentStyle">
+            <enum>QLCDNumber::Flat</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLabel" name="lblQCorr">
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
+           </property>
+           <property name="text">
+            <string>Успешных
+Q-коррекций:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1" colspan="3">
+          <widget class="QProgressBar" name="pgrLineBuf">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Заполненность буфера бинаризированных PCM-строк</string>
+           </property>
+           <property name="statusTip">
+            <string>Заполненность буфера бинаризированных PCM-строк</string>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="format">
+            <string notr="true">%p%</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLabel" name="lblCWDCorr">
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+           </property>
+           <property name="text">
+            <string>Успешных
+CWD-коррекций:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="1">
+          <widget class="QLabel" name="lblDropout">
+           <property name="toolTip">
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
+           </property>
+           <property name="text">
+            <string>Неисправленных
+блоков данных:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="3">
+          <widget class="QLabel" name="indDropout">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Box</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="text">
+            <string notr="true"/>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="lblPCorr">
+           <property name="toolTip">
+            <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
+           </property>
+           <property name="text">
+            <string>Успешных
+P-коррекций:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QLabel" name="lblBroken">
+           <property name="toolTip">
+            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
+           </property>
+           <property name="text">
+            <string>&quot;Сломанных&quot;
+блоков данных:</string>
+           </property>
+           <property name="wordWrap">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
+          <widget class="QLabel" name="indPCorr">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Box</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
+           </property>
+           <property name="text">
+            <string notr="true"/>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="2">
+          <widget class="QLCDNumber" name="lcdBroken">
+           <property name="palette">
+            <palette>
+             <active>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>255</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </active>
+             <inactive>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>255</red>
+                 <green>0</green>
+                 <blue>0</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </inactive>
+             <disabled>
+              <colorrole role="WindowText">
+               <brush brushstyle="SolidPattern">
+                <color alpha="255">
+                 <red>210</red>
+                 <green>210</green>
+                 <blue>210</blue>
+                </color>
+               </brush>
+              </colorrole>
+             </disabled>
+            </palette>
+           </property>
+           <property name="toolTip">
+            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
+           </property>
+           <property name="statusTip">
+            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
            </property>
            <property name="frameShadow">
             <enum>QFrame::Sunken</enum>
@@ -5623,63 +6010,7 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="2">
-          <widget class="QLCDNumber" name="lcdBroken">
-           <property name="palette">
-            <palette>
-             <active>
-              <colorrole role="WindowText">
-               <brush brushstyle="SolidPattern">
-                <color alpha="255">
-                 <red>255</red>
-                 <green>0</green>
-                 <blue>0</blue>
-                </color>
-               </brush>
-              </colorrole>
-             </active>
-             <inactive>
-              <colorrole role="WindowText">
-               <brush brushstyle="SolidPattern">
-                <color alpha="255">
-                 <red>255</red>
-                 <green>0</green>
-                 <blue>0</blue>
-                </color>
-               </brush>
-              </colorrole>
-             </inactive>
-             <disabled>
-              <colorrole role="WindowText">
-               <brush brushstyle="SolidPattern">
-                <color alpha="255">
-                 <red>210</red>
-                 <green>210</green>
-                 <blue>210</blue>
-                </color>
-               </brush>
-              </colorrole>
-             </disabled>
-            </palette>
-           </property>
-           <property name="toolTip">
-            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
-           </property>
-           <property name="statusTip">
-            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
-           </property>
-           <property name="digitCount">
-            <number>8</number>
-           </property>
-           <property name="segmentStyle">
-            <enum>QLCDNumber::Flat</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
+         <item row="6" column="1">
           <widget class="QLabel" name="lblBadStitch">
            <property name="toolTip">
             <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
@@ -5693,105 +6024,16 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
-          <widget class="QLabel" name="lblPCorr">
-           <property name="toolTip">
-            <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
-           </property>
-           <property name="statusTip">
-            <string>Число блоков данных, в которых успешно исправлена одиночная ошибка</string>
-           </property>
-           <property name="text">
-            <string>Успешных
-P-коррекций:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QLabel" name="lblQCorr">
-           <property name="toolTip">
-            <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
-           </property>
-           <property name="statusTip">
-            <string>Число блоков данных, в которых успешно исправлена двойная ошибка</string>
-           </property>
-           <property name="text">
-            <string>Успешных
-Q-коррекций:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QLabel" name="lblBroken">
-           <property name="toolTip">
-            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
-           </property>
-           <property name="statusTip">
-            <string>Число блоков данных, не имеющих ошибок по CRC, но не прошедшие проверку по P и Q словам</string>
-           </property>
-           <property name="text">
-            <string>&quot;Сломанных&quot;
-блоков данных:</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1" colspan="2">
-          <widget class="QProgressBar" name="pgrLineBuf">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>Заполненность буфера бинаризированных PCM-строк</string>
-           </property>
-           <property name="statusTip">
-            <string>Заполненность буфера бинаризированных PCM-строк</string>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="format">
-            <string notr="true">%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="1" colspan="2">
-          <widget class="QProgressBar" name="pgrDeintTime">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="format">
-            <string notr="true">%p%</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="2">
-          <widget class="QLCDNumber" name="lcdCWDCorr">
+         <item row="6" column="2">
+          <widget class="QLCDNumber" name="lcdBadStitch">
            <property name="palette">
             <palette>
              <active>
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>0</red>
-                 <green>170</green>
+                 <red>185</red>
+                 <green>185</green>
                  <blue>0</blue>
                 </color>
                </brush>
@@ -5801,8 +6043,8 @@ Q-коррекций:</string>
               <colorrole role="WindowText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>0</red>
-                 <green>170</green>
+                 <red>185</red>
+                 <green>185</green>
                  <blue>0</blue>
                 </color>
                </brush>
@@ -5822,10 +6064,10 @@ Q-коррекций:</string>
             </palette>
            </property>
            <property name="toolTip">
-            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+            <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
            </property>
            <property name="statusTip">
-            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+            <string>Число сшивок полей, на которых не удалось проверить корректность сборки блоков данных</string>
            </property>
            <property name="frameShadow">
             <enum>QFrame::Sunken</enum>
@@ -5838,17 +6080,37 @@ Q-коррекций:</string>
            </property>
           </widget>
          </item>
-         <item row="5" column="1">
-          <widget class="QLabel" name="lblCWDCorr">
-           <property name="toolTip">
-            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+         <item row="6" column="3">
+          <widget class="QLabel" name="indBadStitch">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
-           <property name="statusTip">
-            <string>Число блоков данных, в которых успешно исправлены ошибки с помощью Cross-Word Decoding</string>
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::Box</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Sunken</enum>
            </property>
            <property name="text">
-            <string>Успешных
-CWD-коррекций:</string>
+            <string notr="true"/>
            </property>
           </widget>
          </item>
@@ -5856,64 +6118,14 @@ CWD-коррекций:</string>
        </item>
        <item>
         <layout class="QGridLayout" name="gridLayout_10">
-         <item row="1" column="1">
-          <widget class="QLCDNumber" name="lcdDropout">
-           <property name="palette">
-            <palette>
-             <active>
-              <colorrole role="WindowText">
-               <brush brushstyle="SolidPattern">
-                <color alpha="255">
-                 <red>255</red>
-                 <green>0</green>
-                 <blue>0</blue>
-                </color>
-               </brush>
-              </colorrole>
-             </active>
-             <inactive>
-              <colorrole role="WindowText">
-               <brush brushstyle="SolidPattern">
-                <color alpha="255">
-                 <red>255</red>
-                 <green>0</green>
-                 <blue>0</blue>
-                </color>
-               </brush>
-              </colorrole>
-             </inactive>
-             <disabled>
-              <colorrole role="WindowText">
-               <brush brushstyle="SolidPattern">
-                <color alpha="255">
-                 <red>210</red>
-                 <green>210</green>
-                 <blue>210</blue>
-                </color>
-               </brush>
-              </colorrole>
-             </disabled>
-            </palette>
-           </property>
-           <property name="toolTip">
-            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-           </property>
-           <property name="statusTip">
-            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Sunken</enum>
-           </property>
-           <property name="digitCount">
-            <number>8</number>
-           </property>
-           <property name="segmentStyle">
-            <enum>QLCDNumber::Flat</enum>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="1">
           <widget class="QLCDNumber" name="lcdSampleDrops">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="palette">
             <palette>
              <active>
@@ -5965,23 +6177,6 @@ CWD-коррекций:</string>
            </property>
            <property name="segmentStyle">
             <enum>QLCDNumber::Flat</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="lblDropout">
-           <property name="toolTip">
-            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-           </property>
-           <property name="statusTip">
-            <string>Число блоков данных, которые невозможно восстановить кодами P и Q</string>
-           </property>
-           <property name="text">
-            <string>Неисправленных
-блоков данных:</string>
-           </property>
-           <property name="wordWrap">
-            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -6048,6 +6243,12 @@ CWD-коррекций:</string>
           <widget class="QLCDNumber" name="lcdMask">
            <property name="enabled">
             <bool>true</bool>
+           </property>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
            <property name="palette">
             <palette>
