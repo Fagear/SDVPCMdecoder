@@ -143,7 +143,7 @@ bool VideoToDigital::waitForOneFrame()
 }
 
 //------------------------ Pre-scan whole buffer and calculate average data coordinates.
-CoordinatePair VideoToDigital::prescanCoordinates(uint8_t *out_ref)
+void VideoToDigital::prescanCoordinates(CoordinatePair *out_coords, uint8_t *out_ref)
 {
     // TODO: prescan most of the frame in INSANE mode.
     bool suppress_log;
@@ -157,188 +157,215 @@ CoordinatePair VideoToDigital::prescanCoordinates(uint8_t *out_ref)
     PCM16X0SubLine pcm16x0_line;
     STC007Line stc007_line;
     PCMLine *work_line;
-    CoordinatePair final_coords;
     bin_preset_t bin_set;
 
     suppress_log = ((log_level&(Binarizer::LOG_PROCESS))==0);
     //suppress_log = false;
 
-    lines_cnt = frame_buf.size();
-
-    bin_set = line_converter.getCurrentFineSettings();
-
-    if((lines_cnt>COORD_CHECK_PARTS)
-       &&(pcm_type!=TYPE_STC007)
-       &&(bin_set.en_force_coords==false))
+    if((out_coords==NULL)||(out_ref==NULL))
     {
-        scan_ofs.resize(COORD_CHECK_LINES);
-        refs_list.reserve(COORD_CHECK_LINES);
-        coord_list.reserve(COORD_CHECK_LINES);
-        // Calculate line gap between checked lines.
-        gap_length = lines_cnt/(COORD_CHECK_PARTS-1);
-        // Calculate line offsets to perform scan.
-        for(index=0;index<COORD_CHECK_LINES;index++)
-        {
-            scan_ofs[index] = (index+1)*gap_length;
-        }
 #ifdef LB_EN_DBG_OUT
-        if(suppress_log==false)
-        {
-            QString log_line;
-            qInfo()<<"[V2D] ---------- Starting frame data coordinates prescan...";
-            log_line = "[V2D] Prescan buffer indexes: ";
-            for(index=0;index<COORD_CHECK_LINES;index++)
-            {
-                log_line += QString::number(scan_ofs[index]);
-                if(index!=(COORD_CHECK_LINES-1))
-                {
-                    log_line += ", ";
-                }
-            }
-            log_line += " (scan gap: "+QString::number(gap_length)+" of "+QString::number(lines_cnt)+" lines)";
-            qInfo()<<log_line;
-        }
+        qWarning()<<"[V2D] Unable to prescan, null pointer provided";
 #endif
-        // Reset everything in binarizer.
-        line_converter.setGoodParameters();
-        // Enable coordinates search.
-        line_converter.setCoordinatesSearch(true);
-        if(pcm_type==TYPE_PCM1)
-        {
-            // Process video line as single PCM line.
-            line_converter.setLinePartMode(Binarizer::FULL_LINE);
-            // Take pointer to PCM-1 line object.
-            work_line = static_cast<PCMLine *>(&pcm1_line);
-        }
-        else if(pcm_type==TYPE_PCM16X0)
-        {
-            // Right part of the video line (it usually has narrower window of good coordinates).
-            line_converter.setLinePartMode(Binarizer::PART_PCM16X0_RIGHT);
-            // Take pointer to PCM-16X0 line object.
-            work_line = static_cast<PCMLine *>(&pcm16x0_line);
-        }
-        else
-        {
-            // Process video line as single PCM line.
-            line_converter.setLinePartMode(Binarizer::FULL_LINE);
-            // Take pointer to STC-007 line object.
-            work_line = static_cast<PCMLine *>(&stc007_line);
-        }
-        // Set pointer to output PCM line for binarizer.
-        line_converter.setOutput(work_line);
+        return;
+    }
 
-        for(index=0;index<COORD_CHECK_LINES;index++)
-        {
-            // Pick source line from the buffer.
-            source_line = &frame_buf.at(scan_ofs[index]);
-            if(source_line->isServiceLine()==false)
-            {
-                line_converter.setSource(source_line);
-                line_converter.setMode(binarization_mode);
-#ifdef LB_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    QString log_line;
-                    log_line = "[V2D] ---------- Starting prescan at frame buffer index [";
-                    log_line += QString::number(scan_ofs[index]);
-                    log_line += "] line ["+QString::number(source_line->frame_number)+":"+QString::number(source_line->line_number)+"]...";
-                    qInfo()<<log_line;
-                }
-#endif
-                // Perform binarization.
-                line_converter.processLine();
-                // Check if CRC is valid for the line.
-                if(work_line->isCRCValid()!=false)
-                {
-                    // Save found coordinates.
-                    coord_list.push_back(work_line->coords);
-                    // Save reference level for valid coordinates.
-                    refs_list.push_back(work_line->ref_level);
-                    // Update binarizator coordinates.
-                    //line_converter.setGoodParameters(work_line);
-                    //if(coord_list.size()>2) break;
-                }
-            }
-        }
+    lines_cnt = frame_buf.size();
+    bin_set = line_converter.getCurrentFineSettings();
+    if((lines_cnt<=COORD_CHECK_PARTS)
+       ||(pcm_type==TYPE_STC007)||(pcm_type==TYPE_M2)
+       ||(bin_set.en_force_coords!=false))
+    {
 #ifdef LB_EN_DBG_OUT
         if(suppress_log==false)
         {
-            QString log_line;
-            if(coord_list.size()>0)
+            if((pcm_type==TYPE_STC007)||(pcm_type==TYPE_M2))
             {
-                qInfo()<<"[V2D] Coordinates list:";
-                for(index=0;index<coord_list.size();index++)
-                {
-                    log_line.sprintf("[%03d:%04d]@[%03u] at line index [%03u]",
-                                     coord_list[index].data_start, coord_list[index].data_stop, refs_list[index], scan_ofs[index]);
-                    qInfo()<<log_line;
-                }
+                qInfo()<<"[V2D] Unable to prescan, its disabled for STC-007";
+            }
+            else if(bin_set.en_force_coords!=false)
+            {
+                qInfo()<<"[V2D] Unable to prescan, its disabled in fine binarization settings";
+            }
+            else if(lines_cnt<=COORD_CHECK_PARTS)
+            {
+                QString log_line;
+                log_line.sprintf("[V2D] Unable to prescan, not enough lines in the buffer: [%03u]<[%03u]",
+                                 lines_cnt, COORD_CHECK_PARTS);
+                qInfo()<<log_line;
             }
         }
 #endif
-        // Check if any coordinates were found.
-        if(coord_list.size()>0)
+        return;
+    }
+
+    scan_ofs.resize(COORD_CHECK_LINES);
+    refs_list.reserve(COORD_CHECK_LINES);
+    coord_list.reserve(COORD_CHECK_LINES);
+    // Calculate line gap between checked lines.
+    gap_length = lines_cnt/(COORD_CHECK_PARTS-1);
+    // Calculate line offsets to perform scan.
+    for(index=0;index<COORD_CHECK_LINES;index++)
+    {
+        scan_ofs[index] = (index+1)*gap_length;
+    }
+#ifdef LB_EN_DBG_OUT
+    if(suppress_log==false)
+    {
+        QString log_line;
+        qInfo()<<"[V2D] ---------- Starting frame data coordinates prescan...";
+        log_line = "[V2D] Prescan buffer indexes: ";
+        for(index=0;index<COORD_CHECK_LINES;index++)
         {
-            // Sort coordinates.
-            std::sort(coord_list.begin(), coord_list.end());
-            // Pick center value.
-            final_coords = coord_list.at(coord_list.size()/2);
+            log_line += QString::number(scan_ofs[index]);
+            if(index!=(COORD_CHECK_LINES-1))
+            {
+                log_line += ", ";
+            }
+        }
+        log_line += " (scan gap: "+QString::number(gap_length)+" of "+QString::number(lines_cnt)+" lines)";
+        qInfo()<<log_line;
+    }
+#endif
+    // Reset everything in binarizer.
+    line_converter.setGoodParameters();
+    // Enable coordinates search.
+    line_converter.setCoordinatesSearch(true);
+    if(pcm_type==TYPE_PCM1)
+    {
+        // Process video line as single PCM line.
+        line_converter.setLinePartMode(Binarizer::FULL_LINE);
+        // Take pointer to PCM-1 line object.
+        work_line = static_cast<PCMLine *>(&pcm1_line);
+    }
+    else if(pcm_type==TYPE_PCM16X0)
+    {
+        // Right part of the video line (it usually has narrower window of good coordinates).
+        line_converter.setLinePartMode(Binarizer::PART_PCM16X0_RIGHT);
+        // Take pointer to PCM-16X0 line object.
+        work_line = static_cast<PCMLine *>(&pcm16x0_line);
+    }
+    else
+    {
+        // Process video line as single PCM line.
+        line_converter.setLinePartMode(Binarizer::FULL_LINE);
+        // Take pointer to STC-007 line object.
+        work_line = static_cast<PCMLine *>(&stc007_line);
+    }
+    // Set pointer to output PCM line for binarizer.
+    line_converter.setOutput(work_line);
+
+    for(index=0;index<COORD_CHECK_LINES;index++)
+    {
+        // Pick source line from the buffer.
+        source_line = &frame_buf.at(scan_ofs[index]);
+        if(source_line->isServiceLine()==false)
+        {
+            line_converter.setSource(source_line);
+            line_converter.setMode(binarization_mode);
 #ifdef LB_EN_DBG_OUT
             if(suppress_log==false)
             {
                 QString log_line;
-                log_line.sprintf("[V2D] Prescan is finished, coordinates: [%03d:%04d] from [%01u] lines of [%01u]",
-                                 final_coords.data_start, final_coords.data_stop, coord_list.size(), COORD_CHECK_LINES);
+                log_line = "[V2D] ---------- Starting prescan at frame buffer index [";
+                log_line += QString::number(scan_ofs[index]);
+                log_line += "] line ["+QString::number(source_line->frame_number)+":"+QString::number(source_line->line_number)+"]...";
                 qInfo()<<log_line;
             }
 #endif
-            if(out_ref!=NULL)
+            // Perform binarization.
+            line_converter.processLine();
+            // Check if CRC is valid for the line.
+            if(work_line->isCRCValid()!=false)
             {
-                // Sort reference levels.
-                std::sort(refs_list.begin(), refs_list.end());
-                // Pick center value.
-                *out_ref = refs_list.at(refs_list.size()/2);
-#ifdef LB_EN_DBG_OUT
-                if(suppress_log==false)
-                {
-                    QString log_line;
-                    log_line.sprintf("[V2D] Reference level selected: [%03u]", (*out_ref));
-                    qInfo()<<log_line;
-                }
-#endif
+                // Save found coordinates.
+                coord_list.push_back(work_line->coords);
+                // Save reference level for valid coordinates.
+                refs_list.push_back(work_line->ref_level);
+                // Update binarizator coordinates.
+                //line_converter.setGoodParameters(work_line);
+                //if(coord_list.size()>2) break;
             }
         }
+    }
 #ifdef LB_EN_DBG_OUT
-        else
+    if(suppress_log==false)
+    {
+        QString log_line;
+        if(coord_list.size()>0)
         {
-            if(suppress_log==false)
+            qInfo()<<"[V2D] Coordinates list:";
+            for(index=0;index<coord_list.size();index++)
             {
-                qInfo()<<"[V2D] Prescan is done, no valid coordinates found";
+                log_line.sprintf("[%03d:%04d]@[%03u] at line index [%03u]",
+                                 coord_list[index].data_start, coord_list[index].data_stop, refs_list[index], scan_ofs[index]);
+                qInfo()<<log_line;
             }
+        }
+    }
+#endif
+    // Check if any coordinates were found.
+    if(coord_list.size()>0)
+    {
+        // Sort coordinates.
+        std::sort(coord_list.begin(), coord_list.end());
+        // Pick center value.
+        *out_coords = coord_list.at(coord_list.size()/2);
+#ifdef LB_EN_DBG_OUT
+        if(suppress_log==false)
+        {
+            QString log_line;
+            log_line.sprintf("[V2D] Prescan is finished, coordinates: [%03d:%04d] from [%01u] lines of [%01u]",
+                             out_coords->data_start, out_coords->data_stop, coord_list.size(), COORD_CHECK_LINES);
+            qInfo()<<log_line;
+        }
+#endif
+        // Sort reference levels.
+        std::sort(refs_list.begin(), refs_list.end());
+        // Pick center value.
+        *out_ref = refs_list.at(refs_list.size()/2);
+#ifdef LB_EN_DBG_OUT
+        if(suppress_log==false)
+        {
+            QString log_line;
+            log_line.sprintf("[V2D] Reference level selected: [%03u]", (*out_ref));
+            qInfo()<<log_line;
         }
 #endif
     }
-    return final_coords;
+#ifdef LB_EN_DBG_OUT
+    else
+    {
+        if(suppress_log==false)
+        {
+            qInfo()<<"[V2D] Prescan is done, no valid coordinates found";
+        }
+    }
+#endif
 }
 
 //------------------------ Apply median filter to the list of coordinates.
 CoordinatePair VideoToDigital::medianCoordinates(std::deque<CoordinatePair> *in_list)
 {
+    CoordinatePair dummy;
     if(in_list->size()>0)
     {
+        size_t buf_middle;
         std::deque<CoordinatePair> sort_buf;
-        // Copy list for sorting.
+
+        // Copy list for sorting (so source will not be affected).
         std::copy(in_list->begin(), in_list->end(), std::inserter(sort_buf, sort_buf.begin()));
-        // Sort coordinates.
-        std::sort(sort_buf.begin(), sort_buf.end());
-        // Pick the middle of the list.
-        return sort_buf.at(sort_buf.size()/2);
+        // Calculate the middle of the list (for median filtering).
+        buf_middle = sort_buf.size()/2;
+        // Put sorted value in that spot.
+        std::nth_element(sort_buf.begin(), sort_buf.begin()+buf_middle, sort_buf.end());
+        // Return filtered value.
+        return sort_buf[buf_middle];
     }
     else
     {
         // Nothing in the input list.
         // Return dummy invalid coordinates.
-        CoordinatePair dummy;
         return dummy;
     }
 }
@@ -418,7 +445,7 @@ void VideoToDigital::outNewLine(PCMLine *in_line)
                 // Put processed line into the queue.
                 mtx_pcm16x0->lock();
                 queue_size = (out_pcm16x0->size()+1);
-                if(queue_size<MAX_PCMLINE_QUEUE_SIZE)
+                if(queue_size<(MAX_PCMLINE_QUEUE_SIZE*PCM16X0SubLine::SUBLINES_PER_LINE))
                 {
                     out_pcm16x0->push_back(*static_cast<PCM16X0SubLine *>(in_line));
                     mtx_pcm16x0->unlock();
@@ -448,7 +475,7 @@ void VideoToDigital::outNewLine(PCMLine *in_line)
 #ifdef LB_EN_DBG_OUT
                         if((log_level&Binarizer::LOG_PROCESS)!=0)
                         {
-                            qInfo()<<"[V2D] Output PCM-16x0 line queue is at size limit ("<<MAX_PCMLINE_QUEUE_SIZE<<"), waiting...";
+                            qInfo()<<"[V2D] Output PCM-16x0 line queue is at size limit ("<<(MAX_PCMLINE_QUEUE_SIZE*PCM16X0SubLine::SUBLINES_PER_LINE)<<"), waiting...";
                         }
 #endif
                     }
@@ -684,6 +711,7 @@ void VideoToDigital::doBinarize()
     quint64 time_spent;
     VideoLine source_line;
 
+    bin_preset_t bin_set;
     PCM1Line pcm1_line;
     PCM16X0SubLine pcm16x0_line;
     STC007Line stc007_line;
@@ -691,7 +719,7 @@ void VideoToDigital::doBinarize()
     PCM1Line last_pcm1_line;
     PCM16X0SubLine last_pcm16x0_p0_line, last_pcm16x0_p1_line, last_pcm16x0_p2_line;
     STC007Line last_stc007_line;
-    ArVidLine arvid_line;
+    //ArVidLine arvid_line;
 
 #ifdef LB_EN_DBG_OUT
     qInfo()<<"[V2D] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
@@ -749,8 +777,6 @@ void VideoToDigital::doBinarize()
                 // New frame started: reset "good coordinates found" counter (for PCM-16x0).
                 good_coords_in_field = pcm_lines_in_field = 0;
 
-                //time_per_frame.start();
-
                 if(reset_stats!=false)
                 {
                     reset_stats = false;
@@ -764,25 +790,39 @@ void VideoToDigital::doBinarize()
                     line_converter.setGoodParameters();
                 }
 
-                // Find average coordinates for the buffer (usefull for markerless PCM formats).
-                frame_avg = prescanCoordinates(&prescan_ref);
+                // Save fine settings for the current frame.
+                bin_set = line_converter.getCurrentFineSettings();
+
+                // Try to prepare some averaged target horizontal data coordinates.
                 frame_avg.clear();
-                // Check if frame prescan returned valid coordinates.
-                if(frame_avg.areValid()==false)
+                // Check if forced horizontal data coordinates are set.
+                if(bin_set.en_force_coords==false)
                 {
-                    // No valid coordinates with prescan.
-                    // Take average from multi-frame stats.
-                    frame_avg = medianCoordinates(&long_coord_stats);
-                }
-                else
-                {
-                    // Valid coordinates were found during prescan.
-                    // Set reference level by prescan.
-                    line_converter.setReferenceLevel(prescan_ref);
-                }
-                if(frame_avg.areValid()!=false)
-                {
-                    line_converter.setDataCoordinates(frame_avg.data_start, frame_avg.data_stop);
+                    if(binarization_mode!=Binarizer::MODE_DRAFT)
+                    {
+                        // Find average coordinates for the frame buffer (usefull for markerless PCM formats).
+                        // Don't run this in fastest mode, cause it takes some time.
+                        prescanCoordinates(&frame_avg, &prescan_ref);
+                    }
+                    // Check if frame prescan returned valid coordinates.
+                    if(frame_avg.areValid()==false)
+                    {
+                        // No valid coordinates with prescan.
+                        // Take average from multi-frame stats.
+                        frame_avg = medianCoordinates(&long_coord_stats);
+                    }
+                    else
+                    {
+                        // Valid coordinates were found during prescan.
+                        // Set reference level by prescan.
+                        line_converter.setReferenceLevel(prescan_ref);
+                    }
+                    // Re-check coordinates again.
+                    if(frame_avg.areValid()!=false)
+                    {
+                        // Something valid was found, set it as target data coordinates.
+                        line_converter.setDataCoordinates(frame_avg.data_start, frame_avg.data_stop);
+                    }
                 }
 
                 // Process the buffer line by line.
@@ -818,7 +858,7 @@ void VideoToDigital::doBinarize()
                         sub_line_cnt--;
                         time_per_line.start();
 
-                        // Debug
+                        // ArVid Audio Debug
                         //pcm_type = PCMLine::TYPE_ARVA;
 
                         // Preset settings for binarizator for selected PCM type.
@@ -1286,7 +1326,7 @@ void VideoToDigital::doBinarize()
                                     }
 
                                     // Check if coordinate damper is enabled and has collected enough data.
-                                    if((coordinate_damper!=false)&&(last_coord_stats.size()>(COORD_HISTORY_DEPTH/2)))
+                                    if((coordinate_damper!=false)&&(bin_set.en_force_coords==false)&&(last_coord_stats.size()>(COORD_HISTORY_DEPTH/2)))
                                     {
                                         // Get last lines median coordinates.
                                         target_coord = medianCoordinates(&last_coord_stats);
@@ -1460,13 +1500,16 @@ void VideoToDigital::doBinarize()
 
                                     // Some data probably is there but CRC is invalid.
                                     CoordinatePair preset_coords;
-                                    // First, preset for median if last valid coordinates.
-                                    preset_coords = medianCoordinates(&last_coord_stats);
-                                    // Check if those are valid.
-                                    if(preset_coords.areValid()==false)
+                                    if(bin_set.en_force_coords==false)
                                     {
-                                        // Set to last frame median coordinates.
-                                        preset_coords = frame_avg;
+                                        // First, preset for median if last valid coordinates.
+                                        preset_coords = medianCoordinates(&last_coord_stats);
+                                        // Check if those are valid.
+                                        if(preset_coords.areValid()==false)
+                                        {
+                                            // Set to last frame median coordinates.
+                                            preset_coords = frame_avg;
+                                        }
                                     }
 #ifdef LB_EN_DBG_OUT
                                     if(((log_level&Binarizer::LOG_PROCESS)!=0)||((log_level&Binarizer::LOG_LINE_DUMP)!=0))
@@ -1547,28 +1590,17 @@ void VideoToDigital::doBinarize()
                                         line_converter.setBWLevels();
                                     }
                                 }
+                                else
+                                {
+                                    // Reset preset BW levels.
+                                    line_converter.setBWLevels();
+                                }
                             }
                             line_in_field_cnt++;
                         }   // service tag presence check
                         // Check if frame ended.
                         if(work_line->isServEndFrame()!=false)
                         {
-                            // Get median coordinates for the frame.
-                            // Overwrite pre-scan median, it will be recalculated at the start of the next frame.
-                            frame_avg = medianCoordinates(&frame_coord_stats);
-                            if(frame_avg.areValid()!=false)
-                            {
-                                // Add filtered coordinates from the last frame to the multi-frame history.
-                                long_coord_stats.push_back(frame_avg);
-                                while(long_coord_stats.size()>COORD_LONG_HISTORY)
-                                {
-                                    // Remove oldest entry to keep history size in check.
-                                    long_coord_stats.pop_front();
-                                }
-                            }
-                            // Reset frame coordinates stats.
-                            frame_coord_stats.clear();
-
                             if(pcm_type==TYPE_PCM1)
                             {
                                 // Limit number of lines with PCM to standard.
@@ -1603,34 +1635,45 @@ void VideoToDigital::doBinarize()
                             }
                             // Save processed frame number.
                             signal_quality.frame_id = work_line->frame_number;
-                            // Save target data coordinates.
-                            if(frame_avg.areValid()==false)
+
+                            // Get median coordinates for the frame.
+                            // Overwrite pre-scan median, it will be recalculated at the start of the next frame.
+                            frame_avg = medianCoordinates(&frame_coord_stats);
+                            if(frame_avg.areValid()!=false)
                             {
-                                // No valid coordinates for current frame, take median from last frames.
-                                frame_avg = medianCoordinates(&long_coord_stats);
-                                signal_quality.data_coord = frame_avg;
-                                signal_quality.data_coord.not_sure = true;
+                                // Add filtered coordinates from the current frame to the multi-frame history.
+                                long_coord_stats.push_back(frame_avg);
+                                while(long_coord_stats.size()>COORD_LONG_HISTORY)
+                                {
+                                    // Remove oldest entry to keep history size in check.
+                                    long_coord_stats.pop_front();
+                                }
                             }
                             else
                             {
-                                // Pick median from the frame.
-                                signal_quality.data_coord = frame_avg;
+                                // No valid coordinates for current frame, take median from last frames.
+                                frame_avg = medianCoordinates(&long_coord_stats);
+                                signal_quality.data_coord.not_sure = true;
                             }
+                            // Reset frame coordinates stats.
+                            frame_coord_stats.clear();
+                            // Save target data coordinates.
+                            signal_quality.data_coord = frame_avg;
                             // Measure time spent on the frame.
                             time_spent = time_per_frame.nsecsElapsed()/1000;
                             signal_quality.time_odd = time_spent;
                             signal_quality.time_even = 0;       // TODO: threads per field
                             emit loopTime(signal_quality.totalProcessTime());
-                            //qDebug()<<"[DBG] Time per frame:"<<signal_quality.totalProcessTime();
                             // Report about new binarized frame.
                             emit guiUpdFrameBin(signal_quality);
+                            //qDebug()<<"[DBG] Time per frame:"<<signal_quality.totalProcessTime();
                             // Reset tracking.
                             signal_quality.clear();
-                            //time_per_frame.start();
                         }
 
                         // Put the resulting PCM line with into PCM lines queue.
                         outNewLine(work_line);
+                        //qDebug()<<"S1"<<pcm16x0_line.line_part<<time_per_line.nsecsElapsed()/1000;
 #ifdef LB_EN_DBG_OUT
                         if((log_level&Binarizer::LOG_LINE_DUMP)!=0)
                         {
@@ -1708,6 +1751,7 @@ void VideoToDigital::doBinarize()
                             // Dump raw PCM line into console.
                             qInfo()<<QString::fromStdString("[V2D] "+work_line->dumpContentString());
                         }
+                        //qDebug()<<time_per_line.nsecsElapsed()/1000;
 #endif
                     }
                     // Sub-lines sub-cycle ended.

@@ -8,6 +8,7 @@
 #include "config.h"
 #include "pcmline.h"
 
+// ArVid Audio prototype.
 class ArVidLine : public PCMLine
 {
 public:

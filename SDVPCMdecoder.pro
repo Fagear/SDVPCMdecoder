@@ -28,7 +28,7 @@ QMAKE_CFLAGS_RELEASE += -O3 -march=pentium3m
 
 QMAKE_CXXFLAGS+= -D__STDC_CONSTANT_MACROS -fpermissive
 
-VERSION = 0.99.6
+VERSION = 0.99.7
 win32: QMAKE_TARGET_COMPANY = Fagear
 win32: QMAKE_TARGET_PRODUCT = SD video PCM decoder
 win32: QMAKE_TARGET_DESCRIPTION = SD video to digital audio decoder

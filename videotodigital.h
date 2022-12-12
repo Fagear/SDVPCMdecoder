@@ -59,12 +59,12 @@ public:
     {
         COORD_CHECK_LINES = 4,                      // Number of lines to check PCM coordinates on buffer prescan.
         COORD_CHECK_PARTS = (COORD_CHECK_LINES+2),  // Add regions at the top and the bottom of first and last checked lines.
-        COORD_HISTORY_DEPTH = 8,                    // Width of sliding window of history of valid data coordinates.
+        COORD_HISTORY_DEPTH = 9,                    // Width of sliding window of history of valid data coordinates.
         COORD_LONG_HISTORY = 16                     // Number of last frames to store averaged valid data coordinates for.
     };
 
 private:
-    Binarizer line_converter;               // Binarizator.
+    Binarizer line_converter;               // Binarizator module.
     std::deque<VideoLine> *in_video;        // Input video line queue (shared).
     std::deque<PCM1Line> *out_pcm1;         // Output PCM PCM-1 line queue (shared).
     std::deque<PCM16X0SubLine> *out_pcm16x0;    // Output PCM PCM-16x0 subline queue (shared).
@@ -94,7 +94,7 @@ public:
 
 private:
     bool waitForOneFrame();                 // Wait for the end of the frame to appear in the input queue.
-    CoordinatePair prescanCoordinates(uint8_t *out_ref = NULL);     // Pre-scan buffer for average data coordinates.
+    void prescanCoordinates(CoordinatePair *out_coords = NULL, uint8_t *out_ref = NULL);    // Pre-scan frame buffer for average data coordinates and reference level.
     static CoordinatePair medianCoordinates(std::deque<CoordinatePair> *in_list);   // Apply median filter to the list of coordinates.
     void outNewLine(PCMLine *in_line);      // Output processed line into output queue.
 

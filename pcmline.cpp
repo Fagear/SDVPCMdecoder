@@ -111,7 +111,7 @@ void PCMLine::clear()
     service_type = SRVLINE_NO;
 
     pixel_start = 0;
-    pixel_stop = getBitsBetweenDataCoordinates();
+    pixel_stop = 1;
     pixel_start_offset = 0;
     pixel_size_mult = INT_CALC_MULT;
     halfpixel_size_mult = pixel_size_mult/INT_CALC_PIXEL_DIV;

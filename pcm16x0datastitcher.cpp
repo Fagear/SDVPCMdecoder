@@ -5726,6 +5726,7 @@ void PCM16X0DataStitcher::doFrameReassemble()
                     time_spent = time_per_frame.nsecsElapsed();
                     time_spent = time_spent/1000;
                     emit loopTime(time_spent);
+                    //qDebug()<<time_spent;
                 }
                 else
                 {

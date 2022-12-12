@@ -4659,6 +4659,15 @@ void STC007DataStitcher::fillFrameForOutput()
     }
 #endif
 
+    // Crude fix to avoid frame overflow.
+    if(field_1_cnt>target_lines_per_field)
+    {
+        field_1_cnt = target_lines_per_field;
+    }
+    if(field_2_cnt>target_lines_per_field)
+    {
+        field_2_cnt = target_lines_per_field;
+    }
 
     // Determine if there is a need to enable top-line insertion due to uneven line count.
     bool insert_top_line = false;
