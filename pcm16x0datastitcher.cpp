@@ -583,6 +583,16 @@ void PCM16X0DataStitcher::splitFrameToFields()
     {
         // Save current line number.
         line_num = trim_buf[line_ind].line_number;
+        // Check for stray service line.
+        if(trim_buf[line_ind].isServiceLine()!=false)
+        {
+            if(trim_buf[line_ind].isServFiller()==false)
+            {
+                // Skip stray unfiltered or lost sync service line.
+                line_ind++;
+                continue;
+            }
+        }
         // Pick lines for the frame.
         if(trim_buf[line_ind].frame_number==frasm_f1.frame_number)
         {

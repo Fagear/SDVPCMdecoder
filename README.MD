@@ -49,7 +49,7 @@ to avoid signal loss in case of problems with reading signal from the tape.
 ## Features
 
 - Linear decoding of SD video into digital audio skipping analog domain.
-- Final digital audio can be stored into WAV file.
+- Decoded digital audio is stored into WAV file.
 - Live playback is possible but it's only for evaluation purposes and it's
   not the primary use case of the software.
 - All error detection and error correction features of each format
@@ -61,7 +61,7 @@ to avoid signal loss in case of problems with reading signal from the tape.
 - Video resolution and aspect ratio do not matter as long as video
   is not vertically resized and data bits are not blended with each other
   (decoder can't help with dropped or duplicated frames in your capture though).
-- Selectable mode of binarization to balance speed and data recovery efforts.
+- Selectable binarization presets to balance speed and data recovery efforts.
 - Many user-controllable parameters (including PCM format,
   source video field order, active error correction stages,
   dropout masking method and more)
@@ -81,7 +81,7 @@ to avoid signal loss in case of problems with reading signal from the tape.
   on per-line basis using statistics on brightness spread information.
 - Reference level can be calculated fast or brute-force sweeped through
   all available levels according to preset binarization mode.
-- **Time-Based Correction (TBC)**: automatic horizontal data coordinates detection
+- **Time Base Correction (TBC)**: automatic horizontal data coordinates detection
   that can be performed on per-line basis or averaged by the frame
   according to preset binarization mode and PCM format.
 - **Bit Picker**: automatic detection and brute-force picking bits
@@ -132,7 +132,12 @@ When in doubt, reset decoder settings to defaults by selecting
 
 ## Demo
 
-A little bit outdated video:
+Updated video on STC-007:
+
+[![New STC-007 video](https://img.youtube.com/vi/beZCRdq2Nt4/default.jpg)](https://www.youtube.com/watch?v=beZCRdq2Nt4)
+
+
+Outdated video:
 
 [![Outdated video](https://img.youtube.com/vi/q1pasjA9C-I/default.jpg)](https://www.youtube.com/watch?v=q1pasjA9C-I)
 

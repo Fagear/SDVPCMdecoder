@@ -631,6 +631,16 @@ void PCM1DataStitcher::splitFrameToFields()
         current_line = trim_buf[line_ind];
         // Save current line number.
         line_num = current_line.line_number;
+        // Check for stray service line.
+        if(current_line.isServiceLine()!=false)
+        {
+            if(trim_buf[line_ind].isServFiller()==false)
+            {
+                // Skip stray unfiltered or lost sync service line.
+                line_ind++;
+                continue;
+            }
+        }
         // Pick lines for the frame.
         if(current_line.frame_number==frasm_f1.frame_number)
         {
@@ -648,12 +658,6 @@ void PCM1DataStitcher::splitFrameToFields()
                     // Check frame trimming.
                     if((line_num>=frasm_f1.even_top_data)&&(line_num<=frasm_f1.even_bottom_data))
                     {
-                        // Check for stray header inside the data.
-                        if(current_line.isServiceLine()!=false)
-                        {
-                            // Make this line invalid.
-                            current_line.clear();
-                        }
                         // Cycle through sub-lines in one line.
                         for(uint8_t sub=0;sub<PCM1SubLine::PART_MAX;sub++)
                         {

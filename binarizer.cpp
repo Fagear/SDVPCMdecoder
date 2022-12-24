@@ -1579,8 +1579,14 @@ uint8_t Binarizer::processLine()
                     temp_pcm_ptr->applyCRCStatePerWord();
                     if((forced_coords.areValid()!=false)&&(temp_pcm_ptr->hasBWSet()!=false))
                     {
-                        // Force marker presence is coordinates are forced and no valid CRC.
+                        // Force marker presence if coordinates are forced and no valid CRC.
                         temp_pcm_ptr->forceMarkersOk();
+                    }
+                    // Check for presence of Control Block in STC-007 PCM line.
+                    if(temp_pcm_ptr->hasControlBlock()!=false)
+                    {
+                        // Force it as a valid service line with Control Block.
+                        temp_pcm_ptr->setServCtrlBlk();
                     }
                 }
 #ifdef LB_EN_DBG_OUT

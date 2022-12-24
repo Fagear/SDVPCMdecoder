@@ -760,6 +760,20 @@ void STC007DataStitcher::splitFramesToFields()
     {
         // Save current line number.
         line_num = trim_buf[line_ind].line_number;
+        // Check for stray service line.
+        if(trim_buf[line_ind].isServiceLine()!=false)
+        {
+            if(trim_buf[line_ind].isServFiller()==false)
+            {
+                if(trim_buf[line_ind].isServCtrlBlk()!=false)
+                {
+                    qDebug()<<"[L2B-007] Stray Control Block"<<trim_buf[line_ind].frame_number<<trim_buf[line_ind].line_number;
+                }
+                // Skip stray unfiltered or lost sync service line.
+                line_ind++;
+                continue;
+            }
+        }
         // Pick lines for frame A.
         if(trim_buf[line_ind].frame_number==frasm_f1.frame_number)
         {
@@ -918,7 +932,7 @@ void STC007DataStitcher::splitFramesToFields()
         line_ind++;
     }
 
-    // Calculate average reference level per fields.
+    // Calculate average reference level for odd field.
     if(frasm_f1.odd_valid_lines>0)
     {
         // There was valid data, calculate reference only by valid lines.
@@ -935,6 +949,7 @@ void STC007DataStitcher::splitFramesToFields()
     {
         frasm_f1.odd_ref = 0;
     }
+    // Calculate average reference level for even field.
     if(frasm_f1.even_valid_lines>0)
     {
         // There was valid data, calculate reference only by valid lines.
@@ -950,7 +965,6 @@ void STC007DataStitcher::splitFramesToFields()
     {
         frasm_f1.even_ref = 0;
     }
-
 
 #ifdef DI_EN_DBG_OUT
     if(((log_level&LOG_PADDING)!=0)||((log_level&LOG_PROCESS)!=0))
@@ -5437,7 +5451,7 @@ uint16_t STC007DataStitcher::patchBrokenLines(std::deque<STC007Line> *in_queue)
 {
     bool suppress_log;
     uint8_t broken_max;
-    uint16_t buf_size, buf_offset, fix_count;
+    uint16_t buf_size, buf_offset, line_offset, fix_count;
     std::array<uint16_t, (LINES_PER_PAL_FIELD*3)> broken_stat;
     STC007DataBlock pcm_block;
 
@@ -5476,62 +5490,102 @@ uint16_t STC007DataStitcher::patchBrokenLines(std::deque<STC007Line> *in_queue)
         {
             // Every source line can be false positive.
             // Put number of source lines into stats.
-            broken_stat[buf_offset+STC007DataBlock::LINE_L0]++;
-            if(broken_stat[buf_offset+STC007DataBlock::LINE_L0]>broken_max)
+            line_offset = (buf_offset+STC007DataBlock::LINE_L0);
+            if((*in_queue)[line_offset].isCRCValid()!=false)
             {
-                broken_max = broken_stat[buf_offset+STC007DataBlock::LINE_L0];
+                broken_stat[line_offset]++;
+                if(broken_stat[line_offset]>broken_max)
+                {
+                    broken_max = broken_stat[line_offset];
+                }
             }
-            broken_stat[buf_offset+STC007DataBlock::LINE_R0]++;
-            if(broken_stat[buf_offset+STC007DataBlock::LINE_R0]>broken_max)
+            line_offset = (buf_offset+STC007DataBlock::LINE_R0);
+            if((*in_queue)[line_offset].isCRCValid()!=false)
             {
-                broken_max = broken_stat[buf_offset+STC007DataBlock::LINE_R0];
+                broken_stat[line_offset]++;
+                if(broken_stat[line_offset]>broken_max)
+                {
+                    broken_max = broken_stat[line_offset];
+                }
             }
-            broken_stat[buf_offset+STC007DataBlock::LINE_L1]++;
-            if(broken_stat[buf_offset+STC007DataBlock::LINE_L1]>broken_max)
+            line_offset = (buf_offset+STC007DataBlock::LINE_L1);
+            if((*in_queue)[line_offset].isCRCValid()!=false)
             {
-                broken_max = broken_stat[buf_offset+STC007DataBlock::LINE_L1];
+                broken_stat[line_offset]++;
+                if(broken_stat[line_offset]>broken_max)
+                {
+                    broken_max = broken_stat[line_offset];
+                }
             }
-            broken_stat[buf_offset+STC007DataBlock::LINE_R1]++;
-            if(broken_stat[buf_offset+STC007DataBlock::LINE_R1]>broken_max)
+            line_offset = (buf_offset+STC007DataBlock::LINE_R1);
+            if((*in_queue)[line_offset].isCRCValid()!=false)
             {
-                broken_max = broken_stat[buf_offset+STC007DataBlock::LINE_R1];
+                broken_stat[line_offset]++;
+                if(broken_stat[line_offset]>broken_max)
+                {
+                    broken_max = broken_stat[line_offset];
+                }
             }
-            broken_stat[buf_offset+STC007DataBlock::LINE_L2]++;
-            if(broken_stat[buf_offset+STC007DataBlock::LINE_L2]>broken_max)
+            line_offset = (buf_offset+STC007DataBlock::LINE_L2);
+            if((*in_queue)[line_offset].isCRCValid()!=false)
             {
-                broken_max = broken_stat[buf_offset+STC007DataBlock::LINE_L2];
+                broken_stat[line_offset]++;
+                if(broken_stat[line_offset]>broken_max)
+                {
+                    broken_max = broken_stat[line_offset];
+                }
             }
-            broken_stat[buf_offset+STC007DataBlock::LINE_R2]++;
-            if(broken_stat[buf_offset+STC007DataBlock::LINE_R2]>broken_max)
+            line_offset = (buf_offset+STC007DataBlock::LINE_R2);
+            if((*in_queue)[line_offset].isCRCValid()!=false)
             {
-                broken_max = broken_stat[buf_offset+STC007DataBlock::LINE_R2];
+                broken_stat[line_offset]++;
+                if(broken_stat[line_offset]>broken_max)
+                {
+                    broken_max = broken_stat[line_offset];
+                }
             }
-            broken_stat[buf_offset+STC007DataBlock::LINE_P0]++;
-            if(broken_stat[buf_offset+STC007DataBlock::LINE_P0]>broken_max)
+            line_offset = (buf_offset+STC007DataBlock::LINE_P0);
+            if((*in_queue)[line_offset].isCRCValid()!=false)
             {
-                broken_max = broken_stat[buf_offset+STC007DataBlock::LINE_P0];
+                broken_stat[line_offset]++;
+                if(broken_stat[line_offset]>broken_max)
+                {
+                    broken_max = broken_stat[line_offset];
+                }
             }
-            broken_stat[buf_offset+STC007DataBlock::LINE_Q0]++;
-            if(broken_stat[buf_offset+STC007DataBlock::LINE_Q0]>broken_max)
+            line_offset = (buf_offset+STC007DataBlock::LINE_Q0);
+            if((*in_queue)[line_offset].isCRCValid()!=false)
             {
-                broken_max = broken_stat[buf_offset+STC007DataBlock::LINE_Q0];
+                broken_stat[line_offset]++;
+                if(broken_stat[line_offset]>broken_max)
+                {
+                    broken_max = broken_stat[line_offset];
+                }
             }
             fix_count++;
 #ifdef DI_EN_DBG_OUT
-            /*if(suppress_log==false)
+            if(suppress_log==false)
             {
                 QString log_line;
-                log_line.sprintf("[L2B-007] Broken block [%03u] from frames [%03u:%03u], lines [%03u,%03u,%03u,%03u,%03u,%03u,%03u,%03u], offsets [%03u,%03u,%03u,%03u,%03u,%03u,%03u,%03u], count [%03u,%03u,%03u,%03u,%03u,%03u,%03u,%03u]",
+                log_line.sprintf("[L2B-007] Broken block [%03u] from frames [%03u:%03u], valid [%03u,%03u,%03u,%03u,%03u,%03u,%03u,%03u], lines [%03u,%03u,%03u,%03u,%03u,%03u,%03u,%03u], offsets [%03u,%03u,%03u,%03u,%03u,%03u,%03u,%03u], count [%03u,%03u,%03u,%03u,%03u,%03u,%03u,%03u]",
                                  fix_count,
                                  pcm_block.getStartFrame(), pcm_block.getStopFrame(),
-                                 pcm_block.w_line[STC007DataBlock::WORD_L0],
-                                 pcm_block.w_line[STC007DataBlock::WORD_R0],
-                                 pcm_block.w_line[STC007DataBlock::WORD_L1],
-                                 pcm_block.w_line[STC007DataBlock::WORD_R1],
-                                 pcm_block.w_line[STC007DataBlock::WORD_L2],
-                                 pcm_block.w_line[STC007DataBlock::WORD_R2],
-                                 pcm_block.w_line[STC007DataBlock::WORD_P0],
-                                 pcm_block.w_line[STC007DataBlock::WORD_Q0],
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_L0)].isCRCValid(),
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_R0)].isCRCValid(),
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_L1)].isCRCValid(),
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_R1)].isCRCValid(),
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_L2)].isCRCValid(),
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_R2)].isCRCValid(),
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_P0)].isCRCValid(),
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_Q0)].isCRCValid(),
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_L0)].line_number,
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_R0)].line_number,
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_L1)].line_number,
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_R1)].line_number,
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_L2)].line_number,
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_R2)].line_number,
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_P0)].line_number,
+                                 (*in_queue)[(buf_offset+STC007DataBlock::LINE_Q0)].line_number,
                                  (buf_offset+STC007DataBlock::LINE_L0),
                                  (buf_offset+STC007DataBlock::LINE_R0),
                                  (buf_offset+STC007DataBlock::LINE_L1),
@@ -5549,7 +5603,7 @@ uint16_t STC007DataStitcher::patchBrokenLines(std::deque<STC007Line> *in_queue)
                                  broken_stat[buf_offset+STC007DataBlock::LINE_P0],
                                  broken_stat[buf_offset+STC007DataBlock::LINE_Q0]);
                 qInfo()<<log_line;
-            }*/
+            }
 #endif
         }
         // Go to the next line in the buffer.
@@ -5591,12 +5645,12 @@ uint16_t STC007DataStitcher::patchBrokenLines(std::deque<STC007Line> *in_queue)
                 qInfo()<<"[L2B-007] Broken: "<<broken_line;
             }
 #endif
-            for(buf_offset=0;buf_offset<filt_stat.size();buf_offset++)
+            /*for(buf_offset=0;buf_offset<filt_stat.size();buf_offset++)
             {
                 (*in_queue)[filt_stat[buf_offset]].setSilent();
                 (*in_queue)[filt_stat[buf_offset]].setInvalidCRC();
                 (*in_queue)[filt_stat[buf_offset]].setForcedBad();
-            }
+            }*/
         }
     }
 
