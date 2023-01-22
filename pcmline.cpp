@@ -88,10 +88,7 @@ bool PCMLine::operator!= (const PCMLine &in_object)
     {
         return false;
     }
-    else
-    {
-        return true;
-    }
+    return true;
 }
 
 //------------------------ Reset all fields to default.
@@ -206,7 +203,7 @@ void PCMLine::setForcedBad()
     forced_bad = true;
 }
 
-//------------------------ Set pixel count of the source [VideoLine].
+//------------------------ Set pixel limits of the source [VideoLine].
 void PCMLine::setSourcePixels(uint16_t in_start, uint16_t in_stop)
 {
     if(in_stop>in_start)
@@ -220,8 +217,8 @@ void PCMLine::setSourcePixels(uint16_t in_start, uint16_t in_stop)
     }
 }
 
-//------------------------ Calculate and store int-multiplied PPB (pixel-per-bit) value (from [BITS_IN_LINE] bits span).
-//------------------------ Pre-calculate coordinates table.
+//------------------------ Calculate and store int-multiplied PPB (Pixels Per Bit) value (from [getBitsBetweenDataCoordinates()] bits span).
+//------------------------ Pre-calculate coordinates tables per shifting stages.
 //------------------------ MUST be called after data coordinates are set and before any [findVideoPixel()] calls!
 void PCMLine::calcPPB(CoordinatePair in_coords)
 {
@@ -234,13 +231,13 @@ void PCMLine::calcPPB(CoordinatePair in_coords)
     }
 }
 
-//------------------------ Get PPB (pixep per bit) integer value.
+//------------------------ Get PPB (Pixels Per Bit) integer value.
 uint8_t PCMLine::getPPB()
 {
     return pixel_size_mult/INT_CALC_MULT;
 }
 
-//------------------------ Get PPB (pixep per bit) fraction value (integer after point).
+//------------------------ Get PPB (Pixels Per Bit) fraction value (integer after point).
 uint8_t PCMLine::getPPBfrac()
 {
     return pixel_size_mult%INT_CALC_MULT;
@@ -249,7 +246,7 @@ uint8_t PCMLine::getPPBfrac()
 //------------------------ Get calculated coordinate of pixel in video line for requested PCM bit number.
 //------------------------ Apply non-uniform (different for begining, center and end of the line) pixel-shifting to coordinates.
 //------------------------ [setPPB()] or [calcPPB()] MUST be called before any [findVideoPixel()] calls!
-uint16_t PCMLine::getVideoPixelC(uint8_t pcm_bit, uint8_t in_shift, uint8_t bit_ofs)
+uint16_t PCMLine::getVideoPixeBylCalc(uint8_t pcm_bit, uint8_t in_shift, uint8_t bit_ofs)
 {
     int32_t video_pixel;
     int8_t bg_shift, ed_shift;
@@ -300,7 +297,7 @@ uint16_t PCMLine::getVideoPixelC(uint8_t pcm_bit, uint8_t in_shift, uint8_t bit_
         // Middle part should not move with non-uniform shift.
     }
 
-    // Correct if out of bounds.
+    // Correct if pixel is out of bounds.
     if(video_pixel<pixel_start)
     {
         video_pixel = pixel_start;
@@ -454,6 +451,7 @@ void PCMLine::CRC16_init(uint16_t *CRC_data)
 }
 
 //------------------------ Update CRC16 data by calculation.
+//------------------------ Universal function that can be used to process any number of bits from the input word.
 uint16_t PCMLine::getCalcCRC16(uint16_t CRC_data, uint16_t in_data, uint8_t bit_cnt)
 {
     // Cycle through all bits in the word (may be any number of bits from 1 to 16).
@@ -497,8 +495,8 @@ void PCMLine::setServiceLine()
     line_number = line;
 }
 
-//------------------------ Calculate and store int-multiplied PPB (pixel-per-bit) value
-//------------------------ from provided video line length (in pixels) and bit count between data coordinates.
+//------------------------ Calculate and store int-multiplied PPB (Pixels Per Bit) value
+//------------------------ from provided data coordinates (in pixels) and bit count between data coordinates.
 void PCMLine::setPPB(CoordinatePair in_coords)
 {
     uint8_t bit_count;

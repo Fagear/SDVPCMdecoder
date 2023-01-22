@@ -232,7 +232,7 @@ MainWindow::MainWindow(QWidget *parent) :
     V2D_worker = new VideoToDigital();
     V2D_worker->setInputPointers(&video_lines, &vl_lock);
     V2D_worker->setOutPCM1Pointers(&pcm1_lines, &pcm1line_lock);
-    V2D_worker->setOutPCM16X0Pointers(&pcm16x0_lines, &pcm16x0subline_lock);
+    V2D_worker->setOutPCM16X0Pointers(&pcm16x0_sublines, &pcm16x0subline_lock);
     V2D_worker->setOutSTC007Pointers(&stc007_lines, &stcline_lock);
     V2D_worker->moveToThread(conv_V2D);
     connect(conv_V2D, SIGNAL(started()), V2D_worker, SLOT(doBinarize()));
@@ -280,7 +280,7 @@ MainWindow::MainWindow(QWidget *parent) :
     conv_L2B_PCM16X0 = NULL;
     conv_L2B_PCM16X0 = new QThread;
     L2B_PCM16X0_worker = new PCM16X0DataStitcher;
-    L2B_PCM16X0_worker->setInputPointers(&pcm16x0_lines, &pcm16x0subline_lock);
+    L2B_PCM16X0_worker->setInputPointers(&pcm16x0_sublines, &pcm16x0subline_lock);
     L2B_PCM16X0_worker->setOutputPointers(&audio_data, &audio_lock);
     L2B_PCM16X0_worker->moveToThread(conv_L2B_PCM16X0);
     connect(conv_L2B_PCM16X0, SIGNAL(started()), L2B_PCM16X0_worker, SLOT(doFrameReassemble()));
@@ -597,11 +597,11 @@ void MainWindow::setGUILanguage(QString in_locale, bool suppress)
     disableGUIEvents();
     // Update window strings.
     ui->retranslateUi(this);
+    // Re-apply all GUI settings.
+    readGUISettings();
     // Re-open visualizations to update strings.
     reopenVisSource();
     reopenVisualizers();
-    // Re-apply all GUI settings.
-    readGUISettings();
 }
 
 //------------------------ Set options for [VideoInFFMPEG] module.
@@ -1922,7 +1922,7 @@ void MainWindow::showVisSource(bool is_checked)
             connect(VIN_worker, SIGNAL(newLine(VideoLine)), renderSource, SLOT(renderNewLine(VideoLine)));
         }
         connect(VIN_worker, SIGNAL(frameDecoded(uint32_t)), renderSource, SLOT(finishNewFrame(uint32_t)));
-        connect(renderSource, SIGNAL(newFrame(QImage,uint32_t)), visuSource, SLOT(drawFrame(QImage,uint32_t)));
+        connect(renderSource, SIGNAL(renderedFrame(QImage)), visuSource, SLOT(drawFrame(QImage)));
         connect(visuSource, SIGNAL(readyToDraw()), renderSource, SLOT(displayIsReady()));
 
         vis_thread->start(QThread::LowPriority);
@@ -1962,7 +1962,6 @@ void MainWindow::showVisBin(bool is_checked)
 
         connect(this, SIGNAL(aboutToExit()), visuBin, SLOT(close()));
 
-        renderBin->startVideoFrame();
         renderBin->setLivePlay(ui->cbxLivePB->isChecked());
         connect(ui->cbxLivePB, SIGNAL(clicked(bool)), renderBin, SLOT(setLivePlay(bool)));
         connect(this, SIGNAL(newVideoStandard(uint8_t)), renderBin, SLOT(setFrameTime(uint8_t)));
@@ -1984,7 +1983,7 @@ void MainWindow::showVisBin(bool is_checked)
             renderBin->setLineCount(FrameAsmDescriptor::VID_UNKNOWN);
             connect(this, SIGNAL(retransmitBinLine(STC007Line)), renderBin, SLOT(renderNewLine(STC007Line)));
         }
-        connect(renderBin, SIGNAL(newFrame(QImage,uint32_t)), visuBin, SLOT(drawFrame(QImage,uint32_t)));
+        connect(renderBin, SIGNAL(renderedFrame(QImage)), visuBin, SLOT(drawFrame(QImage)));
         connect(visuBin, SIGNAL(readyToDraw()), renderBin, SLOT(displayIsReady()));
 
         vis_thread->start(QThread::LowPriority);
@@ -2045,7 +2044,7 @@ void MainWindow::showVisAssembled(bool is_checked)
             renderAssembled->startSTC007NTSCFrame();
             connect(this, SIGNAL(retransmitAsmLine(STC007Line)), renderAssembled, SLOT(renderNewLine(STC007Line)));
         }
-        connect(renderAssembled, SIGNAL(newFrame(QImage,uint32_t)), visuAssembled, SLOT(drawFrame(QImage,uint32_t)));
+        connect(renderAssembled, SIGNAL(renderedFrame(QImage)), visuAssembled, SLOT(drawFrame(QImage)));
         connect(visuAssembled, SIGNAL(readyToDraw()), renderAssembled, SLOT(displayIsReady()));
 
         vis_thread->start(QThread::LowPriority);
@@ -2106,7 +2105,7 @@ void MainWindow::showVisBlocks(bool is_checked)
             renderBlocks->startSTC007DBFrame();
             connect(this, SIGNAL(retransmitPCMDataBlock(STC007DataBlock)), renderBlocks, SLOT(renderNewBlock(STC007DataBlock)));
         }
-        connect(renderBlocks, SIGNAL(newFrame(QImage,uint32_t)), visuBlocks, SLOT(drawFrame(QImage,uint32_t)));
+        connect(renderBlocks, SIGNAL(renderedFrame(QImage)), visuBlocks, SLOT(drawFrame(QImage)));
         connect(visuBlocks, SIGNAL(readyToDraw()), renderBlocks, SLOT(displayIsReady()));
 
         vis_thread->start(QThread::LowPriority);
@@ -2602,7 +2601,7 @@ void MainWindow::updateGUIByTimer()
     {
         if(pcm16x0subline_lock.tryLock(5)!=false)
         {
-            buf_size = pcm16x0_lines.size();
+            buf_size = pcm16x0_sublines.size();
             pcm16x0subline_lock.unlock();
             ui->pgrLineBuf->setValue(buf_size*100/MAX_PCMLINE_QUEUE_SIZE);
         }
@@ -3325,6 +3324,425 @@ void MainWindow::updateStatsDroppedFrame()
     stat_drop_frame_cnt++;
 }
 
+//------------------------ Make a user-log string for the frame assembly data.
+QString MainWindow::logStatsFrameAsm(FrameAsmPCM1 asm_data)
+{
+    QString frame_log, tmp_log;
+    FrameBinDescriptor bin_data;
+    // Log frame number.
+    frame_log.sprintf("F[%06u] ", asm_data.frame_number);
+    // Get binarization stats for the frame.
+    bin_data = getBinDescriptorByFrameNo(asm_data.frame_number);
+    if(bin_data.data_coord.isSourceDoubleWidth()!=false)
+    {
+        bin_data.line_length = bin_data.line_length/2;
+        if(bin_data.data_coord.areValid()!=false)
+        {
+            bin_data.data_coord.data_start = bin_data.data_coord.data_start/2;
+            bin_data.data_coord.data_stop = bin_data.data_coord.data_stop/2;
+        }
+    }
+    // Log video standard.
+    if(asm_data.odd_std_lines==LINES_PER_NTSC_FIELD)
+    {
+        frame_log += "NTSC ";
+    }
+    else if(asm_data.odd_std_lines==LINES_PER_PAL_FIELD)
+    {
+        frame_log += "PAL  ";
+    }
+    else
+    {
+        frame_log += "     ";
+    }
+    // Log number of lines and vertical data coordinates.
+    tmp_log.sprintf("Lo[%03u/%03u/%03u] Le[%03u/%03u/%03u] Vo[%03u/%03u] Ve[%03u/%03u] ",
+                      asm_data.odd_std_lines, asm_data.odd_data_lines, asm_data.odd_valid_lines,
+                      asm_data.even_std_lines, asm_data.even_data_lines, asm_data.even_valid_lines,
+                      asm_data.odd_top_data, asm_data.odd_bottom_data,
+                      asm_data.even_top_data, asm_data.even_bottom_data);
+    frame_log += tmp_log;
+    // Log horizontal data coordinates.
+    tmp_log.sprintf("H[0:%03u]", bin_data.line_length);
+    frame_log += tmp_log;
+    if(bin_data.data_coord.isSourceDoubleWidth()==false)
+    {
+        frame_log += "[???:???] ";
+    }
+    else
+    {
+        tmp_log.sprintf("[%03d:%03d] ",
+                        bin_data.data_coord.data_start,
+                        bin_data.data_coord.data_stop);
+        frame_log += tmp_log;
+    }
+    // Log field order.
+    if(asm_data.field_order==FrameAsmDescriptor::ORDER_TFF)
+    {
+        frame_log += "O[TFF]";
+    }
+    else if(asm_data.field_order==FrameAsmDescriptor::ORDER_BFF)
+    {
+        frame_log += "O[BFF]";
+    }
+    else
+    {
+        frame_log += "O[UNK]";
+    }
+    if(asm_data.isOrderGuessed()!=false)
+    {
+        frame_log += "[G] ";
+    }
+    else if(asm_data.isOrderPreset()!=false)
+    {
+        frame_log += "[F] ";
+    }
+    else
+    {
+        frame_log += "[A] ";
+    }
+    // Log reference level.
+    tmp_log.sprintf("R[%03u/%03u] ", asm_data.odd_ref, asm_data.even_ref);
+    frame_log += tmp_log;
+    // Log padding status.
+    tmp_log.sprintf("Po[%03u/%03u] Pe[%03u/%03u] ",
+                    asm_data.odd_top_padding,
+                    asm_data.odd_bottom_padding,
+                    asm_data.even_top_padding,
+                    asm_data.even_bottom_padding);
+    frame_log += tmp_log;
+    // Log data block counts.
+    tmp_log.sprintf("B[%02u/%02u/%02u] ",
+                    asm_data.blocks_total, asm_data.blocks_fix_bp, asm_data.blocks_drop);
+    frame_log += tmp_log;
+    // Log sample rate.
+    tmp_log.sprintf("S[%05u/%05u] ", asm_data.odd_sample_rate, asm_data.even_sample_rate);
+    frame_log += tmp_log;
+    // Log emphasis status.
+    if(asm_data.odd_emphasis==false)
+    {
+        frame_log += "E[N/";
+    }
+    else
+    {
+        frame_log += "E[Y/";
+    }
+    if(asm_data.even_emphasis==false)
+    {
+        frame_log += "N]";
+    }
+    else
+    {
+        frame_log += "Y]";
+    }
+    return frame_log;
+}
+
+//------------------------ Make a user-log string for the frame assembly data.
+QString MainWindow::logStatsFrameAsm(FrameAsmPCM16x0 asm_data)
+{
+    QString frame_log, tmp_log;
+    FrameBinDescriptor bin_data;
+    // Log frame number.
+    frame_log.sprintf("F[%06u] ", asm_data.frame_number);
+    // Get binarization stats for the frame.
+    bin_data = getBinDescriptorByFrameNo(asm_data.frame_number);
+    if(bin_data.data_coord.isSourceDoubleWidth()!=false)
+    {
+        bin_data.line_length = bin_data.line_length/2;
+        if(bin_data.data_coord.areValid()!=false)
+        {
+            bin_data.data_coord.data_start = bin_data.data_coord.data_start/2;
+            bin_data.data_coord.data_stop = bin_data.data_coord.data_stop/2;
+        }
+    }
+    // Log video standard.
+    if(asm_data.odd_std_lines==LINES_PER_NTSC_FIELD)
+    {
+        frame_log += "NTSC ";
+    }
+    else if(asm_data.odd_std_lines==LINES_PER_PAL_FIELD)
+    {
+        frame_log += "PAL  ";
+    }
+    else
+    {
+        frame_log += "     ";
+    }
+    // Log number of lines and vertical data coordinates.
+    tmp_log.sprintf("Lo[%03u/%03u/%03u] Le[%03u/%03u/%03u] Vo[%03u/%03u] Ve[%03u/%03u] ",
+                      asm_data.odd_std_lines, asm_data.odd_data_lines, asm_data.odd_valid_lines,
+                      asm_data.even_std_lines, asm_data.even_data_lines, asm_data.even_valid_lines,
+                      asm_data.odd_top_data, asm_data.odd_bottom_data,
+                      asm_data.even_top_data, asm_data.even_bottom_data);
+    frame_log += tmp_log;
+    // Log horizontal data coordinates.
+    tmp_log.sprintf("H[0:%03u]", bin_data.line_length);
+    frame_log += tmp_log;
+    if(bin_data.data_coord.isSourceDoubleWidth()==false)
+    {
+        frame_log += "[???:???] ";
+    }
+    else
+    {
+        tmp_log.sprintf("[%03d:%03d] ",
+                        bin_data.data_coord.data_start,
+                        bin_data.data_coord.data_stop);
+        frame_log += tmp_log;
+    }
+    // Log field order.
+    if(asm_data.field_order==FrameAsmDescriptor::ORDER_TFF)
+    {
+        frame_log += "O[TFF]";
+    }
+    else if(asm_data.field_order==FrameAsmDescriptor::ORDER_BFF)
+    {
+        frame_log += "O[BFF]";
+    }
+    else
+    {
+        frame_log += "O[UNK]";
+    }
+    if(asm_data.isOrderGuessed()!=false)
+    {
+        frame_log += "[G] ";
+    }
+    else if(asm_data.isOrderPreset()!=false)
+    {
+        frame_log += "[F] ";
+    }
+    else
+    {
+        frame_log += "[A] ";
+    }
+    // Log reference level.
+    tmp_log.sprintf("R[%03u/%03u] ", asm_data.odd_ref, asm_data.even_ref);
+    frame_log += tmp_log;
+    // Log padding status.
+    if(asm_data.padding_ok!=false)
+    {
+        frame_log += "P[OK]";
+    }
+    else if(asm_data.silence==false)
+    {
+        frame_log += "P[BD]";
+    }
+    else
+    {
+        frame_log += "P[SL]";
+    }
+    tmp_log.sprintf("[%03u/%03u][%03u/%03u] ",
+                    asm_data.odd_top_padding,
+                    asm_data.odd_bottom_padding,
+                    asm_data.even_top_padding,
+                    asm_data.even_bottom_padding);
+    frame_log += tmp_log;
+    // Log data block counts.
+    tmp_log.sprintf("B[%04u/%04u/%04u/%04u/%04u/%04u] ",
+                    asm_data.blocks_total, asm_data.blocks_fix_bp, asm_data.blocks_fix_p, asm_data.blocks_fix_cwd,
+                    asm_data.blocks_broken, asm_data.blocks_drop);
+    frame_log += tmp_log;
+    // Log SI/EI format.
+    if(asm_data.ei_format==false)
+    {
+        frame_log += "D[SI] ";
+    }
+    else
+    {
+        frame_log += "D[EI] ";
+    }
+    // Log sample rate.
+    tmp_log.sprintf("S[%05u/%05u] ", asm_data.odd_sample_rate, asm_data.even_sample_rate);
+    frame_log += tmp_log;
+    // Log emphasis status.
+    if(asm_data.odd_emphasis==false)
+    {
+        frame_log += "E[N/";
+    }
+    else
+    {
+        frame_log += "E[Y/";
+    }
+    if(asm_data.even_emphasis==false)
+    {
+        frame_log += "N]";
+    }
+    else
+    {
+        frame_log += "Y]";
+    }
+    return frame_log;
+}
+
+//------------------------ Make a user-log string for the frame assembly data.
+QString MainWindow::logStatsFrameAsm(FrameAsmSTC007 asm_data)
+{
+    QString frame_log, tmp_log;
+    FrameBinDescriptor bin_data;
+    // Log frame number.
+    frame_log.sprintf("F[%06u] ", asm_data.frame_number);
+    // Get binarization stats for the frame.
+    bin_data = getBinDescriptorByFrameNo(asm_data.frame_number);
+    if(bin_data.data_coord.isSourceDoubleWidth()!=false)
+    {
+        bin_data.line_length = bin_data.line_length/2;
+        if(bin_data.data_coord.areValid()!=false)
+        {
+            bin_data.data_coord.data_start = bin_data.data_coord.data_start/2;
+            bin_data.data_coord.data_stop = bin_data.data_coord.data_stop/2;
+        }
+    }
+    // Log video standard.
+    if(asm_data.odd_std_lines==LINES_PER_NTSC_FIELD)
+    {
+        frame_log += "NTSC ";
+    }
+    else if(asm_data.odd_std_lines==LINES_PER_PAL_FIELD)
+    {
+        frame_log += "PAL  ";
+    }
+    else
+    {
+        frame_log += "     ";
+    }
+    // Log number of lines and vertical data coordinates.
+    tmp_log.sprintf("Lo[%03u/%03u/%03u] Le[%03u/%03u/%03u] Vo[%03u/%03u] Ve[%03u/%03u] ",
+                      asm_data.odd_std_lines, asm_data.odd_data_lines, asm_data.odd_valid_lines,
+                      asm_data.even_std_lines, asm_data.even_data_lines, asm_data.even_valid_lines,
+                      asm_data.odd_top_data, asm_data.odd_bottom_data,
+                      asm_data.even_top_data, asm_data.even_bottom_data);
+    frame_log += tmp_log;
+    // Log horizontal data coordinates.
+    tmp_log.sprintf("H[0:%03u]", bin_data.line_length);
+    frame_log += tmp_log;
+    if(bin_data.data_coord.isSourceDoubleWidth()==false)
+    {
+        frame_log += "[???:???] ";
+    }
+    else
+    {
+        tmp_log.sprintf("[%03d:%03d] ",
+                        bin_data.data_coord.data_start,
+                        bin_data.data_coord.data_stop);
+        frame_log += tmp_log;
+    }
+    // Log field order.
+    if(asm_data.field_order==FrameAsmDescriptor::ORDER_TFF)
+    {
+        frame_log += "O[TFF]";
+    }
+    else if(asm_data.field_order==FrameAsmDescriptor::ORDER_BFF)
+    {
+        frame_log += "O[BFF]";
+    }
+    else
+    {
+        frame_log += "O[UNK]";
+    }
+    if(asm_data.isOrderGuessed()!=false)
+    {
+        frame_log += "[G] ";
+    }
+    else if(asm_data.isOrderPreset()!=false)
+    {
+        frame_log += "[F] ";
+    }
+    else
+    {
+        frame_log += "[A] ";
+    }
+    // Log reference level.
+    tmp_log.sprintf("R[%03u/%03u] ", asm_data.odd_ref, asm_data.even_ref);
+    frame_log += tmp_log;
+    // Log padding status.
+    if(asm_data.inner_padding_ok!=false)
+    {
+        frame_log += "P[OK]";
+    }
+    else if(asm_data.inner_silence==false)
+    {
+        frame_log += "P[BD]";
+    }
+    else
+    {
+        frame_log += "P[SL]";
+    }
+    tmp_log.sprintf("[%03u]", asm_data.inner_padding);
+    frame_log += tmp_log;
+    if(asm_data.outer_padding_ok!=false)
+    {
+        frame_log += "[OK]";
+    }
+    else if(asm_data.outer_silence==false)
+    {
+        frame_log += "[BD]";
+    }
+    else
+    {
+        frame_log += "[SL]";
+    }
+    tmp_log.sprintf("[%03u] ", asm_data.outer_padding);
+    frame_log += tmp_log;
+    // Log data block counts.
+    tmp_log.sprintf("B[%03u/%03u/%03u/%03u/%03u/%03u] ",
+                    asm_data.blocks_total, asm_data.blocks_fix_p, asm_data.blocks_fix_q, asm_data.blocks_fix_cwd,
+                    asm_data.blocks_broken_field, asm_data.blocks_drop);
+    frame_log += tmp_log;
+    // Log audio resolution.
+    if((asm_data.odd_resolution==STC007Deinterleaver::RES_MODE_14BIT)||(asm_data.odd_resolution==STC007Deinterleaver::RES_MODE_14BIT_AUTO))
+    {
+        frame_log += "A[14bit/";
+    }
+    else
+    {
+        frame_log += "A[16bit/";
+    }
+    if((asm_data.even_resolution==STC007Deinterleaver::RES_MODE_14BIT)||(asm_data.even_resolution==STC007Deinterleaver::RES_MODE_14BIT_AUTO))
+    {
+        frame_log += "14bit] ";
+    }
+    else
+    {
+        frame_log += "16bit] ";
+    }
+    // Log index/address information.
+    if(asm_data.isAddressSet()==false)
+    {
+        frame_log += "[I][--][--:--:--.--] ";
+    }
+    else
+    {
+        tmp_log.sprintf("[I][%02d][%02d:%02d:%02d.%02d] ",
+                        asm_data.ctrl_index,
+                        asm_data.ctrl_hour,
+                        asm_data.ctrl_minute,
+                        asm_data.ctrl_second,
+                        asm_data.ctrl_field);
+        frame_log += tmp_log;
+    }
+    // Log sample rate.
+    tmp_log.sprintf("S[%05u/%05u] ", asm_data.odd_sample_rate, asm_data.even_sample_rate);
+    frame_log += tmp_log;
+    // Log emphasis status.
+    if(asm_data.odd_emphasis==false)
+    {
+        frame_log += "E[N/";
+    }
+    else
+    {
+        frame_log += "E[Y/";
+    }
+    if(asm_data.even_emphasis==false)
+    {
+        frame_log += "N]";
+    }
+    else
+    {
+        frame_log += "Y]";
+    }
+    return frame_log;
+}
+
 //------------------------ Update stats and video processor with new frame assembling settings.
 void MainWindow::updateStatsFrameAsm(FrameAsmPCM1 new_trim)
 {
@@ -3347,6 +3765,8 @@ void MainWindow::updateStatsFrameAsm(FrameAsmPCM1 new_trim)
     emit newFrameAssembled(frame_asm_pcm1.frame_number);
     // Report video standard information for PCM-1.
     emit newVideoStandard(FrameAsmDescriptor::VID_NTSC);
+
+    //qDebug()<<logStatsFrameAsm(new_trim);
 }
 
 //------------------------ Update stats and video processor with new frame assembling settings.
@@ -3381,6 +3801,8 @@ void MainWindow::updateStatsFrameAsm(FrameAsmPCM16x0 new_trim)
     emit newVideoStandard(FrameAsmDescriptor::VID_NTSC);
     // Report the number of the assembled frame.
     emit newFrameAssembled(frame_asm_pcm16x0.frame_number);
+
+    //qDebug()<<logStatsFrameAsm(new_trim);
 }
 
 //------------------------ Update stats and video processor with new frame assembling settings.
@@ -3450,6 +3872,8 @@ void MainWindow::updateStatsFrameAsm(FrameAsmSTC007 new_trim)
     emit newVideoStandard(new_trim.video_standard);
     // Report the number of the assembled frame.
     emit newFrameAssembled(new_trim.frame_number);
+
+    //qDebug()<<logStatsFrameAsm(new_trim);
 }
 
 //------------------------ Update stats with new value for masked samples.

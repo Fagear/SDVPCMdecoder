@@ -1,4 +1,38 @@
-﻿#ifndef STC007LINE_H
+﻿/**************************************************************************************************************************************************************
+stc007line.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2020-04
+
+Binarized STC-007/PCM-F1/M2 line container.
+Sub-class of [PCMLine].
+
+Data container used between [Binarizer] and [STC007DataStitcher]/[STC007Deinterleaver] modules.
+Object contains STC-007-specific data after binarization. Line structure does not differ between STC-007, PCM-F1 and M2 formats so it is used for all of those.
+It holds pre-calculated bit coordinates in [pixel_coordinates[][]], data words in [words[]], per-word validity flags in [word_crc[]] and [word_valid[]]
+and START/STOP marker data coordinates (which are translated into data coordinates) with last stage of detection of each of those.
+M2 format requires different "word -> sample" handling, so there is M2 format flag in [m2_format].
+
+This class handles detection of Control Block data structure within the line and provides interface to extract every data field of Control Block.
+See [hasControlBlock()], [isServCtrlBlk()], [getCtrlID()], [getCtrlIndex()], [getCtrlHour()], [getCtrlMinute()], [getCtrlSecond()], [getCtrlField()],
+[isCtrlCopyProhibited()], [isCtrlEnabledP()], [isCtrlEnabledQ()], [isCtrlEnabledEmphasis()].
+
+**************************************************************************************************************************************************************/
+
+#ifndef STC007LINE_H
 #define STC007LINE_H
 
 #include <stdint.h>
@@ -38,16 +72,18 @@ public:
     enum
     {
         BITS_PER_WORD = 14,     // Number of bits per PCM STC-007/STC-008 data word.
+        DATA_WORD_MASK = ((1<<BITS_PER_WORD)-1),    // Mask for a data word.
         BITS_PER_F1_WORD = 16,  // Number of bits per PCM PCM-F1 data word.
         BITS_PER_CRC = 16,      // Number of bits per CRC word.
+        CRC_WORD_MASK = ((1<<BITS_PER_CRC)-1),      // Mask for a CRC word.
         BITS_START = 4,         // Number of bits for PCM START marker.
         BITS_PCM_DATA = 128,    // Number of bits for data.
         BITS_STOP = 5,          // Number of bits for PCM STOP marker.
         BITS_IN_LINE = (BITS_START+BITS_PCM_DATA+BITS_STOP),    // Total number of useful bits in one video line.
         BITS_LEFT_SHIFT = 24,   // Highest bit number for left part pixel-shifting.
         BITS_RIGHT_SHIFT = 76,  // Lowest bit number for right part pixel-shifting.
-        BIT_M2_RANGE_POS = (1<<13), // R bit, that determines value range of other bits for M2 sample format.
-        BIT_M2_SIGN_POS = (1<<12)   // Sign bit in the source 14-bit word for M2 sample format.
+        BIT_M2_RANGE_POS = (1<<13),         // R bit, that determines value range of other bits for M2 sample format.
+        BIT_M2_SIGN_POS = (1<<12)           // Sign bit in the source 14-bit word for M2 sample format.
     };
 
     // Word order in the [words[]] for the line.
@@ -111,7 +147,8 @@ public:
         CTRL_COPY_MASK = 0x0008,    // Prohibition of digital dubbing ("0" = allowed, "1" = prohibited).
         CTRL_EN_P_MASK = 0x0004,    // Presence of P-word ("0" = present, "1" = absent).
         CTRL_EN_Q_MASK = 0x0002,    // Presence of Q-word/14-16 bit mode ("0" = present [14-bit], "1" = absent [16-bit]).
-        CTRL_EMPH_MASK = 0x0001     // Pre-emphasis ("0" = enabled, "1" = disabled).
+        CTRL_EMPH_MASK = 0x0001,    // Pre-emphasis ("0" = enabled, "1" = disabled).
+        CTRL_ZERO_MASK = 0x0FF0     // Mask for zeroed bits.
     };
 
 public:
@@ -123,10 +160,10 @@ public:
 
 private:
     bool m2_format;                 // Are samples formatted for M2?
+    uint16_t pixel_coordinates[PCM_LINE_MAX_PS_STAGES][BITS_PCM_DATA];      // Pre-calculated coordinates for all bits and pixel-shift stages.
     bool word_crc[WORD_CNT];        // Flags for each word (was word intact or not by CRC, used for CWD).
     bool word_valid[WORD_CNT];      // Flags for each word (is word intact after CWD correction).
     uint16_t words[WORD_CNT];       // 14 bit PCM words (2 MSBs unused) + 16 bit CRCC.
-    uint16_t pixel_coordinates[PCM_LINE_MAX_PS_STAGES][BITS_PCM_DATA];      // Pre-calculated coordinates for all bits and pixel-shift stages.
 
 public:
     STC007Line();
@@ -146,17 +183,18 @@ public:
     uint8_t getBitsBetweenDataCoordinates();
     uint8_t getLeftShiftZoneBit();
     uint8_t getRightShiftZoneBit();
-    uint16_t getVideoPixelT(uint8_t pcm_bit, uint8_t shift_stage);
+    uint16_t getVideoPixelByTable(uint8_t pcm_bit, uint8_t shift_stage);
     void calcCRC();
     uint16_t getSourceCRC();
     uint8_t getPCMType();
+    uint16_t getWord(uint8_t index);
     int16_t getSample(uint8_t index);
     int16_t getCtrlID();
     int8_t getCtrlIndex();
     int8_t getCtrlHour();
     int8_t getCtrlMinute();
     int8_t getCtrlSecond();
-    int8_t getCtrlFieldCode();
+    int8_t getCtrlField();
     bool hasStartMarker();
     bool hasStopMarker();
     bool hasMarkers();
@@ -175,7 +213,6 @@ public:
     bool isServCtrlBlk();
     bool isWordCRCOk(uint8_t index);
     bool isWordValid(uint8_t index);
-    uint16_t getWord(uint8_t index);
     std::string dumpWordsString();
     std::string dumpContentString();
     std::string helpDumpNext();

@@ -61,7 +61,10 @@ void VideoLine::setLength(uint16_t in_length)
 //------------------------ Set pixel brightness with boundary check.
 void VideoLine::setBrighness(uint16_t pixel_index, uint8_t data)
 {
-    if(pixel_index<pixel_data.size()) pixel_data.at(pixel_index) = data;
+    if(pixel_index<pixel_data.size())
+    {
+        pixel_data[pixel_index] = data;
+    }
 }
 
 //------------------------ Set flag "line is empty" for fast skipping for padded lines.
@@ -138,10 +141,7 @@ bool VideoLine::isServiceLine()
     {
         return false;
     }
-    else
-    {
-        return true;
-    }
+    return true;
 }
 
 //------------------------ Check if line has service tag "new file opened".
@@ -151,10 +151,7 @@ bool VideoLine::isServNewFile()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if line has service tag "file ended".
@@ -164,10 +161,7 @@ bool VideoLine::isServEndFile()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if line has service tag "filler line".
@@ -177,10 +171,7 @@ bool VideoLine::isServFiller()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if line has service tag "field ended".
@@ -190,10 +181,7 @@ bool VideoLine::isServEndField()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if line has service tag "frame ended".
@@ -203,8 +191,5 @@ bool VideoLine::isServEndFrame()
     {
         return true;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }

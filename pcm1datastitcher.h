@@ -1,7 +1,71 @@
-﻿#ifndef PCM1DATASTITCHER_H
+﻿/**************************************************************************************************************************************************************
+pcm1datastitcher.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2021-11
+
+"Data-stitcher" module for PCM-1 format. Wrapper for [PCM1Deinterleaver].
+[PCM1DataStitcher] takes input queue of [PCM1Line] and puts out set of the [PCMSamplePair] sub-class objects into the output queue.
+[PCM1DataStitcher] processes data on per-frame basis, waiting for "End Of Frame" service line tag in the input queue before starting processing the queue.
+[PCM1DataStitcher] performs:
+    - Vertical data coordinates detection (rudimentary);
+    - Frame trimming detection (empty lines discarding);
+    - Deinterleaving with [PCM1Deinterleaver];
+    - [PCM1DataBlock] to [PCMSamplePair] conversion;
+    - Per-frame statistics collection.
+
+Typical use case:
+    - Set pointer to the input PCM line queue with [setInputPointers()];
+    - Set pointer to the output audio sample queue with [setOutputPointers()];
+    - Call [doFrameReassemble()] to start execution loop;
+    - Set TFF or BFF field order with [setFieldOrder()];
+    - Feed data into the input queue that was set with [setInputPointers()].
+    -- optional: vertical coordinates detection can be toggled with [setAutoLineOffset()],
+                 vertical coordinates can be set per field with [setOddLineOffset()] and [setEvenLineOffset()].
+
+[PCM1DataStitcher] has fine settings for error masking.
+[setDefaultFineSettings()] will set default fine settings.
+[requestCurrentFineSettings()] will return current fine settings.
+New fine settings can be set with [setFineUseECC()].
+
+It would be easy to process all lines, deinterleave those and decode into samples if video captures were ideal
+and contained all source data lines and in the exact same places every time. But the reality is different.
+PCM processors utilize lines in the inactive region right after VBI. Most video capture devices unable to capture inactive region.
+Worse than that, different capture devices have different vertical offsets from VBI and it also can vary with video standard (PAL/NTSC).
+There are professional capture devices that can capture the whole frame but those are rare and expensive.
+This situation introduces static uncertainty to the vertical data coordinates.
+If captured video originated from a VTR, it introduces its own defects to the frame.
+Misaligned tape transport can introduce additional unknown vertical offset to the data, damaged tape can lead to sync losses, frame rolling, etc.
+In edge cases, two fields of the same frame can have different vertical offsets and that offset can jump and vary during playback.
+So, VTR introduces dynamic uncertainty to the capture.
+Sometimes noise in the picture can be treated as PCM data with invalid CRC by [Binarizer], other times lines with PCM damaged beyond recovery and lost.
+If those lines are right at the top or the bottom of the screen the decision has to be made: include those lines in the data stream or not?
+Usually capture is done with additional empty lines at the top and/or bottom of the screen.
+All that introduces even more uncertainty to the original data location.
+The decoder has no way of knowing how many lines been cut from the top of the frame (between VBI and first line of the captured frame)
+and where captured lines were placed in the original frame. That's a problem, because even if data is shifted by one line, data alignment will fail
+and we'll have incorrectly working error correction and corrupted data in general at the output.
+
+**************************************************************************************************************************************************************/
+
+#ifndef PCM1DATASTITCHER_H
 #define PCM1DATASTITCHER_H
 
 #include <stdint.h>
+#include <vector>
 #include <QApplication>
 #include <QDebug>
 #include <QElapsedTimer>
@@ -9,7 +73,6 @@
 #include <QObject>
 #include <QThread>
 #include <QString>
-#include <vector>
 #include "config.h"
 #include "frametrimset.h"
 #include "pcm1datablock.h"

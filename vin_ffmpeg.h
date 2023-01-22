@@ -1,4 +1,42 @@
-﻿#ifndef VIN_FFMPEG_H
+﻿/**************************************************************************************************************************************************************
+vin_ffmpeg.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2020-04
+
+Video input processor.
+[VideoInFFMPEG] receives video frames from FFMPEG wrapper and slices those into video lines.
+[VideoInFFMPEG] processes data on per-frame basis.
+[VideoInFFMPEG] performs:
+    - FFMPEG wrapper setup;
+    - Playback control (start/pause/stop);
+    - Video frames receive;
+    - Dropped frames protection;
+    - Slicing video frame into individual video lines;
+    - Deinterlacing.
+
+Typical use case:
+    - Set pointer to the output video line queue with [setOutputPointers()];
+    - Call [runFrameDecode()] to start execution loop;
+    - Set source path to open with [setSourceLocation()];
+    - Call [mediaPlay()] to start decoding, [mediaStop()] to stop decoding.
+
+**************************************************************************************************************************************************************/
+
+#ifndef VIN_FFMPEG_H
 #define VIN_FFMPEG_H
 
 #include <queue>
@@ -15,8 +53,6 @@
 #include <QString>
 #include "config.h"
 #include "ffmpegwrapper.h"
-//#include "stc007datablock.h"
-//#include "stc007datastitcher.h"
 #include "vid_preset_t.h"
 #include "videoline.h"
 
@@ -106,8 +142,8 @@ private:
     QString src_path;           // Location of the media source.
     QString last_error_txt;     // Human-readable description of the last error.
     std::deque<VideoLine> *out_lines;   // Pointer to output queue of video lines.
-    VideoLine gray_line;
-    VideoLine dummy_line;
+    VideoLine gray_line;        // Video line object that stores per-line data for the output.
+    VideoLine dummy_line;       // Dummy video line used for dummy frames.
     QMutex *mtx_lines;          // Lock for [lines_queue].
     QThread *ffmpeg_thread;     // Thread for FFMPEG wrapper.
     FFMPEGWrapper *ffmpeg_src;  // FFMPEG Qt-wrapper.

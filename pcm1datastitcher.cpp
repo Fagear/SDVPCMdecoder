@@ -582,22 +582,22 @@ void PCM1DataStitcher::splitLineToSubline(PCM1Line *in_line, PCM1SubLine *out_su
     if(part==PCM1SubLine::PART_LEFT)
     {
         // Copy data words.
-        out_sub->setLeft(in_line->words[PCM1Line::WORD_L2]);
-        out_sub->setRight(in_line->words[PCM1Line::WORD_R2]);
+        out_sub->setLeft(in_line->getWord(PCM1Line::WORD_L2));
+        out_sub->setRight(in_line->getWord(PCM1Line::WORD_R2));
         // Copy count of picked bits from the leftmost word.
         out_sub->picked_bits_left = in_line->picked_bits_left;
     }
     else if(part==PCM1SubLine::PART_MIDDLE)
     {
         // Copy data words.
-        out_sub->setLeft(in_line->words[PCM1Line::WORD_L4]);
-        out_sub->setRight(in_line->words[PCM1Line::WORD_R4]);
+        out_sub->setLeft(in_line->getWord(PCM1Line::WORD_L4));
+        out_sub->setRight(in_line->getWord(PCM1Line::WORD_R4));
     }
     else if(part==PCM1SubLine::PART_RIGHT)
     {
         // Copy data words.
-        out_sub->setLeft(in_line->words[PCM1Line::WORD_L6]);
-        out_sub->setRight(in_line->words[PCM1Line::WORD_R6]);
+        out_sub->setLeft(in_line->getWord(PCM1Line::WORD_L6));
+        out_sub->setRight(in_line->getWord(PCM1Line::WORD_R6));
     }
     // Copy count of picked bits from the whole line CRC.
     out_sub->picked_bits_right = in_line->picked_bits_right;
@@ -1410,6 +1410,7 @@ void PCM1DataStitcher::performDeinterleave()
         pcm_block.clear();
         // Fill up data block, performing de-interleaving, convert lines to data blocks.
         lines_to_block.processBlock(iblk);
+        frasm_f1.blocks_total++;
         // Set emphasis for the block from the frame emphasis flag.
         pcm_block.setEmphasis(emphasis_set);
         frasm_f1.odd_emphasis = frasm_f1.even_emphasis = emphasis_set;
@@ -1423,6 +1424,9 @@ void PCM1DataStitcher::performDeinterleave()
             // Samples in data block are corrupted.
             frasm_f1.samples_drop += pcm_block.getErrorsAudio();
         }
+
+        // TODO: implement [blocks_fix_bp] count
+
 #ifdef DI_EN_DBG_OUT
         if((log_level&LOG_BLOCK_DUMP)!=0)
         {

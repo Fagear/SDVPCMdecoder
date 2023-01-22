@@ -1,4 +1,44 @@
-﻿#ifndef VIDEOTODIGITAL_H
+﻿/**************************************************************************************************************************************************************
+videotodigital.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2020-06
+
+Converter from video lines to binarized PCM lines. Wrapper for [Binarizer].
+[VideoToDigital] takes input queue of [VideoLine] and puts one of the [PCMLine] sub-class objects into the output queue.
+[Binarizer] operates on per-line basis and doesn't take frames into account.
+[VideoToDigital] processes data on per-frame basis, waiting for "End Of Frame" service line tag in the input queue before starting processing the queue.
+[VideoToDigital] performs:
+    - Duplicated lines protection (if set by [setCheckLineDup()]);
+    - [Binarizer] settings management and feedback;
+    - Multi-subline binarization (for PCM-16x0);
+    - Horizontal coordinates damping;
+    - Per-frame statistics collection.
+
+Typical use case:
+    - Set pointer to the input video line queue with [setInputPointers()];
+    - Set pointers to the output PCM line queues (one per format) with [setOutPCM1Pointers()], [setOutPCM16X0Pointers()], [setOutSTC007Pointers()];
+    - Set PCM format with [setPCMType()];
+    - Set mode for desired speed/quality with [setBinarizationMode()];
+    - Call [doBinarize()] to start execution loop;
+    - Feed data into the input queue that was set with [setInputPointers()].
+
+**************************************************************************************************************************************************************/
+
+#ifndef VIDEOTODIGITAL_H
 #define VIDEOTODIGITAL_H
 
 #include <deque>
@@ -23,6 +63,7 @@
 #include "videoline.h"
 
 //------------------------ Qt-wrapper for [Binarizer] and data stabilizer.
+// TODO: process each field with its own Binarizer to speed up processing.
 class VideoToDigital : public QObject
 {
     Q_OBJECT

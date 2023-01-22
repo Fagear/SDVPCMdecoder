@@ -11,12 +11,12 @@ bool PCMTester::testPCM1CRCC()
     QString log_line;
     PCM1Line pcm1dummy;
     // Fill up test sequence with 13-bit words.
-    pcm1dummy.words[PCM1Line::WORD_L2] = 0x1A35;
-    pcm1dummy.words[PCM1Line::WORD_R2] = 0x1248;
-    pcm1dummy.words[PCM1Line::WORD_L4] = 0x0DD9;
-    pcm1dummy.words[PCM1Line::WORD_R4] = 0x13FB;
-    pcm1dummy.words[PCM1Line::WORD_L6] = 0x1C0E;
-    pcm1dummy.words[PCM1Line::WORD_R6] = 0x09CB;
+    pcm1dummy.setWord(PCM1Line::WORD_L2, 0x1A35);
+    pcm1dummy.setWord(PCM1Line::WORD_R2, 0x1248);
+    pcm1dummy.setWord(PCM1Line::WORD_L4, 0x0DD9);
+    pcm1dummy.setWord(PCM1Line::WORD_R4, 0x13FB);
+    pcm1dummy.setWord(PCM1Line::WORD_L6, 0x1C0E);
+    pcm1dummy.setWord(PCM1Line::WORD_R6, 0x09CB);
     // Fill CRC that should fit words above.
     pcm1dummy.setSourceCRC(0x9EB9);
     // Calculate CRC for filled words to test calculation process.
@@ -42,9 +42,9 @@ bool PCMTester::testPCM16x0CRCC()
     QString log_line;
     PCM16X0SubLine pcm16x0dummy;
     // Fill up test sequence with 16-bit words.
-    pcm16x0dummy.words[PCM16X0SubLine::WORD_R1P1L1] = 0xD527;
-    pcm16x0dummy.words[PCM16X0SubLine::WORD_L2P2R2] = 0x9C36;
-    pcm16x0dummy.words[PCM16X0SubLine::WORD_R3P3L3] = 0x02A5;
+    pcm16x0dummy.setWord(PCM16X0SubLine::WORD_R1P1L1, 0xD527);
+    pcm16x0dummy.setWord(PCM16X0SubLine::WORD_L2P2R2, 0x9C36);
+    pcm16x0dummy.setWord(PCM16X0SubLine::WORD_R3P3L3, 0x02A5);
     // Fill CRC that should fit words above.
     pcm16x0dummy.setSourceCRC(0xFB40);
     // Calculate CRC for filled words to test calculation process.
@@ -162,7 +162,7 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
     lines_to_block.setLogLevel(STC007Deinterleaver::LOG_PROCESS);
     lines_to_block.setResMode(STC007Deinterleaver::RES_MODE_14BIT);
     lines_to_block.setIgnoreCRC(false);
-    lines_to_block.setForceParity(true);
+    lines_to_block.setForcedErrorCheck(true);
 
     // Check that valid buffer passes the test.
     lines_to_block.processBlock(0);
@@ -244,7 +244,7 @@ bool PCMTester::testSTC007ECC(enum KillMode test_mode)
             // Save index of corrupted word.
             bad_indexes[cor] = corr_index;
             // Choose what bits to corrupt in the word.
-            rand_mask = rand()%0x3FFF+1;
+            rand_mask = rand()%STC007Line::DATA_WORD_MASK+1;
             // Corrupt the data.
             test_buffer[corr_index*16].setWord(corr_index, test_buffer[corr_index*16].getWord(corr_index)^rand_mask);
             test_buffer[corr_index*16].setSourceCRC(~test_buffer[corr_index*16].getSourceCRC());
@@ -391,7 +391,6 @@ void PCMTester::testCRCC()
         emit testOk();
     }
 
-    testHamming();
     emit finished();
 }
 
@@ -421,91 +420,4 @@ void PCMTester::testDataBlock()
 
     qInfo()<<"[TST] ECC test PASSED.";
     emit finished();
-}
-
-//------------------------
-void PCMTester::testHamming()
-{
-    uint8_t idx, cnt, summ;
-    uint16_t codeword, masked;
-
-    //codeword = 0b010001001011000;
-    codeword = 0b010101010101010;
-
-    masked = codeword&0b0101010101010100;
-    qDebug()<<"Mask c1:"<<"0x"+QString::number(masked, 16);
-    cnt = summ = 0;
-    for(idx=0;idx<16;idx++)
-    {
-        if((masked&(1<<0))!=0)
-        {
-            cnt++;
-        }
-        masked = (masked>>1);
-    }
-    qDebug()<<"Bit count:"<<cnt;
-    masked = codeword&0b0000000000000001;
-    if(masked!=0)
-    {
-        summ = 1;
-    }
-    qDebug()<<"C1 bit:"<<summ;
-
-    masked = codeword&0b0110011001100100;
-    qDebug()<<"Mask c2:"<<"0x"+QString::number(masked, 16);
-    cnt = summ = 0;
-    for(idx=0;idx<16;idx++)
-    {
-        if((masked&(1<<0))!=0)
-        {
-            cnt++;
-        }
-        masked = (masked>>1);
-    }
-    qDebug()<<"Bit count:"<<cnt;
-    masked = codeword&0b0000000000000010;
-    if(masked!=0)
-    {
-        summ = 1;
-    }
-    qDebug()<<"C2 bit:"<<summ;
-
-    masked = codeword&0b0111100001110000;
-    qDebug()<<"Mask c4:"<<"0x"+QString::number(masked, 16);
-    cnt = summ = 0;
-    for(idx=0;idx<16;idx++)
-    {
-        if((masked&(1<<0))!=0)
-        {
-            cnt++;
-        }
-        masked = (masked>>1);
-    }
-    qDebug()<<"Bit count:"<<cnt;
-    masked = codeword&0b0000000000001000;
-    if(masked!=0)
-    {
-        summ = 1;
-    }
-    qDebug()<<"C4 bit:"<<summ;
-
-    masked = codeword&0b0111111100000000;
-    qDebug()<<"Mask c8:"<<"0x"+QString::number(masked, 16);
-    cnt = summ = 0;
-    for(idx=0;idx<16;idx++)
-    {
-        if((masked&(1<<0))!=0)
-        {
-            cnt++;
-        }
-        masked = (masked>>1);
-    }
-    qDebug()<<"Bit count:"<<cnt;
-    masked = codeword&0b0000000010000000;
-    if(masked!=0)
-    {
-        summ = 1;
-    }
-    qDebug()<<"C8 bit:"<<summ;
-
 }

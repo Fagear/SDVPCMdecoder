@@ -1,4 +1,25 @@
-﻿#ifndef MAINWINDOW_H
+﻿/**************************************************************************************************************************************************************
+mainwindow.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2020-04
+
+**************************************************************************************************************************************************************/
+
+#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <deque>
@@ -296,7 +317,7 @@ private:
     // Queues for data transfer and buffering between threads/modules.
     std::deque<VideoLine> video_lines;      // Queue for video lines from frame (in the same order as in frame, deinterlaced).
     std::deque<PCM1Line> pcm1_lines;        // Queue for PCM lines, binarized from video lines (in the same strict order).
-    std::deque<PCM16X0SubLine> pcm16x0_lines;  // Queue for PCM lines, binarized from video lines (in the same strict order).
+    std::deque<PCM16X0SubLine> pcm16x0_sublines;  // Queue for PCM lines, binarized from video lines (in the same strict order).
     std::deque<STC007Line> stc007_lines;    // Queue for PCM lines, binarized from video lines (in the same strict order).
     std::deque<PCMSamplePair> audio_data;   // Queue for PCM sample pair, picked from assembled PCM data blocks.
     QMutex vl_lock;                         // Protects [video_lines].
@@ -476,6 +497,9 @@ private slots:
     void updateStatsVIPFrame(uint32_t);     // Update stats after VIP has read a frame.
     void updateStatsVideoTracking(FrameBinDescriptor);  // Update stats after VIP has spliced a frame.
     void updateStatsDroppedFrame();         // Update stats with new value for dropped frames.
+    QString logStatsFrameAsm(FrameAsmPCM1);   // Make a user-log string for the frame assembly data.
+    QString logStatsFrameAsm(FrameAsmPCM16x0);   // Make a user-log string for the frame assembly data.
+    QString logStatsFrameAsm(FrameAsmSTC007);   // Make a user-log string for the frame assembly data.
     void updateStatsFrameAsm(FrameAsmPCM1);     // Update stats and video processor with new trim settings.
     void updateStatsFrameAsm(FrameAsmPCM16x0);  // Update stats and video processor with new trim settings.
     void updateStatsFrameAsm(FrameAsmSTC007);   // Update stats and video processor with new trim settings.

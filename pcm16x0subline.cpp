@@ -15,11 +15,6 @@ PCM16X0SubLine::PCM16X0SubLine(const PCM16X0SubLine &in_object) : PCMLine(in_obj
     picked_bits_left = in_object.picked_bits_left;
     picked_bits_right = in_object.picked_bits_right;
     queue_order = in_object.queue_order;
-    // Copy data words.
-    for(uint8_t index=0;index<WORD_MAX;index++)
-    {
-        words[index] = in_object.words[index];
-    }
     // Copy pixel coordinates.
     for(uint8_t stage=0;stage<PCM_LINE_MAX_PS_STAGES;stage++)
     {
@@ -27,6 +22,11 @@ PCM16X0SubLine::PCM16X0SubLine(const PCM16X0SubLine &in_object) : PCMLine(in_obj
         {
             pixel_coordinates[stage][bit] = in_object.pixel_coordinates[stage][bit];
         }
+    }
+    // Copy data words.
+    for(uint8_t index=0;index<WORD_CNT;index++)
+    {
+        words[index] = in_object.words[index];
     }
 }
 
@@ -42,11 +42,6 @@ PCM16X0SubLine& PCM16X0SubLine::operator= (const PCM16X0SubLine &in_object)
     picked_bits_left = in_object.picked_bits_left;
     picked_bits_right = in_object.picked_bits_right;
     queue_order = in_object.queue_order;
-    // Copy data words.
-    for(uint8_t index=0;index<WORD_MAX;index++)
-    {
-        words[index] = in_object.words[index];
-    }
     // Copy pixel coordinates.
     for(uint8_t stage=0;stage<PCM_LINE_MAX_PS_STAGES;stage++)
     {
@@ -54,6 +49,11 @@ PCM16X0SubLine& PCM16X0SubLine::operator= (const PCM16X0SubLine &in_object)
         {
             pixel_coordinates[stage][bit] = in_object.pixel_coordinates[stage][bit];
         }
+    }
+    // Copy data words.
+    for(uint8_t index=0;index<WORD_CNT;index++)
+    {
+        words[index] = in_object.words[index];
     }
 
     return *this;
@@ -69,8 +69,6 @@ void PCM16X0SubLine::clear()
     line_part = PART_LEFT;
     picked_bits_left = picked_bits_right = 0;
     queue_order = 0;
-    // Reset data words.
-    setSilent();
     // Reset pixel coordinates.
     for(uint8_t bit=0;bit<BITS_IN_LINE;bit++)
     {
@@ -79,6 +77,8 @@ void PCM16X0SubLine::clear()
             pixel_coordinates[stage][bit] = 0;
         }
     }
+    // Reset data words.
+    setSilent();
     // Force CRC to be bad until good binarization.
     //calcCRC();
     calc_crc = CRC_SILENT;  // Pre-calculated CRC for silenced line.
@@ -99,6 +99,22 @@ void PCM16X0SubLine::setSilent()
         words[i] = 0;
     }
     calcCRC();
+}
+
+//------------------------ Copy 16-bit word into the object.
+void PCM16X0SubLine::setWord(uint8_t index, uint16_t in_word)
+{
+    if(index<WORD_CNT)
+    {
+        if(index==WORD_CRCC)
+        {
+            words[index] = in_word&CRC_WORD_MASK;
+        }
+        else
+        {
+            words[index] = in_word&DATA_WORD_MASK;
+        }
+    }
 }
 
 //------------------------ Get number of data bits in the source line by the standard.
@@ -127,7 +143,7 @@ uint8_t PCM16X0SubLine::getRightShiftZoneBit()
 
 //------------------------ Get pre-calculated coordinate of pixel in video line for requested PCM bit number and pixel-shifting stage.
 //------------------------ [calcPPB()] MUST be called before any [findVideoPixel()] calls!
-uint16_t PCM16X0SubLine::getVideoPixelT(uint8_t pcm_bit, uint8_t shift_stage)
+uint16_t PCM16X0SubLine::getVideoPixelByTable(uint8_t pcm_bit, uint8_t shift_stage)
 {
     return pixel_coordinates[shift_stage][pcm_bit];
 }
@@ -157,6 +173,16 @@ uint16_t PCM16X0SubLine::getSourceCRC()
 uint8_t PCM16X0SubLine::getPCMType()
 {
     return TYPE_PCM16X0;
+}
+
+//------------------------ Get one word.
+uint16_t PCM16X0SubLine::getWord(uint8_t index)
+{
+    if(index<WORD_CNT)
+    {
+        return words[index];
+    }
+    return 0;
 }
 
 //------------------------ Convert one 16-bit word to a 16-bit sample.
@@ -275,7 +301,7 @@ bool PCM16X0SubLine::isSilent()
 //------------------------ Were the word's bits picked during binarization?
 bool PCM16X0SubLine::isPicked(uint8_t word)
 {
-    if(word<WORD_MAX)
+    if(word<WORD_CNT)
     {
         if((picked_bits_left!=0)&&(word==WORD_R1P1L1))
         {
@@ -596,7 +622,7 @@ void PCM16X0SubLine::calcCoordinates(uint8_t in_shift)
 {
     for(uint8_t bit=0;bit<BITS_IN_LINE;bit++)
     {
-        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixelC(bit, in_shift);
+        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixeBylCalc(bit, in_shift);
     }
 }
 

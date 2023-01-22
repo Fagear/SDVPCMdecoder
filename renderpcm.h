@@ -1,10 +1,36 @@
-﻿#ifndef RENDERPCM_H
+﻿/**************************************************************************************************************************************************************
+renderpcm.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2021-01
+
+Renderer for visualization.
+This module represents various data containers as an image for visualization purposes.
+
+**************************************************************************************************************************************************************/
+
+#ifndef RENDERPCM_H
 #define RENDERPCM_H
 
 #include <QColor>
 #include <QElapsedTimer>
 #include <QImage>
+#include <QList>
 #include <QObject>
+#include <QTimer>
 #include <QThread>
 #include "frametrimset.h"
 #include "pcm1datablock.h"
@@ -40,7 +66,6 @@
 #define VIS_LIM_OK          (qRgb(255, 255, 255))   // Data boundaries for data blocks.
 #define VIS_LIM_MARK        (qRgb(224, 170, 170))   // Data boundaries with some marker (almost silent data or data on the seam).
 
-// TODO: maybe make a workaround for minimized render window leaking memory
 class RenderPCM : public QObject
 {
     Q_OBJECT
@@ -49,8 +74,9 @@ public:
     // Minimum time between frames (ms) in live playback.
     enum
     {
-        TIME_NTSC = 30,     // NTSC.
-        TIME_PAL = 39       // PAL.
+        TIME_START = 75,        // Playback start (buffer-up).
+        TIME_NTSC = 27,         // NTSC.
+        TIME_PAL = 31           // PAL.
     };
 
     // PPBs (Pixels Per Bit) for visualization.
@@ -71,6 +97,11 @@ public:
         WPL_PCM1BLK = (PPL_PCM1BLK*2)   // Words Per Line for [PCM1DataBlock].
     };
 
+    enum
+    {
+        PACING_DEPTH = 30       // Depth of frame pacing buffer between render and drawer.
+    };
+
 public:
     explicit RenderPCM(QObject *parent = 0);
     ~RenderPCM();
@@ -79,15 +110,15 @@ private:
     void resetFrame();
 
 private:
-    QImage *img_data;
-    QElapsedTimer frame_time;
-    bool live_pb;
-    bool drawer_ready;
-    uint8_t frame_time_lim;
-    uint32_t frame_number;
-    uint16_t fill_line_num;
-    uint16_t provided_width;
-    uint16_t provided_heigth;
+    QImage *img_data;           // Image to render to.
+    QTimer *frame_period;       // Frame pacing timer.
+    QList<QImage> pacing_buf;   // Output images queue.
+    bool live_pb;               // Is live playback enabled? (requires frame pacing)
+    uint8_t frame_time_lim;     // Time between frames in [ms] for frame pacing.
+    uint8_t queue_size;         // Queue length between renderer and drawer.
+    uint16_t fill_line_num;     // Current line for filling in the image.
+    uint16_t provided_width;    // Width of the render canvas.
+    uint16_t provided_heigth;   // Height of the render canvas.
 
 public slots:
     void dumpThreadDebug();
@@ -118,8 +149,11 @@ public slots:
     void renderNewBlock(STC007DataBlock);
     void displayIsReady();
 
+private slots:
+    void framePacing();
+
 signals:
-    void newFrame(QImage, uint32_t);
+    void renderedFrame(QImage);
 };
 
 #endif // RENDERPCM_H

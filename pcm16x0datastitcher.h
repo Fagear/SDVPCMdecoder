@@ -1,8 +1,74 @@
-﻿#ifndef PCM16X0DATASTITCHER_H
+﻿/**************************************************************************************************************************************************************
+pcm16x0datastitcher.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2021-08
+
+"Data-stitcher" module for PCM-1600/PCM-1610/PCM-1630 formats. Wrapper for [PCM16X0Deinterleaver].
+[PCM16X0DataStitcher] takes input queue of [PCM16X0SubLine] and puts out set of the [PCMSamplePair] sub-class objects into the output queue.
+[PCM16X0DataStitcher] processes data on per-frame basis, waiting for "End Of Frame" service line tag in the input queue before starting processing the queue.
+[PCM16X0DataStitcher] performs:
+    - Vertical data coordinates detection;
+    - Frame trimming detection (empty lines discarding);
+    - Field padding detection;
+    - Deinterleaving and error correction with [PCM16X0Deinterleaver];
+    - [PCM16X0DataBlock] to [PCMSamplePair] conversion;
+    - Per-frame statistics collection.
+
+Typical use case:
+    - Set pointer to the input PCM sub-line queue with [setInputPointers()];
+    - Set pointer to the output audio sample queue with [setOutputPointers()];
+    - Call [doFrameReassemble()] to start execution loop;
+    - Set SI or EI format with [setFormat()];
+    - Set TFF or BFF field order with [setFieldOrder()];
+    - Feed data into the input queue that was set with [setInputPointers()].
+    -- optional: P-code correction can be toggled with [setPCorrection()],
+                 sample rate can be preset with [setSampleRatePreset()].
+
+[PCM16X0DataStitcher] has a number of fine settings for error correction and masking.
+[setDefaultFineSettings()] will set default fine settings.
+[requestCurrentFineSettings()] will return current fine settings.
+New fine settings can be set with [setFineUseECC()], [setFineMaskSeams()] and [setFineBrokeMask()].
+
+It would be easy to process all lines, deinterleave those and decode into samples if video captures were ideal
+and contained all source data lines and in the exact same places every time. But the reality is different.
+PCM processors utilize lines in the inactive region right after VBI. Most video capture devices unable to capture inactive region.
+Worse than that, different capture devices have different vertical offsets from VBI and it also can vary with video standard (PAL/NTSC).
+There are professional capture devices that can capture the whole frame but those are rare and expensive.
+This situation introduces static uncertainty to the vertical data coordinates.
+If captured video originated from a VTR, it introduces its own defects to the frame.
+Misaligned tape transport can introduce additional unknown vertical offset to the data, damaged tape can lead to sync losses, frame rolling, etc.
+In edge cases, two fields of the same frame can have different vertical offsets and that offset can jump and vary during playback.
+So, VTR introduces dynamic uncertainty to the capture.
+Sometimes noise in the picture can be treated as PCM data with invalid CRC by [Binarizer], other times lines with PCM damaged beyond recovery and lost.
+If those lines are right at the top or the bottom of the screen the decision has to be made: include those lines in the data stream or not?
+Usually capture is done with additional empty lines at the top and/or bottom of the screen.
+All that introduces even more uncertainty to the original data location.
+The decoder has no way of knowing how many lines been cut from the top of the frame (between VBI and first line of the captured frame)
+and where captured lines were placed in the original frame. That's a problem, because even if data is shifted by one line, data alignment will fail
+and we'll have incorrectly working error correction and corrupted data in general at the output.
+
+**************************************************************************************************************************************************************/
+
+#ifndef PCM16X0DATASTITCHER_H
 #define PCM16X0DATASTITCHER_H
 
 #include <array>
 #include <stdint.h>
+#include <vector>
 #include <QApplication>
 #include <QDebug>
 #include <QElapsedTimer>
@@ -10,7 +76,6 @@
 #include <QObject>
 #include <QThread>
 #include <QString>
-#include <vector>
 #include "config.h"
 #include "circbuffer.h"
 #include "frametrimset.h"
@@ -30,7 +95,7 @@
 #endif
 
 // TODO: SI/EI auto-detection
-// TODO: fix erroneous SI format stitching (causing repetitive broken blocks)
+// TODO: EI format field order auto-detection
 class PCM16X0DataStitcher : public QObject
 {
     Q_OBJECT
@@ -177,6 +242,7 @@ private:
     circarray<uint8_t, STATS_DEPTH> stats_padding;  // List of last paddings.
     uint16_t log_level;                         // Level of debug output.
     uint16_t trim_fill;                         // Number of filled sub-lines in [trim_buf] from input queue.
+    uint16_t preset_sample_rate;                // Sample rate of audio samples, set externally.
     uint16_t f1_srate;                          // Sample rate detected in [collectCtrlBitStats()].
     bool f1_emph;                               // Emphasis setting detected in [collectCtrlBitStats()].
     bool f1_code;                               // Code/Audio setting detected in [collectCtrlBitStats()].
@@ -228,6 +294,7 @@ private:
     uint16_t addFieldPadding(uint32_t in_frame, uint16_t line_cnt, uint16_t *last_q_order, uint16_t *last_line_num = NULL);
     void fillFrameForOutput();
     bool collectCtrlBitStats(PCM16X0DataBlock *int_block_flags = NULL);
+    void setBlockSampleRate(PCM16X0DataBlock *in_block);
     void outputFileStart();
     void outputDataBlock(PCM16X0DataBlock *in_block = NULL);
     void outputFileStop();

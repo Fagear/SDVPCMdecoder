@@ -4,10 +4,15 @@ RenderPCM::RenderPCM(QObject *parent)
 {
     Q_UNUSED(parent);
 
+    frame_period = new QTimer(this);
+    frame_period->setInterval(TIME_START);
+    frame_period->setSingleShot(false);
+    connect(frame_period, SIGNAL(timeout()), this, SLOT(framePacing()));
+    frame_period->start();
+
     live_pb = true;
-    drawer_ready = true;
     frame_time_lim = TIME_NTSC;
-    frame_number = 0;
+    queue_size = 0;
     fill_line_num = 0;
     provided_width = 0;
     provided_heigth = 0;
@@ -44,6 +49,10 @@ void RenderPCM::dumpThreadDebug()
 void RenderPCM::setLivePlay(bool in_flag)
 {
     live_pb = in_flag;
+    if(live_pb!=false)
+    {
+        queue_size = 0;
+    }
 }
 
 //------------------------ Set frame time for live playback.
@@ -103,7 +112,9 @@ void RenderPCM::startNewFrame(uint16_t in_width, uint16_t in_height)
 #ifdef VIS_EN_DBG_OUT
     qInfo()<<"[REN] New frame"<<in_width<<"x"<<in_height<<"started";
 #endif
+    // Resize the canvas.
     resizeToFrame(in_width, in_height);
+    // Reset filling line.
     resetFrame();
 }
 
@@ -131,13 +142,13 @@ void RenderPCM::startPCM1600Frame()
     startNewFrame((PPB_PCM1600SUBLINE*PCM16X0SubLine::BITS_IN_LINE), (PCM16X0DataStitcher::LINES_PF*2));
 }
 
-//------------------------ Start new frame for STC-007 binarized lines.
+//------------------------ Start new frame for NTSC STC-007 binarized lines.
 void RenderPCM::startSTC007NTSCFrame()
 {
     startNewFrame((PPB_STC007LINE*STC007Line::BITS_IN_LINE), (STC007DataStitcher::LINES_PF_NTSC*2));
 }
 
-//------------------------ Start new frame for STC-007 binarized lines.
+//------------------------ Start new frame for PAL STC-007 binarized lines.
 void RenderPCM::startSTC007PALFrame()
 {
     startNewFrame((PPB_STC007LINE*STC007Line::BITS_IN_LINE), (STC007DataStitcher::LINES_PF_PAL*2));
@@ -165,11 +176,12 @@ void RenderPCM::startSTC007DBFrame()
 void RenderPCM::prepareNewFrame(uint32_t in_frame_no)
 {
 #ifdef VIS_EN_DBG_OUT
-    qInfo()<<"[REN] New frame #"<<in_frame_no<<"incoming";
+    qDebug()<<"[REN] New frame #"<<in_frame_no<<"incoming";
 #endif
+    // Send rendered frame.
     finishNewFrame(in_frame_no);
+    // Reset filling line.
     resetFrame();
-    frame_number = in_frame_no;
 }
 
 //------------------------ Convert finished frame and send it.
@@ -178,27 +190,48 @@ void RenderPCM::finishNewFrame(uint32_t in_frame_no)
 #ifdef VIS_EN_DBG_OUT
     qInfo()<<"[REN] Frame"<<in_frame_no<<"is done";
 #endif
-    // Start frame timer if not already.
-    if(frame_time.isValid()==false)
+    // Store frame number.
+    img_data->setText("Frame", QString::number(in_frame_no));
+    // Check if live playback enabled.
+    if(live_pb==false)
     {
-        frame_time.start();
+        // Live playback disabled, no need for frame pacing.
+        if(queue_size==0)
+        {
+            // Increase queue size.
+            queue_size++;
+            // Send the image directly to the drawer.
+            emit renderedFrame(img_data->copy());
+        }
+#ifdef VIS_EN_DBG_OUT
+        else
+        {
+            qDebug()<<"Frame"<<in_frame_no<<"dropped, drawer not ready";
+        }
+#endif
     }
-
-    if(drawer_ready!=false)
+    else
     {
-        // Report new frame to renderer.
-        frame_number = in_frame_no;
-        // Send QImage for displaying.
-        emit newFrame(img_data->copy(), frame_number);
-        // Clear ready flag.
-        drawer_ready = false;
+        // Live playback is active, frame pacing required.
+        if(pacing_buf.size()<PACING_DEPTH)
+        {
+            // Place image into the queue.
+            pacing_buf.push_back(img_data->copy());
+        }
+#ifdef VIS_EN_DBG_OUT
+        else
+        {
+            qDebug()<<"Frame"<<in_frame_no<<"dropped, buffer fill:"<<pacing_buf.size();
+        }
+#endif
     }
 }
 
-//------------------------ Insert next video line into the frame.
+//------------------------ Insert next video line into the frame (in order those are sent to the renderer).
 void RenderPCM::renderNewLine(VideoLine in_line)
 {
     QColor pixel_cl;
+    // Prevent line overflow in case of lost frame sync.
     if(fill_line_num>=provided_heigth)
     {
 #ifdef VIS_EN_DBG_OUT
@@ -206,106 +239,132 @@ void RenderPCM::renderNewLine(VideoLine in_line)
 #endif
         return;
     }
-
-    if(in_line.isDoubleWidth()==false)
+    // Check if video line set to be empty.
+    if(in_line.isEmpty()==false)
     {
-        if(in_line.pixel_data.size()<=(size_t)(img_data->width()))
+        // Line has some data.
+        // Check if width doubling was enabled.
+        if(in_line.isDoubleWidth()==false)
         {
-            if(in_line.isEmpty()==false)
+            // No width doubling of the video line.
+            // Prevent line overflow.
+            if(in_line.pixel_data.size()<=(size_t)(img_data->width()))
             {
                 QRgb *pixel_ptr;
+                // Pick first pixel from video line.
                 pixel_ptr = (QRgb *)img_data->scanLine(fill_line_num);
+                // Cycle through all pixels in the source video line.
                 for(uint16_t i=0;i<provided_width;i++)
                 {
+                    // Check color channel for the video line.
                     if(in_line.colors==vid_preset_t::COLOR_BW)
                     {
+                        // Luma channel.
                         *pixel_ptr = qRgb(in_line.pixel_data[i], in_line.pixel_data[i], in_line.pixel_data[i]);
                     }
                     else
                     {
+                        // Single color channel.
                         if(in_line.colors==vid_preset_t::COLOR_R)
                         {
+                            // Pick maximum brighness for the red channel.
                             pixel_cl = VIS_RED_TINT;
                         }
                         else if(in_line.colors==vid_preset_t::COLOR_G)
                         {
+                            // Pick maximum brighness for the green channel.
                             pixel_cl = VIS_GREEN_TINT;
                         }
                         else if(in_line.colors==vid_preset_t::COLOR_B)
                         {
+                            // Pick maximum brighness for the blue channel.
                             pixel_cl = VIS_BLUE_TINT;
                         }
                         else
                         {
+                            // Fallback to white in case of an error.
                             pixel_cl = VIS_BIT1_MARK;
                         }
+                        // Scale brightness down according to color channel brighness.
                         pixel_cl.setRed(pixel_cl.red()*in_line.pixel_data[i]/255);
                         pixel_cl.setGreen(pixel_cl.green()*in_line.pixel_data[i]/255);
                         pixel_cl.setBlue(pixel_cl.blue()*in_line.pixel_data[i]/255);
                         *pixel_ptr = pixel_cl.rgb();
                     }
+                    // Go to the next pixel in the visualization.
                     pixel_ptr++;
                 }
             }
-            fill_line_num++;
         }
-    }
-    else
-    {
-        if(in_line.pixel_data.size()<=((size_t)(img_data->width())*2))
+        else
         {
-            if(in_line.isEmpty()==false)
+            // Width doubling enabled.
+            // Prevent line overflow.
+            if(in_line.pixel_data.size()<=((size_t)(img_data->width())*2))
             {
                 QRgb *pixel_ptr;
                 uint16_t line_width;
-                // Get pointer to image line data.
+                // Pick first pixel from video line.
                 pixel_ptr = (QRgb *)img_data->scanLine(fill_line_num);
                 line_width = in_line.pixel_data.size();
+                // Cycle through all pixels in the source video line.
                 // Copy every other byte (shrinking line by 2).
                 for(uint16_t i=0;i<line_width;i=i+2)
                 {
+                    // Check color channel for the video line.
                     if(in_line.colors==vid_preset_t::COLOR_BW)
                     {
+                        // Luma channel.
                         *pixel_ptr = qRgb(in_line.pixel_data[i], in_line.pixel_data[i], in_line.pixel_data[i]);
                     }
                     else
                     {
+                        // Single color channel.
                         if(in_line.colors==vid_preset_t::COLOR_R)
                         {
+                            // Pick maximum brighness for the red channel.
                             pixel_cl = VIS_RED_TINT;
                         }
                         else if(in_line.colors==vid_preset_t::COLOR_G)
                         {
+                            // Pick maximum brighness for the green channel.
                             pixel_cl = VIS_GREEN_TINT;
                         }
                         else if(in_line.colors==vid_preset_t::COLOR_B)
                         {
+                            // Pick maximum brighness for the blue channel.
                             pixel_cl = VIS_BLUE_TINT;
                         }
                         else
                         {
+                            // Fallback to white in case of an error.
                             pixel_cl = VIS_BIT1_MARK;
                         }
+                        // Scale brightness down according to color channel brighness.
                         pixel_cl.setRed(pixel_cl.red()*in_line.pixel_data[i]/255);
                         pixel_cl.setGreen(pixel_cl.green()*in_line.pixel_data[i]/255);
                         pixel_cl.setBlue(pixel_cl.blue()*in_line.pixel_data[i]/255);
                         *pixel_ptr = pixel_cl.rgb();
                     }
+                    // Go to the next pixel in the visualization.
                     pixel_ptr++;
                 }
             }
-            fill_line_num++;
         }
+        // Shift to the next line in the visualization frame.
+        fill_line_num++;
     }
 }
 
-//------------------------ Insert next video line into the frame in the order of original frame.
+//------------------------ Insert next video line into the frame (in the order of original frame).
 void RenderPCM::renderNewLineInOrder(VideoLine in_line)
 {
     uint16_t line_num;
     QColor pixel_cl;
-    // [VideoLine] line numer starts from 1.
+    // Set filling line number per video line number in the source frame.
+    // [VideoLine] line numbers start from 1.
     line_num = (in_line.line_number-1);
+    // Prevent line overflow in case of lost frame sync.
     if(line_num>=provided_heigth)
     {
 #ifdef VIS_EN_DBG_OUT
@@ -313,95 +372,115 @@ void RenderPCM::renderNewLineInOrder(VideoLine in_line)
 #endif
         return;
     }
-
-    if(in_line.isDoubleWidth()==false)
+    // Check if video line set to be empty.
+    if(in_line.isEmpty()==false)
     {
-        if(in_line.pixel_data.size()<=(size_t)(img_data->width()))
+        // Line has some data.
+        // Check if width doubling was enabled.
+        if(in_line.isDoubleWidth()==false)
         {
-            if(in_line.isEmpty()==false)
+            // No width doubling of the video line.
+            // Prevent line overflow.
+            if(in_line.pixel_data.size()<=(size_t)(img_data->width()))
             {
                 QRgb *pixel_ptr;
+                // Pick first pixel from video line.
                 pixel_ptr = (QRgb *)img_data->scanLine(line_num);
                 for(uint16_t i=0;i<provided_width;i++)
                 {
+                    // Check color channel for the video line.
                     if(in_line.colors==vid_preset_t::COLOR_BW)
                     {
+                        // Luma channel.
                         *pixel_ptr = qRgb(in_line.pixel_data[i], in_line.pixel_data[i], in_line.pixel_data[i]);
                     }
                     else
                     {
+                        // Single color channel.
                         if(in_line.colors==vid_preset_t::COLOR_R)
                         {
+                            // Pick maximum brighness for the red channel.
                             pixel_cl = VIS_RED_TINT;
                         }
                         else if(in_line.colors==vid_preset_t::COLOR_G)
                         {
+                            // Pick maximum brighness for the green channel.
                             pixel_cl = VIS_GREEN_TINT;
                         }
                         else if(in_line.colors==vid_preset_t::COLOR_B)
                         {
+                            // Pick maximum brighness for the blue channel.
                             pixel_cl = VIS_BLUE_TINT;
                         }
                         else
                         {
+                            // Fallback to white in case of an error.
                             pixel_cl = VIS_BIT1_MARK;
                         }
+                        // Scale brightness down according to color channel brighness.
                         pixel_cl.setRed(pixel_cl.red()*in_line.pixel_data[i]/255);
                         pixel_cl.setGreen(pixel_cl.green()*in_line.pixel_data[i]/255);
                         pixel_cl.setBlue(pixel_cl.blue()*in_line.pixel_data[i]/255);
                         *pixel_ptr = pixel_cl.rgb();
                     }
+                    // Go to the next pixel in the visualization.
                     pixel_ptr++;
                 }
             }
-            line_num++;
         }
-    }
-    else
-    {
-        if(in_line.pixel_data.size()<=((size_t)(img_data->width())*2))
+        else
         {
-            if(in_line.isEmpty()==false)
+            // Width doubling enabled.
+            // Prevent line overflow.
+            if(in_line.pixel_data.size()<=((size_t)(img_data->width())*2))
             {
                 QRgb *pixel_ptr;
                 uint16_t line_width;
-                // Get pointer to image line data.
+                // Pick first pixel from video line.
                 pixel_ptr = (QRgb *)img_data->scanLine(line_num);
                 line_width = in_line.pixel_data.size();
                 // Copy every other byte (shrinking line by 2).
                 for(uint16_t i=0;i<line_width;i=i+2)
                 {
+                    // Check color channel for the video line.
                     if(in_line.colors==vid_preset_t::COLOR_BW)
                     {
+                        // Luma channel.
                         *pixel_ptr = qRgb(in_line.pixel_data[i], in_line.pixel_data[i], in_line.pixel_data[i]);
                     }
                     else
                     {
+                        // Single color channel.
                         if(in_line.colors==vid_preset_t::COLOR_R)
                         {
+                            // Pick maximum brighness for the red channel.
                             pixel_cl = VIS_RED_TINT;
                         }
                         else if(in_line.colors==vid_preset_t::COLOR_G)
                         {
+                            // Pick maximum brighness for the green channel.
                             pixel_cl = VIS_GREEN_TINT;
                         }
                         else if(in_line.colors==vid_preset_t::COLOR_B)
                         {
+                            // Pick maximum brighness for the blue channel.
                             pixel_cl = VIS_BLUE_TINT;
                         }
                         else
                         {
+                            // Fallback to white in case of an error.
                             pixel_cl = VIS_BIT1_MARK;
                         }
+                        // Scale brightness down according to color channel brighness.
                         pixel_cl.setRed(pixel_cl.red()*in_line.pixel_data[i]/255);
                         pixel_cl.setGreen(pixel_cl.green()*in_line.pixel_data[i]/255);
                         pixel_cl.setBlue(pixel_cl.blue()*in_line.pixel_data[i]/255);
                         *pixel_ptr = pixel_cl.rgb();
                     }
+                    // Go to the next pixel in the visualization.
                     pixel_ptr++;
                 }
             }
-            line_num++;
         }
     }
 }
@@ -414,8 +493,9 @@ void RenderPCM::renderNewLine(PCM1Line in_line)
     uint8_t word, word_bit, line_bit;
 
     pixel_data = 0;
+    // Set bit width in the visualization.
     pixel_width = PPB_PCM1LINE;
-
+    // Prevent line overflow in case of lost frame sync.
     if(fill_line_num>=provided_heigth)
     {
 #ifdef VIS_EN_DBG_OUT
@@ -429,7 +509,7 @@ void RenderPCM::renderNewLine(PCM1Line in_line)
 
     line_bit = 0;
     // Cycle through all data words.
-    for(word=0;word<PCM1Line::WORD_MAX;word++)
+    for(word=0;word<PCM1Line::WORD_CNT;word++)
     {
         // Determine how many bits there are in the current word.
         if(word==PCM1Line::WORD_CRCC)
@@ -444,7 +524,7 @@ void RenderPCM::renderNewLine(PCM1Line in_line)
         while(word_bit>0)
         {
             // Get burrent bit state from the data word.
-            if((in_line.words[word]&(1<<(word_bit-1)))==0)
+            if((in_line.getWord(word)&(1<<(word_bit-1)))==0)
             {
                 pixel_data = 0;
             }
@@ -537,8 +617,9 @@ void RenderPCM::renderNewLine(PCM1SubLine in_line)
     uint16_t pixel_offset;
 
     pixel_data = 0;
+    // Set bit width in the visualization.
     pixel_width = PPB_PCM1SUBLINE;
-
+    // Prevent line overflow in case of lost frame sync.
     if(fill_line_num>=provided_heigth)
     {
 #ifdef VIS_EN_DBG_OUT
@@ -561,7 +642,7 @@ void RenderPCM::renderNewLine(PCM1SubLine in_line)
 
     line_bit = 0;
     // Cycle through all data words.
-    for(word=0;word<PCM1SubLine::WORD_MAX;word++)
+    for(word=0;word<PCM1SubLine::WORD_CNT;word++)
     {
         // Cycle through all bits in the current word.
         word_bit = PCM1SubLine::BITS_PER_WORD;
@@ -657,8 +738,9 @@ void RenderPCM::renderNewLine(PCM16X0SubLine in_line)
     qInfo()<<log_line;*/
 
     pixel_data = 0;
+    // Set bit width in the visualization.
     pixel_width = PPB_PCM1600SUBLINE;
-
+    // Prevent line overflow in case of lost frame sync.
     if(fill_line_num>=provided_heigth)
     {
 #ifdef VIS_EN_DBG_OUT
@@ -686,7 +768,7 @@ void RenderPCM::renderNewLine(PCM16X0SubLine in_line)
 
     line_bit = 0;
     // Cycle through all data words.
-    for(word=0;word<PCM16X0SubLine::WORD_MAX;word++)
+    for(word=0;word<PCM16X0SubLine::WORD_CNT;word++)
     {
         // Determine how many bits there are in the current word.
         if(word==PCM16X0SubLine::WORD_CRCC)
@@ -701,7 +783,7 @@ void RenderPCM::renderNewLine(PCM16X0SubLine in_line)
         while(word_bit>0)
         {
             // Get burrent bit state from the data word.
-            if((in_line.words[word]&(1<<(word_bit-1)))==0)
+            if((in_line.getWord(word)&(1<<(word_bit-1)))==0)
             {
                 pixel_data = 0;
             }
@@ -839,15 +921,9 @@ void RenderPCM::renderNewLine(STC007Line in_line)
 #endif
 
     pixel_data = 0;
+    // Set bit width in the visualization.
     pixel_width = PPB_STC007LINE;
-    /*if(in_line.frame_number!=frame_number)
-    {
-        // Workaround for misplaced frame control signals.
-        finishNewFrame(frame_number);
-        frame_number = in_line.frame_number;
-        resetFrame();
-    }*/
-    // Check for frame overflow.
+    // Prevent line overflow in case of lost frame sync.
     if(fill_line_num>=provided_heigth)
     {
 #ifdef VIS_EN_DBG_OUT
@@ -1059,8 +1135,9 @@ void RenderPCM::renderNewBlock(PCM1DataBlock in_block)
     uint16_t line_limit, word_data;
 
     pixel_data = 0;
+    // Set bit width in the visualization.
     pixel_width = PPB_PCM1BLK;
-
+    // Prevent line overflow in case of lost frame sync.
     if(fill_line_num>=provided_heigth)
     {
 #ifdef VIS_EN_DBG_OUT
@@ -1290,8 +1367,9 @@ void RenderPCM::renderNewBlock(PCM16X0DataBlock in_block)
     uint16_t word_data;
 
     pixel_data = 0;
+    // Set bit width in the visualization.
     pixel_width = PPB_PCM1600BLK;
-
+    // Prevent line overflow in case of lost frame sync.
     if(fill_line_num>=provided_heigth)
     {
 #ifdef VIS_EN_DBG_OUT
@@ -1657,8 +1735,9 @@ void RenderPCM::renderNewBlock(STC007DataBlock in_block)
     uint16_t word_data;
 
     pixel_data = 0;
+    // Set bit width in the visualization.
     pixel_width = PPB_STC007BLK;
-
+    // Prevent line overflow in case of lost frame sync.
     if(fill_line_num>=provided_heigth)
     {
 #ifdef VIS_EN_DBG_OUT
@@ -1932,5 +2011,38 @@ void RenderPCM::renderNewBlock(STC007DataBlock in_block)
 //------------------------ Receive "ready" message from display window.
 void RenderPCM::displayIsReady()
 {
-    drawer_ready = true;
+    if(queue_size>0)
+    {
+        queue_size--;
+    }
+    //qDebug()<<"Ready"<<queue_size<<"buf"<<pacing_buf.size();
+}
+
+//------------------------ Periodic sending frames by specified frame time for pacing.
+void RenderPCM::framePacing()
+{
+    if(live_pb!=false)
+    {
+        // Live playback enabled, pacing is required.
+        if(pacing_buf.isEmpty()==false)
+        {
+            // Queue has something in it.
+            //qDebug()<<"Sending from queue of"<<pacing_buf.size()<<"frame"<<pacing_buf.front().width()<<"x"<<pacing_buf.front().height();
+            // Send first image from the queue to the drawer.
+            emit renderedFrame(pacing_buf.front());
+            pacing_buf.pop_front();
+            // Set interval for the next frame.
+            frame_period->setInterval(frame_time_lim);
+        }
+        else
+        {
+            frame_period->setInterval(TIME_START);
+        }
+    }
+    else if(pacing_buf.isEmpty()==false)
+    {
+        // Live playback and pacing are disabled, clear queue from any remains.
+        pacing_buf.clear();
+        frame_period->setInterval(TIME_START);
+    }
 }

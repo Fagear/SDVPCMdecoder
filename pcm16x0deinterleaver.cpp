@@ -3,7 +3,7 @@
 PCM16X0Deinterleaver::PCM16X0Deinterleaver()
 {
     log_level = 0;
-    force_parity_check = false;
+    force_ecc_check = true;
     en_p_code = true;
     ignore_crc = false;
     setSIFormat();
@@ -45,10 +45,10 @@ void PCM16X0Deinterleaver::setOutput(PCM16X0DataBlock *out_data)
 }
 
 //------------------------ Enable/disable force parity check (regardless of CRC result).
-void PCM16X0Deinterleaver::setForceParity(bool flag)
+void PCM16X0Deinterleaver::setForcedErrorCheck(bool flag)
 {
 #ifdef DI_EN_DBG_OUT
-    if(force_parity_check!=flag)
+    if(force_ecc_check!=flag)
     {
         if((log_level&LOG_SETTINGS)!=0)
         {
@@ -63,7 +63,7 @@ void PCM16X0Deinterleaver::setForceParity(bool flag)
         }
     }
 #endif
-    force_parity_check = flag;
+    force_ecc_check = flag;
 }
 
 //------------------------ Enable/disable P-code correction of data.
@@ -331,7 +331,7 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
                     {
                         // P-code correction is allowed.
                         // Check if parity check is forced.
-                        if(force_parity_check!=false)
+                        if(force_ecc_check!=false)
                         {
 #ifdef DI_EN_DBG_OUT
                             if(suppress_log==false)
@@ -396,9 +396,9 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
                             }
 #endif
                         }
-                        else if(force_parity_check!=false)
+                        else if(force_ecc_check!=false)
                         {
-                            // Force parity check enabled, but P-code checks are disabled.
+                            // Forced parity check enabled, but P-code checks are disabled.
                             // No errors in audio, everything is fine.
                             proc_state = STG_NO_CHECK;
 #ifdef DI_EN_DBG_OUT
@@ -714,33 +714,33 @@ void PCM16X0Deinterleaver::setWordData(PCM16X0SubLine *line1, PCM16X0SubLine *li
 
     // Line 1.
     // Copy R1/L1.
-    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::LINE_1, line1->words[PCM16X0SubLine::WORD_R1P1L1],
+    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::LINE_1, line1->getWord(PCM16X0SubLine::WORD_R1P1L1),
                             subline1_crc_ok, line1->hasPickedLeft(), line1->hasPickedRight());
     // Copy L2/R2.
-    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::LINE_1, line1->words[PCM16X0SubLine::WORD_L2P2R2],
+    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::LINE_1, line1->getWord(PCM16X0SubLine::WORD_L2P2R2),
                             subline1_crc_ok, false, line1->hasPickedRight());
     // Copy R3/L3.
-    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::LINE_1, line1->words[PCM16X0SubLine::WORD_R3P3L3],
+    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::LINE_1, line1->getWord(PCM16X0SubLine::WORD_R3P3L3),
                             subline1_crc_ok, false, line1->hasPickedRight());
     // Line 2.
     // Copy P1.
-    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::LINE_2, line2->words[PCM16X0SubLine::WORD_R1P1L1],
+    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::LINE_2, line2->getWord(PCM16X0SubLine::WORD_R1P1L1),
                             subline2_crc_ok, line2->hasPickedLeft(), line2->hasPickedRight());
     // Copy P2.
-    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::LINE_2, line2->words[PCM16X0SubLine::WORD_L2P2R2],
+    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::LINE_2, line2->getWord(PCM16X0SubLine::WORD_L2P2R2),
                             subline2_crc_ok, false, line2->hasPickedRight());
     // Copy P3.
-    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::LINE_2, line2->words[PCM16X0SubLine::WORD_R3P3L3],
+    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::LINE_2, line2->getWord(PCM16X0SubLine::WORD_R3P3L3),
                             subline2_crc_ok, false, line2->hasPickedRight());
     // Line 3.
     // Copy L1/R1.
-    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::LINE_3, line3->words[PCM16X0SubLine::WORD_R1P1L1],
+    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::LINE_3, line3->getWord(PCM16X0SubLine::WORD_R1P1L1),
                             subline3_crc_ok, line3->hasPickedLeft(), line3->hasPickedRight());
     // Copy R2/L2.
-    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::LINE_3, line3->words[PCM16X0SubLine::WORD_L2P2R2],
+    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::LINE_3, line3->getWord(PCM16X0SubLine::WORD_L2P2R2),
                             subline3_crc_ok, false, line3->hasPickedRight());
     // Copy L3/R3.
-    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::LINE_3, line3->words[PCM16X0SubLine::WORD_R3P3L3],
+    out_data_block->setWord(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::LINE_3, line3->getWord(PCM16X0SubLine::WORD_R3P3L3),
                             subline3_crc_ok, false, line3->hasPickedRight());
     // Save frames/lines info.
     out_data_block->frame_number = line1->frame_number;
@@ -766,13 +766,19 @@ void PCM16X0Deinterleaver::setWordData(PCM16X0SubLine *line1, PCM16X0SubLine *li
 #endif
 }
 
+//------------------------ Calculate P-code.
+uint16_t PCM16X0Deinterleaver::calcPcode(PCM16X0DataBlock *data_block, uint8_t blk)
+{
+    uint16_t p_code;
+    p_code = data_block->getWord(blk, PCM16X0DataBlock::WORD_L)^data_block->getWord(blk, PCM16X0DataBlock::WORD_R);
+    return p_code;
+}
+
 //------------------------ Calculate syndrome for P-code (parity).
 uint16_t PCM16X0Deinterleaver::calcSyndromeP(PCM16X0DataBlock *data_block, uint8_t blk)
 {
     uint16_t syndrome/* = 0xDEAD*/;
-    syndrome = data_block->getWord(blk, PCM16X0DataBlock::WORD_L)
-               ^data_block->getWord(blk, PCM16X0DataBlock::WORD_R)
-               ^data_block->getWord(blk, PCM16X0DataBlock::WORD_P);
+    syndrome = calcPcode(data_block, blk)^data_block->getWord(blk, PCM16X0DataBlock::WORD_P);
     return syndrome;
 }
 

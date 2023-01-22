@@ -15,7 +15,7 @@ frame_vis::frame_vis(QWidget *parent) :
     prev_width = 640;
     prev_height = 480;
 
-    update_time.start();
+    //update_time.start();
 
     pos_timer.setSingleShot(true);
     pos_timer.setInterval(500);
@@ -121,15 +121,17 @@ void frame_vis::setTitle(QString in_str)
 }
 
 //------------------------ Get new frame from renderer and display it.
-void frame_vis::drawFrame(QImage in_img, uint32_t in_frame_no)
+void frame_vis::drawFrame(QImage in_img)
 {
     if(in_img.isNull()!=false)
     {
         return;
     }
+    //qDebug()<<"Drawing"<<in_img.text("Frame")<<update_time.elapsed();
+
     if((prev_width!=in_img.width())||(prev_height!=in_img.height()))
     {
-        qInfo()<<"[VIS] Resized to"<<in_img.width()<<"x"<<in_img.height();
+        //qInfo()<<"[VIS] Resized to"<<in_img.width()<<"x"<<in_img.height();
         // Save new dimensions.
         prev_width = in_img.width();
         prev_height = in_img.height();
@@ -147,12 +149,11 @@ void frame_vis::drawFrame(QImage in_img, uint32_t in_frame_no)
     }
     else
     {
-        //pixels->setPixmap(QPixmap::fromImage(in_img.copy()));
         pixels->setPixmap(QPixmap::fromImage(in_img));
         ui->viewport->viewport()->update();
     }
-    // Update frame number in the window title;
-    this->setWindowTitle(win_title+QString::number(in_frame_no));
+    // Update frame number in the window title.
+    this->setWindowTitle(win_title+in_img.text("Frame"));
     update_time.start();
 }
 

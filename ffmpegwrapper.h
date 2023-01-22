@@ -1,3 +1,37 @@
+/**************************************************************************************************************************************************************
+ffmpegwrapper.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2022-10
+
+Signal-based Qt-wrapper for FFMPEG library.
+[FFMPEGWrapper] performs:
+    - Capture device listing (in development);
+    - Opening and decoding video sources through FFMPEG library;
+    - Dropped frames detection;
+    - Output of monochrome video frames.
+
+Typical use case:
+    - Connect to [sigInputReady()], [sigInputClosed()], [sigVideoError()] signals for source state tracking;
+    - Connect [newImage()] signal to the frame receiver;
+    - Call [slotOpenInput()] to open provided source;
+    - Call [slotGetNextFrame()] for each next video frame.
+
+**************************************************************************************************************************************************************/
+
 #ifndef FFMPEGWRAPPER_H
 #define FFMPEGWRAPPER_H
 
@@ -87,7 +121,6 @@ public:
     enum
     {
         DUMMY_CNT_MAX = 1024,
-        DUMMY_WIDTH = 16,
         DUMMY_HEIGTH = 8
     };
 
@@ -134,7 +167,7 @@ private:
     bool source_open;                   // Source is open.
     AVPixelFormat last_frame_fmt;       // Last frame format.
     AVPixelFormat target_pixfmt;        // Pixel format for final frame (set in [initFrameConverter()]).
-    uint32_t frame_count;
+    uint32_t frame_count;               // Number of processed frames after a source was opened.
     bool file_capture;                  // Is source selected as file?
     bool detect_drops;                  // Detect droped frames via DTS.
     bool dts_detected;                  // Was DTS from new source already detected?

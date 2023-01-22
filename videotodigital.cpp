@@ -723,7 +723,6 @@ void VideoToDigital::doBinarize()
 
 #ifdef LB_EN_DBG_OUT
     qInfo()<<"[V2D] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
-    qInfo()<<"[V2D] Damper buffer depth:"<<COORD_HISTORY_DEPTH;
 #endif
 
     work_line = NULL;

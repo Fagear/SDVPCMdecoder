@@ -166,6 +166,7 @@ Development is performed with [Qt 5.5.0 toolset](https://www.qt.io/).
   to enable correct operation on those - please do.
 
 ## License
-Program copyright 2020-2022.
+Program copyright 2020-2023.
 
-This program is free software; Licence is TBD.
+This program is free software.
+Licensed under the Apache License, Version 2.0 (the "License");

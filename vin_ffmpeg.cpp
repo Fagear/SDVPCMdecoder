@@ -1149,7 +1149,7 @@ void VideoInFFMPEG::runFrameDecode()
                 emit mediaLoaded("");
                 // Ask FFMPEG to open new source.
                 emit openDevice(evt_source, "");
-                // TODO: add watchdog.
+                // TODO: add FFMPEG watchdog.
             }
             else if(new_state==STG_STOP)
             {

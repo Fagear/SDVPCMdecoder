@@ -366,7 +366,7 @@ void STC007DataStitcher::findFramesTrim()
                     frasm_f1.ctrl_hour = trim_buf[line_ind].getCtrlHour();
                     frasm_f1.ctrl_minute = trim_buf[line_ind].getCtrlMinute();
                     frasm_f1.ctrl_second = trim_buf[line_ind].getCtrlSecond();
-                    frasm_f1.ctrl_field = trim_buf[line_ind].getCtrlFieldCode();
+                    frasm_f1.ctrl_field = trim_buf[line_ind].getCtrlField();
                 }
             }
         }
@@ -416,7 +416,7 @@ void STC007DataStitcher::findFramesTrim()
                     frasm_f2.ctrl_hour = trim_buf[line_ind].getCtrlHour();
                     frasm_f2.ctrl_minute = trim_buf[line_ind].getCtrlMinute();
                     frasm_f2.ctrl_second = trim_buf[line_ind].getCtrlSecond();
-                    frasm_f2.ctrl_field = trim_buf[line_ind].getCtrlFieldCode();
+                    frasm_f2.ctrl_field = trim_buf[line_ind].getCtrlField();
                 }
             }
         }
@@ -477,14 +477,14 @@ void STC007DataStitcher::findFramesTrim()
         // Check for service lines in the input.
         if((trim_buf[line_ind].isServiceLine()!=false)&&(trim_buf[line_ind].isServFiller()==false))
         {
-            // Go to next line.
-            line_ind++;
 #ifdef DI_LOG_TRIM_VERBOSE
             if(((log_level&LOG_TRIM)!=0)&&((log_level&LOG_PROCESS)!=0))
             {
                 qInfo()<<"[L2B-007] Skipping service line at"<<trim_buf[line_ind].frame_number<<"/"<<trim_buf[line_ind].line_number;
             }
 #endif
+            // Go to next line.
+            line_ind++;
             // Skip service lines.
             continue;
         }
@@ -765,10 +765,10 @@ void STC007DataStitcher::splitFramesToFields()
         {
             if(trim_buf[line_ind].isServFiller()==false)
             {
-                if(trim_buf[line_ind].isServCtrlBlk()!=false)
+                /*if(trim_buf[line_ind].isServCtrlBlk()!=false)
                 {
                     qDebug()<<"[L2B-007] Stray Control Block"<<trim_buf[line_ind].frame_number<<trim_buf[line_ind].line_number;
-                }
+                }*/
                 // Skip stray unfiltered or lost sync service line.
                 line_ind++;
                 continue;
@@ -1049,7 +1049,7 @@ uint8_t STC007DataStitcher::getFieldResolution(std::vector<STC007Line> *field, u
     pad_checker.setLogLevel(0);
     //pad_checker.setIgnoreCRC(ignore_CRC);
     pad_checker.setIgnoreCRC(false);
-    pad_checker.setForceParity(true);
+    pad_checker.setForcedErrorCheck(true);
     // Check only P-code, that's enough. Q-code can cause false "corrections" and "valid" CRCs on 16-bit data.
     pad_checker.setPCorrection(true);
     pad_checker.setQCorrection(false);
@@ -1541,7 +1541,7 @@ uint8_t STC007DataStitcher::tryPadding(std::vector<STC007Line> *field1, uint16_t
     pad_checker.setLogLevel(ext_di_log_lvl);
     pad_checker.setResMode(getDataBlockResolution(&padding_queue, 0));
     pad_checker.setIgnoreCRC(ignore_CRC);
-    pad_checker.setForceParity(true);
+    pad_checker.setForcedErrorCheck(true);
     pad_checker.setPCorrection(enable_P_code);
     pad_checker.setQCorrection(enable_Q_code);
     pad_checker.setCWDCorrection(false);
@@ -2957,7 +2957,7 @@ uint8_t STC007DataStitcher::findFieldStitching()
         //qDebug()<<"[DI] State #"<<proc_state;
         dbg_timer.start();
 
-//------------------------ Try to perform the same stitching as on frame before.
+//------------------------ Try to perform the same stitching as on frame before to speed up the process.
         if(proc_state==STG_TRY_PREVIOUS)
         {
             // Preset "go full processing" state.
@@ -5462,7 +5462,7 @@ uint16_t STC007DataStitcher::patchBrokenLines(std::deque<STC007Line> *in_queue)
     lines_to_block.setInput(in_queue);
     lines_to_block.setOutput(&pcm_block);
     lines_to_block.setIgnoreCRC(ignore_CRC);
-    lines_to_block.setForceParity(!ignore_CRC);
+    lines_to_block.setForcedErrorCheck(!ignore_CRC);
     lines_to_block.setPCorrection(enable_P_code);
     lines_to_block.setQCorrection(enable_Q_code);
     lines_to_block.setCWDCorrection(false);
@@ -5673,7 +5673,7 @@ uint16_t STC007DataStitcher::patchBrokenLinesOld(std::deque<STC007Line> *in_queu
     lines_to_block.setInput(in_queue);
     lines_to_block.setOutput(&pcm_block);
     lines_to_block.setIgnoreCRC(ignore_CRC);
-    lines_to_block.setForceParity(!ignore_CRC);
+    lines_to_block.setForcedErrorCheck(!ignore_CRC);
     lines_to_block.setPCorrection(enable_P_code);
     lines_to_block.setQCorrection(enable_Q_code);
     lines_to_block.setCWDCorrection(false);
@@ -5911,7 +5911,7 @@ uint16_t STC007DataStitcher::performCWD(std::deque<STC007Line> *in_queue)
     lines_to_block.setOutput(&pcm_block);
     //lines_to_block.setLogLevel(STC007Deinterleaver::LOG_PROCESS|STC007Deinterleaver::LOG_ERROR_CORR);
     lines_to_block.setIgnoreCRC(ignore_CRC);
-    lines_to_block.setForceParity(!ignore_CRC);
+    lines_to_block.setForcedErrorCheck(!ignore_CRC);
     lines_to_block.setPCorrection(enable_P_code);
     lines_to_block.setQCorrection(enable_Q_code);
     lines_to_block.setCWDCorrection(true);
@@ -6671,7 +6671,7 @@ void STC007DataStitcher::performDeinterleave()
     lines_to_block.setInput(&conv_queue);
     lines_to_block.setOutput(&pcm_block);
     lines_to_block.setIgnoreCRC(ignore_CRC);
-    lines_to_block.setForceParity(!ignore_CRC);
+    lines_to_block.setForcedErrorCheck(!ignore_CRC);
     lines_to_block.setPCorrection(enable_P_code);
     lines_to_block.setQCorrection(enable_Q_code);
     lines_to_block.setCWDCorrection(enable_CWD);
@@ -6704,10 +6704,12 @@ void STC007DataStitcher::performDeinterleave()
 
         // Fill up data block, performing de-interleaving, convert lines to data blocks.
         lines_to_block.processBlock(0);
+        frasm_f1.blocks_total++;
         // TODO: determine emphasis for the data block
         //pcm_block.setEmphasis();
         // Set sample rate for data block.
         setBlockSampleRate(&pcm_block);
+        frasm_f1.odd_sample_rate = frasm_f1.even_sample_rate = pcm_block.sample_rate;
         // Set sample format.
         pcm_block.setM2Format(mode_m2);
 

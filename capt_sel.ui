@@ -566,7 +566,7 @@
         <string>Функционал ещё не готов</string>
        </property>
        <property name="text">
-        <string>Сохранить</string>
+        <string>Сохранить (ещё не доделано)</string>
        </property>
       </widget>
      </item>

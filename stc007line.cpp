@@ -16,13 +16,6 @@ STC007Line::STC007Line(const STC007Line &in_object) : PCMLine(in_object)
     marker_start_ed_coord = in_object.marker_start_ed_coord;
     marker_stop_ed_coord = in_object.marker_stop_ed_coord;
     m2_format = in_object.m2_format;
-    // Copy data words.
-    for(uint8_t index=0;index<WORD_CNT;index++)
-    {
-        words[index] = in_object.words[index];
-        word_crc[index] = in_object.word_crc[index];
-        word_valid[index] = in_object.word_valid[index];
-    }
     // Copy pixel coordinates.
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
@@ -30,6 +23,13 @@ STC007Line::STC007Line(const STC007Line &in_object) : PCMLine(in_object)
         {
             pixel_coordinates[stage][bit] = in_object.pixel_coordinates[stage][bit];
         }
+    }
+    // Copy data words.
+    for(uint8_t index=0;index<WORD_CNT;index++)
+    {
+        words[index] = in_object.words[index];
+        word_crc[index] = in_object.word_crc[index];
+        word_valid[index] = in_object.word_valid[index];
     }
 }
 
@@ -46,13 +46,6 @@ STC007Line& STC007Line::operator= (const STC007Line &in_object)
     marker_start_ed_coord = in_object.marker_start_ed_coord;
     marker_stop_ed_coord = in_object.marker_stop_ed_coord;
     m2_format = in_object.m2_format;
-    // Copy data words.
-    for(uint8_t index=0;index<WORD_CNT;index++)
-    {
-        words[index] = in_object.words[index];
-        word_crc[index] = in_object.word_crc[index];
-        word_valid[index] = in_object.word_valid[index];
-    }
     // Copy pixel coordinates.
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
@@ -60,6 +53,13 @@ STC007Line& STC007Line::operator= (const STC007Line &in_object)
         {
             pixel_coordinates[stage][bit] = in_object.pixel_coordinates[stage][bit];
         }
+    }
+    // Copy data words.
+    for(uint8_t index=0;index<WORD_CNT;index++)
+    {
+        words[index] = in_object.words[index];
+        word_crc[index] = in_object.word_crc[index];
+        word_valid[index] = in_object.word_valid[index];
     }
 
     return *this;
@@ -75,14 +75,6 @@ void STC007Line::clear()
     mark_ed_stage = MARK_ED_START;
     marker_start_bg_coord = marker_start_ed_coord = marker_stop_ed_coord = 0;
     m2_format = false;
-    // Reset data words.
-    setSilent();
-    for(uint8_t index=0;index<WORD_CNT;index++)
-    {
-        // Reset per-word flags used for CWD.
-        word_crc[index] = false;
-        word_valid[index] = false;
-    }
     // Reset pixel coordinates.
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
@@ -90,6 +82,14 @@ void STC007Line::clear()
         {
             pixel_coordinates[stage][bit] = 0;
         }
+    }
+    // Reset data words.
+    setSilent();
+    for(uint8_t index=0;index<WORD_CNT;index++)
+    {
+        // Reset per-word flags used for CWD.
+        word_crc[index] = false;
+        word_valid[index] = false;
     }
     // Force CRC to be bad until good binarization.
     //calcCRC();
@@ -154,13 +154,21 @@ void STC007Line::setSilent()
     calcCRC();
 }
 
-//------------------------ Copy 14-bit word into object with its state.
+//------------------------ Copy 14-bit word into the object with its state.
 void STC007Line::setWord(uint8_t index, uint16_t in_word, bool in_valid)
 {
     if(index<WORD_CNT)
     {
-        words[index] = in_word&0x3FFF;
-        word_crc[index] = word_valid[index] = in_valid;
+        if(index==WORD_CRCC_SH0)
+        {
+            words[index] = in_word&CRC_WORD_MASK;
+            word_crc[index] = word_valid[index] = in_valid;
+        }
+        else
+        {
+            words[index] = in_word&DATA_WORD_MASK;
+            word_crc[index] = word_valid[index] = in_valid;
+        }
     }
 }
 
@@ -222,7 +230,7 @@ uint8_t STC007Line::getRightShiftZoneBit()
 
 //------------------------ Get pre-calculated coordinate of pixel in video line for requested PCM bit number and pixel-shifting stage.
 //------------------------ [calcPPB()] MUST be called before any [findVideoPixel()] calls!
-uint16_t STC007Line::getVideoPixelT(uint8_t pcm_bit, uint8_t shift_stage)
+uint16_t STC007Line::getVideoPixelByTable(uint8_t pcm_bit, uint8_t shift_stage)
 {
     return pixel_coordinates[shift_stage][pcm_bit];
 }
@@ -254,6 +262,16 @@ uint8_t STC007Line::getPCMType()
     return TYPE_STC007;
 }
 
+//------------------------ Get one word.
+uint16_t STC007Line::getWord(uint8_t index)
+{
+    if(index<WORD_CNT)
+    {
+        return words[index];
+    }
+    return 0;
+}
+
 //------------------------ Convert one 14-bit word to a 16-bit sample.
 int16_t STC007Line::getSample(uint8_t index)
 {
@@ -268,11 +286,13 @@ int16_t STC007Line::getSample(uint8_t index)
 
     if(m2_format==false)
     {
+        // STC-001/PCM-F1 regular sample format.
         // Convert 14-bit word to a 16-bit word.
         data_word = (data_word<<2);
     }
     else
     {
+        // M2 sample format.
         bool is_positive;
         // Check 14th bit for range (R bit).
         if((data_word&BIT_M2_RANGE_POS)==0)
@@ -305,7 +325,7 @@ int16_t STC007Line::getCtrlID()
 {
     if(isServCtrlBlk()!=false)
     {
-        return (words[WORD_CB_ID]&0x3FFF);
+        return (words[WORD_CB_ID]&DATA_WORD_MASK);
     }
     return -1;
 }
@@ -373,7 +393,7 @@ int8_t STC007Line::getCtrlSecond()
 
 //------------------------ Get Index code from Address part of Control Block.
 //------------------------ Negative result means an error.
-int8_t STC007Line::getCtrlFieldCode()
+int8_t STC007Line::getCtrlField()
 {
     if(isServCtrlBlk()!=false)
     {
@@ -435,11 +455,14 @@ bool STC007Line::hasSameWords(STC007Line *in_line)
     }
 }
 
-//------------------------ Does this line contain control signal block (and no audio data)?
+//------------------------ Does this line contain Control Block structure (and no audio data)?
 bool STC007Line::hasControlBlock()
 {
-    if((words[WORD_CB_CUE1]==0x3333)&&(words[WORD_CB_CUE2]==0x0CCC)
-        &&(words[WORD_CB_CUE3]==0x3333)&&(words[WORD_CB_CUE4]==0x0CCC))
+    // Detect Control Block data.
+    if((words[WORD_CB_CUE1]==0x3333)&&(words[WORD_CB_CUE2]==0x0CCC)         // Cue signal presence
+        &&(words[WORD_CB_CUE3]==0x3333)&&(words[WORD_CB_CUE4]==0x0CCC)      // Cue signal presence
+        &&(words[WORD_CB_ID]==0x0000)                                       // Zeroes in unused "Identification" field
+        &&((words[WORD_CB_CTRL]&CTRL_ZERO_MASK)==0x0000))                   // Zeroes in unused bits of "Control" field
     {
         return true;
     }
@@ -579,7 +602,7 @@ bool STC007Line::isFixedByCWD()
     return false;
 }
 
-//------------------------ Check if line has service tag "PCM control block".
+//------------------------ Check if line has service tag "PCM Control Block".
 bool STC007Line::isServCtrlBlk()
 {
     if(service_type==SRVLINE_CTRL_BLOCK)
@@ -615,16 +638,6 @@ bool STC007Line::isWordValid(uint8_t index)
         return false;
     }
     return false;
-}
-
-//------------------------ Get one word.
-uint16_t STC007Line::getWord(uint8_t index)
-{
-    if(index<WORD_CNT)
-    {
-        return words[index];
-    }
-    return 0;
 }
 
 //------------------------ Convert PCM data to string for debug.
@@ -804,7 +817,7 @@ std::string STC007Line::dumpContentString()
                     getCtrlHour(),
                     getCtrlMinute(),
                     getCtrlSecond(),
-                    getCtrlFieldCode(),
+                    getCtrlField(),
                     words[WORD_CB_CTRL]);
             text_out += c_buf;
             if(isCtrlEnabledP()==false)
@@ -1000,6 +1013,6 @@ void STC007Line::calcCoordinates(uint8_t in_shift)
 {
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
-        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixelC(bit, in_shift, (BITS_START-1));
+        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixeBylCalc(bit, in_shift, (BITS_START-1));
     }
 }

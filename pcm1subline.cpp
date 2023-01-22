@@ -16,7 +16,7 @@ PCM1SubLine::PCM1SubLine(const PCM1SubLine &in_object)
     bw_set = in_object.bw_set;
     crc = in_object.crc;
     // Copy data words.
-    for(uint8_t i=0;i<WORD_MAX;i++)
+    for(uint8_t i=0;i<WORD_CNT;i++)
     {
         words[i] = in_object.words[i];
     }
@@ -35,7 +35,7 @@ PCM1SubLine& PCM1SubLine::operator= (const PCM1SubLine &in_object)
     bw_set = in_object.bw_set;
     crc = in_object.crc;
     // Copy data words.
-    for(uint8_t i=0;i<WORD_MAX;i++)
+    for(uint8_t i=0;i<WORD_CNT;i++)
     {
         words[i] = in_object.words[i];
     }
@@ -54,12 +54,21 @@ void PCM1SubLine::clear()
     setSilent();
 }
 
-//------------------------ Copy word into object.
+//------------------------ Zero out all data words.
+void PCM1SubLine::setSilent()
+{
+    for(uint8_t i=WORD_L;i<=WORD_R;i++)
+    {
+        words[i] = PCM1Line::BIT_RANGE_POS;
+    }
+}
+
+//------------------------ Copy the word into the object.
 void PCM1SubLine::setWord(uint8_t index, uint16_t in_word)
 {
-    if(index<WORD_MAX)
+    if(index<WORD_CNT)
     {
-        words[index] = in_word;
+        words[index] = in_word&DATA_WORD_MASK;
     }
 }
 
@@ -94,15 +103,6 @@ void PCM1SubLine::setBWLevels(bool bw_ok)
 void PCM1SubLine::setCRCValid(bool crc_ok)
 {
     crc = crc_ok;
-}
-
-//------------------------ Zero out all data words.
-void PCM1SubLine::setSilent()
-{
-    for(uint8_t i=WORD_L;i<=WORD_R;i++)
-    {
-        words[i] = PCM1Line::BIT_RANGE_POS;
-    }
 }
 
 //------------------------ Were BLACK and WHITE levels set for the line?
@@ -140,14 +140,11 @@ bool PCM1SubLine::isCRCValid()
 //------------------------ Get word data by its index.
 uint16_t PCM1SubLine::getWord(uint8_t index)
 {
-    if(index<WORD_MAX)
+    if(index<WORD_CNT)
     {
         return words[index];
     }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
 
 //------------------------ Get left sample word.

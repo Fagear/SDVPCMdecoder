@@ -20,6 +20,7 @@ PCM16X0DataStitcher::PCM16X0DataStitcher(QObject *parent) : QObject(parent)
 
     log_level = 0;
     trim_fill = 0;
+    preset_sample_rate = PCMSamplePair::SAMPLE_RATE_AUTO;
     file_start = file_end = format_changed = false;
 
     enable_P_code = true;
@@ -1688,7 +1689,7 @@ uint8_t PCM16X0DataStitcher::findSIPadding(std::vector<PCM16X0SubLine> *field_bu
         // Setup deinterleaver.
         pad_checker.setInput(&padding_queue);
         pad_checker.setOutput(&padding_block);
-        pad_checker.setForceParity(true);
+        pad_checker.setForcedErrorCheck(true);
         pad_checker.setLogLevel(ext_di_log_lvl);
         pad_checker.setPCorrection(true);
         pad_checker.setSIFormat();
@@ -2715,7 +2716,7 @@ uint8_t PCM16X0DataStitcher::findEIPadding(uint8_t field_order)
         pad_checker.setOutput(&padding_block);
         pad_checker.setLogLevel(ext_di_log_lvl);
         pad_checker.setIgnoreCRC(ignore_CRC);
-        pad_checker.setForceParity(true);
+        pad_checker.setForcedErrorCheck(true);
         pad_checker.setPCorrection(true);
         pad_checker.setEIFormat();
 
@@ -4892,6 +4893,22 @@ bool PCM16X0DataStitcher::collectCtrlBitStats(PCM16X0DataBlock *int_block_flags)
     }
 }
 
+//------------------------ Set data block sample rate.
+void PCM16X0DataStitcher::setBlockSampleRate(PCM16X0DataBlock *in_block)
+{
+    // Check if sample rate is preset.
+    if((preset_sample_rate==PCMSamplePair::SAMPLE_RATE_44100)||(preset_sample_rate==PCMSamplePair::SAMPLE_RATE_44056))
+    {
+        // Apply preset sample rate.
+        in_block->sample_rate = preset_sample_rate;
+    }
+    else
+    {
+        // Set sample rate from control bits.
+        in_block->sample_rate = f1_srate;
+    }
+}
+
 //------------------------ Output service tag "New file started".
 void PCM16X0DataStitcher::outputFileStart()
 {
@@ -5137,7 +5154,7 @@ void PCM16X0DataStitcher::performDeinterleave(uint8_t int_format)
     lines_to_block.setInput(&conv_queue);
     lines_to_block.setOutput(&pcm_block);
     lines_to_block.setIgnoreCRC(ignore_CRC);
-    lines_to_block.setForceParity(!ignore_CRC);
+    lines_to_block.setForcedErrorCheck(!ignore_CRC);
     lines_to_block.setPCorrection(enable_P_code);
 
     if(int_format==PCM16X0Deinterleaver::FORMAT_EI)
@@ -5188,11 +5205,13 @@ void PCM16X0DataStitcher::performDeinterleave(uint8_t int_format)
             //already_invalid = false;
             // Fill up data block, performing de-interleaving, convert lines to data blocks.
             lines_to_block.processBlock(i, even_order);
+            frasm_f1.blocks_total += PCM16X0DataBlock::SUBBLK_CNT;
             // Put line number inside of interleave block into queue index.
             pcm_block.queue_order = line_in_block;
 
+            // Set sample rate for data block.
+            setBlockSampleRate(&pcm_block);
             // Set service bits.
-            pcm_block.sample_rate = f1_srate;
             pcm_block.setEmphasis(f1_emph);
             pcm_block.code = f1_code;
             if(int_format==PCM16X0Deinterleaver::FORMAT_EI)
@@ -5205,6 +5224,12 @@ void PCM16X0DataStitcher::performDeinterleave(uint8_t int_format)
                 // SI format.
                 pcm_block.ei_format = false;
             }
+            // Update frame assembling data.
+            frasm_f1.odd_sample_rate = frasm_f1.even_sample_rate = pcm_block.sample_rate;
+            frasm_f1.odd_emphasis = frasm_f1.even_emphasis = pcm_block.emphasis;
+            frasm_f1.ei_format = pcm_block.ei_format;
+
+            // TODO: implement [blocks_fix_bp] count
 
             // Check if data is not pure silence.
             if(pcm_block.isSilent()==false)
@@ -5279,14 +5304,40 @@ void PCM16X0DataStitcher::performDeinterleave(uint8_t int_format)
 
             if(pcm_block.isBlockValid()==false)
             {
-                // Data block is corrupted.
-                frasm_f1.blocks_drop++;
+                if(pcm_block.isBlockValid(PCM16X0DataBlock::SUBBLK_1)==false)
+                {
+                    // Data block is corrupted.
+                    frasm_f1.blocks_drop++;
+                }
+                if(pcm_block.isBlockValid(PCM16X0DataBlock::SUBBLK_2)==false)
+                {
+                    // Data block is corrupted.
+                    frasm_f1.blocks_drop++;
+                }
+                if(pcm_block.isBlockValid(PCM16X0DataBlock::SUBBLK_3)==false)
+                {
+                    // Data block is corrupted.
+                    frasm_f1.blocks_drop++;
+                }
                 // Samples in data block are corrupted.
                 frasm_f1.samples_drop += pcm_block.getErrorsFixedAudio();
                 if(pcm_block.isDataBroken()!=false)
                 {
-                    // Broken data block detected.
-                    frasm_f1.blocks_broken++;
+                    if(pcm_block.isDataBroken(PCM16X0DataBlock::SUBBLK_1)!=false)
+                    {
+                        // Data block is corrupted.
+                        frasm_f1.blocks_broken++;
+                    }
+                    if(pcm_block.isDataBroken(PCM16X0DataBlock::SUBBLK_2)!=false)
+                    {
+                        // Data block is corrupted.
+                        frasm_f1.blocks_broken++;
+                    }
+                    if(pcm_block.isDataBroken(PCM16X0DataBlock::SUBBLK_3)!=false)
+                    {
+                        // Data block is corrupted.
+                        frasm_f1.blocks_broken++;
+                    }
 #ifdef DI_EN_DBG_OUT
                     if((log_level&LOG_PROCESS)!=0)
                     {
@@ -5459,10 +5510,8 @@ void PCM16X0DataStitcher::setPCorrection(bool in_set)
 //------------------------ Preset audio sample rate.
 void PCM16X0DataStitcher::setSampleRatePreset(uint16_t in_srate)
 {
-    uint16_t sample_rate_preset;
-    sample_rate_preset = PCMSamplePair::SAMPLE_RATE_UNKNOWN;
 #ifdef DI_EN_DBG_OUT
-    if(sample_rate_preset!=in_srate)
+    if(preset_sample_rate!=in_srate)
     {
         if((log_level&LOG_SETTINGS)!=0)
         {
@@ -5480,13 +5529,12 @@ void PCM16X0DataStitcher::setSampleRatePreset(uint16_t in_srate)
             }
             else
             {
-                qInfo()<<"[L2B-16x0] Unknown sample rate provided, ignored!";
+                qInfo()<<"[L2B-16x0] Unknown sample rate provided!";
             }
         }
     }
 #endif
-    // TODO: add support for sample rate preset.
-    sample_rate_preset = in_srate;
+    preset_sample_rate = in_srate;
 }
 
 //------------------------ Set fine settings: usage of ECC on CRC-marked words.

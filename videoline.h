@@ -1,4 +1,32 @@
-﻿#ifndef VIDEOLINE_H
+﻿/**************************************************************************************************************************************************************
+videoline.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2020-04
+
+Video line container.
+Data container used between [VideoInFFMPEG] and [Binarizer] modules.
+This object holds grayscale brightnesses for all pixels of the single line of the source frame in [pixel_data].
+It also contains information about number of the source frame and line, color channel setting used during capture.
+In addition this object can hold service tag, signalling for such events as start of a new source or end of a frame.
+When [service_type] is set to something different from [SRVLINE_NO], other fields are not used.
+
+**************************************************************************************************************************************************************/
+
+#ifndef VIDEOLINE_H
 #define VIDEOLINE_H
 
 #include "vid_preset_t.h"
@@ -12,7 +40,7 @@ public:
     // Service tags for [service_type].
     enum
     {
-        SRVLINE_NO,             // Regular PCM line with audio data.
+        SRVLINE_NO,             // Regular line with audio data.
         SRVLINE_NEW_FILE,       // New file opened (with path in [file_path]).
         SRVLINE_END_FILE,       // File ended.
         SRVLINE_FILLER,         // Filler line (for frame padding).
@@ -27,7 +55,7 @@ public:
     std::vector<uint8_t> pixel_data;    // Array of grayscale 8-bit pixels.
     std::string file_path;              // Path of decoded file (set with [serv_new_file]).
     uint32_t process_time;              // Amount of time spent processing the line [us].
-    bool scan_done;                     // This line was scanned for data coordinates by binarizer;
+    bool scan_done;                     // This line was scanned for data coordinates by [Binarizer];
 
 private:
     bool empty;                         // Is line marked as "empty" (no items in [pixel_data]) for fast skipping?

@@ -304,10 +304,7 @@ bool PCM16X0DataBlock::hasPickedLeft(uint8_t line)
     {
         return picked_left[line];
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Has CRC picked (during binarization) bits?
@@ -317,10 +314,7 @@ bool PCM16X0DataBlock::hasPickedCRC(uint8_t line)
     {
         return picked_crc[line];
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Does the word in the sub-block contained picked bits?
@@ -448,10 +442,7 @@ bool PCM16X0DataBlock::isWordCRCOk(uint8_t blk, uint8_t word)
     {
         return word_crc[blk][getWordToLine(blk, word)];
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Check if word is safe to playback (not damaged or fixed).
@@ -461,10 +452,7 @@ bool PCM16X0DataBlock::isWordValid(uint8_t blk, uint8_t word)
     {
         return word_valid[blk][getWordToLine(blk, word)];
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 //------------------------ Is this block odd in the order?
@@ -480,11 +468,11 @@ bool PCM16X0DataBlock::isOrderEven()
 }
 
 //------------------------ Check if data block is valid.
-bool PCM16X0DataBlock::isBlockValid()
+bool PCM16X0DataBlock::isBlockValid(uint8_t blk)
 {
     bool valid;
     valid = true;
-    if(getErrorsFixedAudio()>0)
+    if(getErrorsFixedAudio(blk)>0)
     {
         valid = false;
     }
@@ -613,10 +601,7 @@ uint16_t PCM16X0DataBlock::getWord(uint8_t blk, uint8_t word)
     {
         return words[blk][getWordToLine(blk, word)];
     }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
 
 //------------------------ Get audio sample.
@@ -626,10 +611,7 @@ int16_t PCM16X0DataBlock::getSample(uint8_t blk, uint8_t word)
     {
         return (int16_t)(words[blk][getWordToLine(blk, word)]);
     }
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
 
 //------------------------ Get what type of fix was applied to audio data.
@@ -639,10 +621,7 @@ uint8_t PCM16X0DataBlock::getAudioState(uint8_t blk)
     {
         return audio_state[blk];
     }
-    else
-    {
-        return AUD_BROKEN;
-    }
+    return AUD_BROKEN;
 }
 
 //------------------------ Get error count for audio samples (before correction).

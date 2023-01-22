@@ -592,8 +592,27 @@ bool FrameAsmDescriptor::isOrderTFF()
 uint8_t FrameAsmDescriptor::getAvgRef()
 {
     uint16_t temp_avg;
-    temp_avg = odd_ref + even_ref;
-    temp_avg = temp_avg/2;
+    if((odd_ref==0)&&(even_ref==0))
+    {
+        // No reference level data.
+        temp_avg = 0;
+    }
+    else if(odd_ref==0)
+    {
+        // No reference level for odd field, keep data from the even field.
+        temp_avg = even_ref;
+    }
+    else if(even_ref==0)
+    {
+        // No reference level for even field, keep data from the odd field.
+        temp_avg = odd_ref;
+    }
+    else
+    {
+        // Average data from both fields.
+        temp_avg = odd_ref + even_ref;
+        temp_avg = temp_avg/2;
+    }
     return (uint8_t)temp_avg;
 }
 
@@ -836,7 +855,7 @@ void FrameAsmSTC007::clearMisc()
     inner_padding_ok = outer_padding_ok = false;
     inner_silence = outer_silence = true;
     vid_std_preset = vid_std_guessed = false;
-    ctrl_index = ctrl_hour = ctrl_minute = ctrl_second = ctrl_field = 0;
+    ctrl_index = ctrl_hour = ctrl_minute = ctrl_second = ctrl_field = -1;
     this->clearAsmStats();
 }
 
@@ -864,5 +883,5 @@ void FrameAsmSTC007::updateVidStdSoft(uint8_t in_std)
 //------------------------ Is address data set from Control Block?
 bool FrameAsmSTC007::isAddressSet()
 {
-    return ((ctrl_index!=0)||(ctrl_hour!=0)||(ctrl_minute!=0)||(ctrl_second!=0)||(ctrl_field!=0));
+    return ((ctrl_index!=-1)||(ctrl_hour!=-1)||(ctrl_minute!=-1)||(ctrl_second!=-1)||(ctrl_field!=-1));
 }

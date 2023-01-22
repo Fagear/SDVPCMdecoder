@@ -12,11 +12,6 @@ PCM1Line::PCM1Line(const PCM1Line &in_object) : PCMLine(in_object)
     // Copy own fields.
     picked_bits_left = in_object.picked_bits_left;
     picked_bits_right = in_object.picked_bits_right;
-    // Copy data words.
-    for(uint8_t index=0;index<WORD_MAX;index++)
-    {
-        words[index] = in_object.words[index];
-    }
     // Copy pixel coordinates.
     for(uint8_t stage=0;stage<PCM_LINE_MAX_PS_STAGES;stage++)
     {
@@ -24,6 +19,11 @@ PCM1Line::PCM1Line(const PCM1Line &in_object) : PCMLine(in_object)
         {
             pixel_coordinates[stage][bit] = in_object.pixel_coordinates[stage][bit];
         }
+    }
+    // Copy data words.
+    for(uint8_t index=0;index<WORD_CNT;index++)
+    {
+        words[index] = in_object.words[index];
     }
 }
 
@@ -36,11 +36,6 @@ PCM1Line& PCM1Line::operator= (const PCM1Line &in_object)
     // Copy own fields.
     picked_bits_left = in_object.picked_bits_left;
     picked_bits_right = in_object.picked_bits_right;
-    // Copy data words.
-    for(uint8_t index=0;index<WORD_MAX;index++)
-    {
-        words[index] = in_object.words[index];
-    }
     // Copy pixel coordinates.
     for(uint8_t stage=0;stage<PCM_LINE_MAX_PS_STAGES;stage++)
     {
@@ -48,6 +43,11 @@ PCM1Line& PCM1Line::operator= (const PCM1Line &in_object)
         {
             pixel_coordinates[stage][bit] = in_object.pixel_coordinates[stage][bit];
         }
+    }
+    // Copy data words.
+    for(uint8_t index=0;index<WORD_CNT;index++)
+    {
+        words[index] = in_object.words[index];
     }
 
     return *this;
@@ -60,8 +60,6 @@ void PCM1Line::clear()
     PCMLine::clear();
     // Clear own fields.
     picked_bits_left = picked_bits_right = 0;
-    // Reset data words.
-    setSilent();
     // Reset pixel coordinates.
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
@@ -70,6 +68,8 @@ void PCM1Line::clear()
             pixel_coordinates[stage][bit] = 0;
         }
     }
+    // Reset data words.
+    setSilent();
     // Force CRC to be bad until good binarization.
     //calcCRC();
     calc_crc = CRC_SILENT;  // Pre-calculated CRC for silenced line.
@@ -101,6 +101,22 @@ void PCM1Line::setSilent()
     calcCRC();
 }
 
+//------------------------ Copy 13-bit word into the object.
+void PCM1Line::setWord(uint8_t index, uint16_t in_word)
+{
+    if(index<WORD_CNT)
+    {
+        if(index==WORD_CRCC)
+        {
+            words[index] = in_word&CRC_WORD_MASK;
+        }
+        else
+        {
+            words[index] = in_word&DATA_WORD_MASK;
+        }
+    }
+}
+
 //------------------------ Get number of data bits in the source line by the standard.
 uint8_t PCM1Line::getBitsPerSourceLine()
 {
@@ -127,7 +143,7 @@ uint8_t PCM1Line::getRightShiftZoneBit()
 
 //------------------------ Get pre-calculated coordinate of pixel in video line for requested PCM bit number and pixel-shifting stage.
 //------------------------ [calcPPB()] MUST be called before any [findVideoPixel()] calls!
-uint16_t PCM1Line::getVideoPixelT(uint8_t pcm_bit, uint8_t shift_stage)
+uint16_t PCM1Line::getVideoPixelByTable(uint8_t pcm_bit, uint8_t shift_stage)
 {
     return pixel_coordinates[shift_stage][pcm_bit];
 }
@@ -158,6 +174,16 @@ uint16_t PCM1Line::getSourceCRC()
 uint8_t PCM1Line::getPCMType()
 {
     return TYPE_PCM1;
+}
+
+//------------------------ Get one word.
+uint16_t PCM1Line::getWord(uint8_t index)
+{
+    if(index<WORD_CNT)
+    {
+        return words[index];
+    }
+    return BIT_RANGE_POS;
 }
 
 //------------------------ Convert one 13-bit word to a 16-bit sample.
@@ -621,6 +647,6 @@ void PCM1Line::calcCoordinates(uint8_t in_shift)
 {
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
-        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixelC(bit, in_shift);
+        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixeBylCalc(bit, in_shift);
     }
 }

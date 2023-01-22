@@ -1,4 +1,25 @@
-﻿#ifndef FRAMETRIMSET_H
+﻿/**************************************************************************************************************************************************************
+frametrimset.h
+
+Copyright © 2023 Maksim Kryukov <fagear@mail.ru>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Created: 2020-05
+
+**************************************************************************************************************************************************************/
+
+#ifndef FRAMETRIMSET_H
 #define FRAMETRIMSET_H
 
 #include <stdint.h>
@@ -46,7 +67,7 @@ class FrameBinDescriptor
 {
 public:
     uint32_t frame_id;          // Frame number.
-    uint16_t line_length;       // Number of pixels in single line of the frame.
+    uint16_t line_length;       // Number of pixels in a single line of the frame.
     uint16_t lines_odd;         // Number of lines in the odd field with video data.
     uint16_t lines_even;        // Number of lines in the even field with video data.
     uint16_t lines_pcm_odd;     // Number of lines in the odd field, containing PCM data (has valid CRC or has markers).
@@ -91,6 +112,7 @@ public:
     void clear();
 };
 
+// TODO: add service tags
 //------------------------ Frame assembling information (base class).
 class FrameAsmDescriptor
 {
@@ -207,6 +229,7 @@ public:
     void clearAsmStats();
 };
 
+// TODO: introduce "M2" flag
 //------------------------ Frame assembling information for STC-007.
 class FrameAsmSTC007 : public FrameAsmDescriptor
 {

@@ -51,7 +51,6 @@ SOURCES += main.cpp\
     frame_vis.cpp \
     fine_vidin_set.cpp \
     pcm1line.cpp \
-    bin_preset_t.cpp \
     pcmline.cpp \
     binarizer.cpp \
     pcmsamplepair.cpp \
@@ -90,7 +89,6 @@ HEADERS  += mainwindow.h \
     frame_vis.h \
     fine_vidin_set.h \
     pcm1line.h \
-    bin_preset_t.h \
     pcmline.h \
     binarizer.h \
     pcmsamplepair.h \

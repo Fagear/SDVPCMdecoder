@@ -1,5 +1,65 @@
 ﻿#include "binarizer.h"
 
+bin_preset_t::bin_preset_t()
+{
+    reset();
+}
+
+bin_preset_t::bin_preset_t(const bin_preset_t &in_object)
+{
+    max_black_lvl = in_object.max_black_lvl;
+    min_white_lvl = in_object.min_white_lvl;
+    min_contrast = in_object.min_contrast;
+    min_ref_lvl = in_object.min_ref_lvl;
+    max_ref_lvl = in_object.max_ref_lvl;
+    min_valid_crcs = in_object.min_valid_crcs;
+    mark_max_dist = in_object.mark_max_dist;
+    left_bit_pick = in_object.left_bit_pick;
+    right_bit_pick = in_object.right_bit_pick;
+    horiz_coords = in_object.horiz_coords;
+    en_coord_search = in_object.en_coord_search;
+    en_force_coords = in_object.en_force_coords;
+    en_good_no_marker = in_object.en_good_no_marker;
+}
+
+bin_preset_t& bin_preset_t::operator= (const bin_preset_t &in_object)
+{
+    if(this==&in_object) return *this;
+
+    max_black_lvl = in_object.max_black_lvl;
+    min_white_lvl = in_object.min_white_lvl;
+    min_contrast = in_object.min_contrast;
+    min_ref_lvl = in_object.min_ref_lvl;
+    max_ref_lvl = in_object.max_ref_lvl;
+    min_valid_crcs = in_object.min_valid_crcs;
+    mark_max_dist = in_object.mark_max_dist;
+    left_bit_pick = in_object.left_bit_pick;
+    right_bit_pick = in_object.right_bit_pick;
+    horiz_coords = in_object.horiz_coords;
+    en_coord_search = in_object.en_coord_search;
+    en_force_coords = in_object.en_force_coords;
+    en_good_no_marker = in_object.en_good_no_marker;
+
+    return *this;
+}
+
+void bin_preset_t::reset()
+{
+    max_black_lvl = 160;
+    min_white_lvl = 28;
+    min_contrast = 10;
+    min_ref_lvl = 7;
+    max_ref_lvl = 240;
+    min_valid_crcs = 5;     // (picked after extensive testing)
+    mark_max_dist = 6;
+    left_bit_pick = 4;
+    right_bit_pick = 2;
+    horiz_coords.clear();
+    horiz_coords.setToZero();
+    en_force_coords = false;
+    en_coord_search = en_good_no_marker = true;
+}
+
 Binarizer::Binarizer()
 {
     // Set default preset.
@@ -1583,11 +1643,11 @@ uint8_t Binarizer::processLine()
                         temp_pcm_ptr->forceMarkersOk();
                     }
                     // Check for presence of Control Block in STC-007 PCM line.
-                    if(temp_pcm_ptr->hasControlBlock()!=false)
+                    /*if(temp_pcm_ptr->hasControlBlock()!=false)
                     {
                         // Force it as a valid service line with Control Block.
                         temp_pcm_ptr->setServCtrlBlk();
-                    }
+                    }*/
                 }
 #ifdef LB_EN_DBG_OUT
                 if(suppress_log==false)
@@ -6091,7 +6151,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
     for(index=0;index<max_cut_bits;index++)
     {
         // Get [i] bit coordinate.
-        current_pixel_coord = pcm_line->getVideoPixelT(index, 0);
+        current_pixel_coord = pcm_line->getVideoPixelByTable(index, 0);
 #ifdef LB_EN_DBG_OUT
         if(suppress_log==false)
         {
@@ -6157,7 +6217,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
     for(index=0;index<max_cut_bits;index++)
     {
         // Get [i] bit coordinate.
-        current_pixel_coord = pcm_line->getVideoPixelT((pcm_line->getBitsBetweenDataCoordinates()-1-index), 0);
+        current_pixel_coord = pcm_line->getVideoPixelByTable((pcm_line->getBitsBetweenDataCoordinates()-1-index), 0);
 #ifdef LB_EN_DBG_OUT
         if(suppress_log==false)
         {
@@ -6226,7 +6286,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
         if(left_bit_count>0)
         {
             // Save original state of the word.
-            left_orig_word = pcm_line->words[PCM1Line::WORD_L2];
+            left_orig_word = pcm_line->getWord(PCM1Line::WORD_L2);
             // Remove "empty" bits.
             left_clean_word = ((left_rep_limit-1)<<(PCM1Line::BITS_PER_WORD-left_bit_count));
             left_clean_word = ~left_clean_word;
@@ -6235,7 +6295,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
         if(right_bit_count>0)
         {
             // Save original state of the word.
-            right_orig_word = pcm_line->words[PCM1Line::WORD_CRCC];
+            right_orig_word = pcm_line->getWord(PCM1Line::WORD_CRCC);
             // Remove "empty" bits.
             right_clean_word = (right_rep_limit-1);
             right_clean_word = ~right_clean_word;
@@ -6254,11 +6314,11 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
                     // Create a patch for a leftmost word.
                     left_patch_word = (index<<(PCM1Line::BITS_PER_WORD-left_bit_count));
                     // Apply patch to the word.
-                    pcm_line->words[PCM1Line::WORD_L2] = left_clean_word|left_patch_word;
+                    pcm_line->setWord(PCM1Line::WORD_L2, left_clean_word|left_patch_word);
                     // Create a patch for a rightmost word.
                     right_patch_word = idx_in;
                     // Apply patch to the word.
-                    pcm_line->words[PCM1Line::WORD_CRCC] = right_clean_word|right_patch_word;
+                    pcm_line->setWord(PCM1Line::WORD_CRCC, right_clean_word|right_patch_word);
                     // Re-calc CRC.
                     pcm_line->calcCRC();
                     if(pcm_line->isCRCValid()!=false)
@@ -6291,8 +6351,8 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
             {
                 // Found more than one patches: CRC collision detected!
                 // Restore original state of the word.
-                pcm_line->words[PCM1Line::WORD_L2] = left_orig_word;
-                pcm_line->words[PCM1Line::WORD_CRCC] = right_orig_word;
+                pcm_line->setWord(PCM1Line::WORD_L2, left_orig_word);
+                pcm_line->setWord(PCM1Line::WORD_CRCC, right_orig_word);
                 pcm_line->calcCRC();
                 // Force line to be bad.
                 pcm_line->setForcedBad();
@@ -6308,8 +6368,8 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
             {
                 // Fix was not found and no collision occured.
                 // Restore original state of the words.
-                pcm_line->words[PCM1Line::WORD_L2] = left_orig_word;
-                pcm_line->words[PCM1Line::WORD_CRCC] = right_orig_word;
+                pcm_line->setWord(PCM1Line::WORD_L2, left_orig_word);
+                pcm_line->setWord(PCM1Line::WORD_CRCC, right_orig_word);
                 pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
                 if(suppress_log==false)
@@ -6323,8 +6383,8 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
             {
                 // Fix successfully found, no collision.
                 // Apply patches to the words.
-                pcm_line->words[PCM1Line::WORD_L2] = left_clean_word|left_fix_word;
-                pcm_line->words[PCM1Line::WORD_CRCC] = right_clean_word|right_fix_word;
+                pcm_line->setWord(PCM1Line::WORD_L2, left_clean_word|left_fix_word);
+                pcm_line->setWord(PCM1Line::WORD_CRCC, right_clean_word|right_fix_word);
                 // Re-calc CRC.
                 pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
@@ -6334,10 +6394,10 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
                     log_line.sprintf("[LB] Successfull bit pick for both sides (%u/%u bits).", left_bit_count, right_bit_count);
                     qInfo()<<log_line;
                     log_line.sprintf("[LB] Left word: original [0x%04x], cleaned [0x%04x], patch [0x%04x], result [0x%04x]",
-                                     left_orig_word, left_clean_word, left_fix_word, pcm_line->words[PCM1Line::WORD_L2]);
+                                     left_orig_word, left_clean_word, left_fix_word, pcm_line->getWord(PCM1Line::WORD_L2));
                     qInfo()<<log_line;
                     log_line.sprintf("[LB] Right word: original [0x%04x], cleaned [0x%04x], patch [0x%04x], result [0x%04x]",
-                                     right_orig_word, right_clean_word, right_fix_word, pcm_line->words[PCM1Line::WORD_CRCC]);
+                                     right_orig_word, right_clean_word, right_fix_word, pcm_line->getWord(PCM1Line::WORD_CRCC));
                     qInfo()<<log_line;
                 }
 #endif
@@ -6355,7 +6415,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
                 // Create a patch.
                 left_patch_word = (index<<(PCM1Line::BITS_PER_WORD-left_bit_count));
                 // Apply patch to the word.
-                pcm_line->words[PCM1Line::WORD_L2] = left_clean_word|left_patch_word;
+                pcm_line->setWord(PCM1Line::WORD_L2, left_clean_word|left_patch_word);
                 // Re-check CRC.
                 pcm_line->calcCRC();
                 if(pcm_line->isCRCValid()!=false)
@@ -6382,7 +6442,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
             {
                 // Found more than one patches: CRC collision detected!
                 // Restore original state of the word.
-                pcm_line->words[PCM1Line::WORD_L2] = left_orig_word;
+                pcm_line->setWord(PCM1Line::WORD_L2, left_orig_word);
                 pcm_line->calcCRC();
                 // Force sub-line to be bad.
                 pcm_line->setForcedBad();
@@ -6398,7 +6458,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
             {
                 // Fix was not found and no collision occured.
                 // Restore original state of the word.
-                pcm_line->words[PCM1Line::WORD_L2] = left_orig_word;
+                pcm_line->setWord(PCM1Line::WORD_L2, left_orig_word);
                 pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
                 if(suppress_log==false)
@@ -6412,7 +6472,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
             {
                 // Fix successfully found, no collision.
                 // Apply patch to the word.
-                pcm_line->words[PCM1Line::WORD_L2] = left_clean_word|left_fix_word;
+                pcm_line->setWord(PCM1Line::WORD_L2, left_clean_word|left_fix_word);
                 // Re-calc CRC.
                 pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
@@ -6421,7 +6481,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
                     log_line.sprintf("[LB] Successfull bit pick for the left side (%u bits).", left_bit_count);
                     qInfo()<<log_line;
                     log_line.sprintf("[LB] Left word: original [0x%04x], cleaned [0x%04x], patch [0x%04x], result [0x%04x]",
-                                     left_orig_word, left_clean_word, left_fix_word, pcm_line->words[PCM1Line::WORD_L2]);
+                                     left_orig_word, left_clean_word, left_fix_word, pcm_line->getWord(PCM1Line::WORD_L2));
                     qInfo()<<log_line;
                 }
 #endif
@@ -6438,7 +6498,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
                 // Create a patch.
                 right_patch_word = index;
                 // Apply patch to the word.
-                pcm_line->words[PCM1Line::WORD_CRCC] = right_clean_word|right_patch_word;
+                pcm_line->setWord(PCM1Line::WORD_CRCC, right_clean_word|right_patch_word);
                 // Re-check CRC.
                 pcm_line->calcCRC();
                 if(pcm_line->isCRCValid()!=false)
@@ -6465,7 +6525,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
             {
                 // Found more than one patches: CRC collision detected!
                 // Restore original state of the word.
-                pcm_line->words[PCM1Line::WORD_CRCC] = right_orig_word;
+                pcm_line->setWord(PCM1Line::WORD_CRCC, right_orig_word);
                 pcm_line->calcCRC();
                 // Force sub-line to be bad.
                 pcm_line->setForcedBad();
@@ -6481,7 +6541,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
             {
                 // Fix was not found and no collision occured.
                 // Restore original state of the word.
-                pcm_line->words[PCM1Line::WORD_CRCC] = right_orig_word;
+                pcm_line->setWord(PCM1Line::WORD_CRCC, right_orig_word);
                 pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
                 if(suppress_log==false)
@@ -6495,7 +6555,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
             {
                 // Fix successfully found, no collision.
                 // Apply patch to the word.
-                pcm_line->words[PCM1Line::WORD_CRCC] = right_clean_word|right_fix_word;
+                pcm_line->setWord(PCM1Line::WORD_CRCC, right_clean_word|right_fix_word);
                 // Re-calc CRC.
                 pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
@@ -6504,7 +6564,7 @@ uint8_t Binarizer::pickCutBitsUpPCM1(PCM1Line *pcm_line, bool no_log)
                     log_line.sprintf("[LB] Successfull bit pick for the right side (%u bits).", right_bit_count);
                     qInfo()<<log_line;
                     log_line.sprintf("[LB] Right word: original [0x%04x], cleaned [0x%04x], patch [0x%04x], result [0x%04x]",
-                                     right_orig_word, right_clean_word, right_fix_word, pcm_line->words[PCM1Line::WORD_CRCC]);
+                                     right_orig_word, right_clean_word, right_fix_word, pcm_line->getWord(PCM1Line::WORD_CRCC));
                     qInfo()<<log_line;
                 }
 #endif
@@ -6575,7 +6635,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
         for(index=0;index<max_cut_bits;index++)
         {
             // Get [i] bit coordinate.
-            current_pixel_coord = pcm_line->getVideoPixelT(index, 0);
+            current_pixel_coord = pcm_line->getVideoPixelByTable(index, 0);
 #ifdef LB_EN_DBG_OUT
             if(suppress_log==false)
             {
@@ -6639,7 +6699,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
             if(bit_count>0)
             {
                 // Save original state of the word.
-                orig_word = pcm_line->words[PCM16X0SubLine::WORD_R1P1L1];
+                orig_word = pcm_line->getWord(PCM16X0SubLine::WORD_R1P1L1);
                 // Calculate how many iterations to substitute.
                 rep_limit = (1<<bit_count);
 #ifdef LB_EN_DBG_OUT
@@ -6658,7 +6718,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                     // Create a patch.
                     patch_word = (index<<(PCM16X0SubLine::BITS_PER_WORD-bit_count));
                     // Apply patch to the word.
-                    pcm_line->words[PCM16X0SubLine::WORD_R1P1L1] = clean_word|patch_word;
+                    pcm_line->setWord(PCM16X0SubLine::WORD_R1P1L1, clean_word|patch_word);
                     // Re-check CRC.
                     pcm_line->calcCRC();
                     if(pcm_line->isCRCValid()!=false)
@@ -6685,7 +6745,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                 {
                     // Found more than one patches: CRC collision detected!
                     // Restore original state of the word.
-                    pcm_line->words[PCM16X0SubLine::WORD_R1P1L1] = orig_word;
+                    pcm_line->setWord(PCM16X0SubLine::WORD_R1P1L1, orig_word);
                     pcm_line->calcCRC();
                     // Force sub-line to be bad.
                     pcm_line->setForcedBad();
@@ -6701,7 +6761,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                 {
                     // Fix was not found and no collision occured.
                     // Restore original state of the word.
-                    pcm_line->words[PCM16X0SubLine::WORD_R1P1L1] = orig_word;
+                    pcm_line->setWord(PCM16X0SubLine::WORD_R1P1L1, orig_word);
                     pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
                     if(suppress_log==false)
@@ -6715,7 +6775,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                 {
                     // Fix successfully found, no collision.
                     // Apply patch to the word.
-                    pcm_line->words[PCM16X0SubLine::WORD_R1P1L1] = clean_word|fix_word;
+                    pcm_line->setWord(PCM16X0SubLine::WORD_R1P1L1, clean_word|fix_word);
                     // Re-calc CRC.
                     pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
@@ -6726,7 +6786,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                                          orig_word,
                                          clean_word,
                                          fix_word,
-                                         pcm_line->words[PCM16X0SubLine::WORD_R1P1L1]);
+                                         pcm_line->getWord(PCM16X0SubLine::WORD_R1P1L1));
                         qInfo()<<log_line;
                     }
 #endif
@@ -6771,7 +6831,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
         for(index=0;index<max_cut_bits;index++)
         {
             // Get [i] bit coordinate.
-            current_pixel_coord = pcm_line->getVideoPixelT((pcm_line->getBitsBetweenDataCoordinates()-1-index), 0);
+            current_pixel_coord = pcm_line->getVideoPixelByTable((pcm_line->getBitsBetweenDataCoordinates()-1-index), 0);
 #ifdef LB_EN_DBG_OUT
             if(suppress_log==false)
             {
@@ -6828,7 +6888,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
             if(bit_count>0)
             {
                 // Save original state of the word.
-                orig_word = pcm_line->words[PCM16X0SubLine::WORD_CRCC];
+                orig_word = pcm_line->getWord(PCM16X0SubLine::WORD_CRCC);
                 // Calculate how many iterations to substitute.
                 rep_limit = (1<<bit_count);
 #ifdef LB_EN_DBG_OUT
@@ -6847,7 +6907,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                     // Create a patch.
                     patch_word = index;
                     // Apply patch to the word.
-                    pcm_line->words[PCM16X0SubLine::WORD_CRCC] = clean_word|patch_word;
+                    pcm_line->setWord(PCM16X0SubLine::WORD_CRCC, clean_word|patch_word);
                     // Re-check CRC.
                     pcm_line->calcCRC();
                     if(pcm_line->isCRCValid()!=false)
@@ -6874,7 +6934,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                 {
                     // Found more than one patches: CRC collision detected!
                     // Restore original state of the word.
-                    pcm_line->words[PCM16X0SubLine::WORD_CRCC] = orig_word;
+                    pcm_line->setWord(PCM16X0SubLine::WORD_CRCC, orig_word);
                     pcm_line->calcCRC();
                     // Force sub-line to be bad.
                     pcm_line->setForcedBad();
@@ -6890,7 +6950,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                 {
                     // Fix was not found and no collision occured.
                     // Restore original state of the word.
-                    pcm_line->words[PCM16X0SubLine::WORD_CRCC] = orig_word;
+                    pcm_line->setWord(PCM16X0SubLine::WORD_CRCC, orig_word);
                     pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
                     if(suppress_log==false)
@@ -6904,7 +6964,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                 {
                     // Fix successfully found, no collision.
                     // Apply patch to the word.
-                    pcm_line->words[PCM16X0SubLine::WORD_CRCC] = clean_word|fix_word;
+                    pcm_line->setWord(PCM16X0SubLine::WORD_CRCC, clean_word|fix_word);
                     // Re-calc CRC.
                     pcm_line->calcCRC();
 #ifdef LB_EN_DBG_OUT
@@ -6915,7 +6975,7 @@ uint8_t Binarizer::pickCutBitsUpPCM16X0(PCM16X0SubLine *pcm_line, bool no_log)
                                          orig_word,
                                          clean_word,
                                          fix_word,
-                                         pcm_line->words[PCM16X0SubLine::WORD_CRCC]);
+                                         pcm_line->getWord(PCM16X0SubLine::WORD_CRCC));
                         qInfo()<<log_line;
                     }
 #endif
@@ -6971,7 +7031,7 @@ uint8_t Binarizer::fillPCM1(PCM1Line *fill_pcm_line, uint8_t ref_delta, uint8_t 
         {
             pcm_word++;
             // Find bit coodinate in video line.
-            log_line += QString::number(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg))+",";
+            log_line += QString::number(fill_pcm_line->getVideoPixelByTable(pcm_bit, shift_stg))+",";
         }
         log_line += " total: "+QString::number(pcm_word);
         qInfo()<<log_line;
@@ -6998,7 +7058,7 @@ uint8_t Binarizer::fillPCM1(PCM1Line *fill_pcm_line, uint8_t ref_delta, uint8_t 
     while(pcm_bit<=(PCM1Line::BITS_PCM_DATA-1))
     {
         // Pick the bit.
-        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg));
+        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelByTable(pcm_bit, shift_stg));
 
         // Perform binarization with hysteresis.
         if(prev_high==false)
@@ -7029,7 +7089,7 @@ uint8_t Binarizer::fillPCM1(PCM1Line *fill_pcm_line, uint8_t ref_delta, uint8_t 
         if(word_bit_pos==0)
         {
             // Save completed word.
-            fill_pcm_line->words[word_index] = pcm_word;
+            fill_pcm_line->setWord(word_index, pcm_word);
             // Reset bits in next word.
             pcm_word = 0;
             // Go to the next word.
@@ -7145,7 +7205,7 @@ uint8_t Binarizer::fillPCM16X0(PCM16X0SubLine *fill_pcm_line, uint8_t ref_delta,
         {
             pcm_word++;
             // Find bit coodinate in video line.
-            log_line += QString::number(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg))+",";
+            log_line += QString::number(fill_pcm_line->getVideoPixelByTable(pcm_bit, shift_stg))+",";
         }
         log_line += " total: "+QString::number(pcm_word);
         qInfo()<<log_line;
@@ -7173,7 +7233,7 @@ uint8_t Binarizer::fillPCM16X0(PCM16X0SubLine *fill_pcm_line, uint8_t ref_delta,
     while(pcm_bit<=stop_bit)
     {
         // Pick the bit.
-        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg));
+        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelByTable(pcm_bit, shift_stg));
 
         // Perform binarization with hysteresis.
         if(prev_high==false)
@@ -7204,7 +7264,7 @@ uint8_t Binarizer::fillPCM16X0(PCM16X0SubLine *fill_pcm_line, uint8_t ref_delta,
         if(word_bit_pos==0)
         {
             // Save completed word.
-            fill_pcm_line->words[word_index] = pcm_word;
+            fill_pcm_line->setWord(word_index, pcm_word);
             // Reset bits in next word.
             pcm_word = 0;
             // Go to the next word.
@@ -7240,7 +7300,7 @@ uint8_t Binarizer::fillPCM16X0(PCM16X0SubLine *fill_pcm_line, uint8_t ref_delta,
     {
         // Pick skew bit.
         // Control Bit is "1" by default.
-        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelT((2*PCM16X0SubLine::BITS_PCM_DATA), shift_stg));
+        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelByTable((2*PCM16X0SubLine::BITS_PCM_DATA), shift_stg));
         if(pixel_val<fill_pcm_line->ref_level)
         {
             fill_pcm_line->control_bit = false;
@@ -7276,7 +7336,7 @@ uint8_t Binarizer::fillSTC007(STC007Line *fill_pcm_line, uint8_t ref_delta, uint
         {
             pcm_word++;
             // Find bit coodinate in video line.
-            log_line += QString::number(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg))+",";
+            log_line += QString::number(fill_pcm_line->getVideoPixelByTable(pcm_bit, shift_stg))+",";
         }
         log_line += " total: "+QString::number(pcm_word);
         qInfo()<<log_line;
@@ -7303,7 +7363,7 @@ uint8_t Binarizer::fillSTC007(STC007Line *fill_pcm_line, uint8_t ref_delta, uint
     while(pcm_bit<=(STC007Line::BITS_PCM_DATA-1))
     {
         // Pick the bit.
-        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg));
+        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelByTable(pcm_bit, shift_stg));
 
         // Perform binarization with hysteresis.
         if(prev_high==false)
@@ -7403,7 +7463,7 @@ uint8_t Binarizer::fillArVidAudio(ArVidLine *fill_pcm_line, uint8_t ref_delta, u
         {
             pcm_word++;
             // Find bit coodinate in video line.
-            log_line += QString::number(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg))+",";
+            log_line += QString::number(fill_pcm_line->getVideoPixelByTable(pcm_bit, shift_stg))+",";
         }
         log_line += " total: "+QString::number(pcm_word);
         qInfo()<<log_line;
@@ -7430,7 +7490,7 @@ uint8_t Binarizer::fillArVidAudio(ArVidLine *fill_pcm_line, uint8_t ref_delta, u
     while(pcm_bit<=(ArVidLine::BITS_PCM_DATA-1))
     {
         // Pick the bit.
-        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelT(pcm_bit, shift_stg));
+        pixel_val = getPixelBrightness(fill_pcm_line->getVideoPixelByTable(pcm_bit, shift_stg));
 
         // Perform binarization with hysteresis.
         if(prev_high==false)
@@ -7461,7 +7521,7 @@ uint8_t Binarizer::fillArVidAudio(ArVidLine *fill_pcm_line, uint8_t ref_delta, u
         if(word_bit_pos==0)
         {
             // Save completed word.
-            fill_pcm_line->words[word_index] = pcm_word;
+            fill_pcm_line->setWord(word_index, pcm_word);
             // Reset bits in next word.
             pcm_word = 0;
             // Go to the next word.

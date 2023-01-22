@@ -10,11 +10,6 @@ ArVidLine::ArVidLine(const ArVidLine &in_object) : PCMLine(in_object)
     // Copy base class fields.
     PCMLine::operator =(in_object);
     // Copy own fields.
-    // Copy data words.
-    for(uint8_t index=0;index<WORD_CNT;index++)
-    {
-        words[index] = in_object.words[index];
-    }
     // Copy pixel coordinates.
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
@@ -22,6 +17,11 @@ ArVidLine::ArVidLine(const ArVidLine &in_object) : PCMLine(in_object)
         {
             pixel_coordinates[stage][bit] = in_object.pixel_coordinates[stage][bit];
         }
+    }
+    // Copy data words.
+    for(uint8_t index=0;index<WORD_CNT;index++)
+    {
+        words[index] = in_object.words[index];
     }
 }
 
@@ -32,11 +32,6 @@ ArVidLine& ArVidLine::operator= (const ArVidLine &in_object)
     // Copy base class fields.
     PCMLine::operator =(in_object);
     // Copy own fields.
-    // Copy data words.
-    for(uint8_t index=0;index<WORD_CNT;index++)
-    {
-        words[index] = in_object.words[index];
-    }
     // Copy pixel coordinates.
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
@@ -44,6 +39,11 @@ ArVidLine& ArVidLine::operator= (const ArVidLine &in_object)
         {
             pixel_coordinates[stage][bit] = in_object.pixel_coordinates[stage][bit];
         }
+    }
+    // Copy data words.
+    for(uint8_t index=0;index<WORD_CNT;index++)
+    {
+        words[index] = in_object.words[index];
     }
 
     return *this;
@@ -55,8 +55,6 @@ void ArVidLine::clear()
     PCMLine::clear();
     // Clear own fields.
 
-    // Reset data words.
-    setSilent();
     // Reset pixel coordinates.
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
@@ -65,6 +63,8 @@ void ArVidLine::clear()
             pixel_coordinates[stage][bit] = 0;
         }
     }
+    // Reset data words.
+    setSilent();
 }
 
 //------------------------ Set word with source CRC.
@@ -80,6 +80,15 @@ void ArVidLine::setSilent()
     for(uint8_t i=0;i<WORD_CNT;i++)
     {
         words[i] = 0;
+    }
+}
+
+//------------------------ Copy word into object.
+void ArVidLine::setWord(uint8_t index, uint8_t in_word)
+{
+    if(index<WORD_CNT)
+    {
+        words[index] = in_word&WORD_MASK;
     }
 }
 
@@ -109,7 +118,7 @@ uint8_t ArVidLine::getRightShiftZoneBit()
 
 //------------------------ Get pre-calculated coordinate of pixel in video line for requested PCM bit number and pixel-shifting stage.
 //------------------------ [calcPPB()] MUST be called before any [findVideoPixel()] calls!
-uint16_t ArVidLine::getVideoPixelT(uint8_t pcm_bit, uint8_t shift_stage)
+uint16_t ArVidLine::getVideoPixelByTable(uint8_t pcm_bit, uint8_t shift_stage)
 {
     return pixel_coordinates[shift_stage][pcm_bit];
 }
@@ -326,6 +335,6 @@ void ArVidLine::calcCoordinates(uint8_t in_shift)
 {
     for(uint8_t bit=0;bit<BITS_PCM_DATA;bit++)
     {
-        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixelC(bit, in_shift, 0);
+        pixel_coordinates[in_shift][bit] = PCMLine::getVideoPixeBylCalc(bit, in_shift, 0);
     }
 }

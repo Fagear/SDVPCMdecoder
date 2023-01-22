@@ -88,7 +88,7 @@ void STC007Deinterleaver::clear()
     log_level = 0;
     data_res_mode = RES_MODE_14BIT_AUTO;
     ignore_crc = false;
-    force_parity_check = false;
+    force_ecc_check = true;
     en_p_code = true;
     en_q_code = true;
     en_cwd = false;
@@ -184,26 +184,26 @@ void STC007Deinterleaver::setIgnoreCRC(bool flag)
     ignore_crc = flag;
 }
 
-//------------------------ Enable/disable force parity check (regardless of CRC result).
-void STC007Deinterleaver::setForceParity(bool flag)
+//------------------------ Enable/disable forced error correction check (regardless of CRC result).
+void STC007Deinterleaver::setForcedErrorCheck(bool flag)
 {
 #ifdef DI_EN_DBG_OUT
-    if(force_parity_check!=flag)
+    if(force_ecc_check!=flag)
     {
         if((log_level&LOG_SETTINGS)!=0)
         {
             if(flag==false)
             {
-                qInfo()<<"[DI-007] Parity check override set to 'disabled'.";
+                qInfo()<<"[DI-007] ECC check override set to 'disabled'.";
             }
             else
             {
-                qInfo()<<"[DI-007] Parity check override set to 'enabled'.";
+                qInfo()<<"[DI-007] ECC check override set to 'enabled'.";
             }
         }
     }
 #endif
-    force_parity_check = flag;
+    force_ecc_check = flag;
 }
 
 //------------------------ Enable/disable P-code correction of data.
@@ -488,9 +488,9 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                 if(aud_crc_errs==0)
                 {
                     // No audio CRC errors in the data block.
-                    if(force_parity_check==false)
+                    if(force_ecc_check==false)
                     {
-                        // Force parity check disabled.
+                        // Forced ECC check disabled.
                         // All audio samples are fine - data is valid.
                         // (don't care about any errors in P&Q words)
                         proc_state = STG_DATA_OK;
@@ -503,20 +503,20 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
 #ifdef DI_EN_DBG_OUT
                         if(suppress_log==false)
                         {
-                            qInfo()<<"[DI-007] No audio CRC errors, but parity check is forced, checking with P-code...";
+                            qInfo()<<"[DI-007] No audio CRC errors, but ECC check is forced, checking with P-code...";
                         }
 #endif
                     }
                     else
                     {
-                        // Force parity check enabled, but P-code checks are disabled (assume Q-code disabled as well).
+                        // Forced ECC check enabled, but P-code checks are disabled (assume Q-code disabled as well).
                         // Assume all audio samples are fine - data is valid.
                         // (don't care about any errors in P/Q words)
                         proc_state = STG_NO_CHECK;
 #ifdef DI_EN_DBG_OUT
                         if(suppress_log==false)
                         {
-                            qInfo()<<"[DI-007] No audio CRC errors, parity check is forced, but P-code is disabled.";
+                            qInfo()<<"[DI-007] No audio CRC errors, ECC check is forced, but P-code is disabled.";
                         }
 #endif
                     }
@@ -554,7 +554,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                     // There are two corrupted audio samples.
                     if(run_audio_res==STC007DataBlock::RES_14BIT)
                     {
-                        // 14-bit mode (STC-007/STC-008).
+                        // 14-bit mode (STC-007/STC-008/M2).
                         if(en_q_code!=false)
                         {
                             // Q-code correction is allowed.
@@ -586,7 +586,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                         // There is no Q-code available in 16-bit mode.
                         if((en_cwd!=false)&&(out_data_block->isDataFixedByCWD()==false))
                         {
-                            // Try to apply data from CWD.
+                            // Try to apply data from CWD pre-scan.
                             proc_state = STG_CWD_CORR;
 #ifdef DI_EN_DBG_OUT
                             if(suppress_log==false)
@@ -637,7 +637,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
         }
         else if(proc_state==STG_CWD_CORR)
         {
-            // Try to "fix" data with Cross-Word Decoding if pre-deinterleave was performed.
+            // Try to "fix" data with Cross-Word Decoding if pre-scan was performed.
             uint8_t fix_count;
             fix_count = 0;
             // Preset bad result.
@@ -645,7 +645,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
             // Scan words for already pre-fixed words during pre-scan.
             for(uint8_t index=STC007DataBlock::WORD_L0;index<=STC007DataBlock::WORD_Q0;index++)
             {
-                if((out_data_block->isWordCWDFixed(index)!=false)/*&&(out_data_block->isWordValid(index)==false)*/)
+                if(out_data_block->isWordCWDFixed(index)!=false)
                 {
                     // Data word has flag that this word was fixed in pre-scan.
                     out_data_block->setFixed(index);
@@ -723,6 +723,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
             // Check if P-word is not damaged.
             if(out_data_block->isWordValid(STC007DataBlock::WORD_P0)!=false)
             {
+                // P-code is ok.
                 // Fix audio sample with parity if required (audio resolution is already preset).
                 fix_result = fixByP(out_data_block, first_bad);
                 if(fix_result==FIX_BROKEN)
@@ -770,20 +771,21 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
 #endif
                     }
                     // Check if resolution set to 14-bit and Q-code is available.
-                    if((run_audio_res==STC007DataBlock::RES_14BIT)&&                            // Audio resolution is 14-bit, Q-code present.
-                       (en_q_code!=false))                                                      // Usage of Q-code is allowed.
+                    if((run_audio_res==STC007DataBlock::RES_14BIT)&&                        // Audio resolution is 14-bit, Q-code present.
+                       (en_q_code!=false))                                                  // Usage of Q-code is allowed.
                     {
                         // Check if Q-word is valid.
                         if(out_data_block->isWordValid(STC007DataBlock::WORD_Q0)!=false)
                         {
-                            // Check if force check is required.
-                            if(force_parity_check!=false)                                       // Forced check is enabled.
+                            // Check if forced ECC check is required.
+                            if(force_ecc_check!=false)                                      // Forced ECC check is enabled.
                             {
                                 uint16_t synd_q;
                                 // Calculate syndrome for Q-code (all audio words and P-code are intact as check showed).
                                 synd_q = calcSyndromeQ(out_data_block);
                                 if(synd_q!=0)
                                 {
+                                    // Non-zero syndrome while no CRC errors, BROKEN data.
 #ifdef DI_EN_DBG_OUT
                                     if(suppress_log==false)
                                     {
@@ -812,6 +814,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                             q_code = calcQcode(out_data_block);
                             if(out_data_block->getWord(STC007DataBlock::WORD_Q0)!=q_code)
                             {
+                                // Re-calculated Q-code differs, update it.
 #ifdef DI_EN_DBG_OUT
                                 if(suppress_log==false)
                                 {
@@ -828,6 +831,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                             }
                             else
                             {
+                                // Q-code is the same as re-calculated.
                                 // Mark Q-word as valid.
                                 out_data_block->setValid(STC007DataBlock::WORD_Q0);
 #ifdef DI_EN_DBG_OUT
@@ -870,7 +874,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
 #ifdef DI_EN_DBG_OUT
                             if(suppress_log==false)
                             {
-                                qInfo()<<"[DI-007] P-code word is bad, but Q-code is disabled, unable to verify parity";
+                                qInfo()<<"[DI-007] P-code word is bad, but Q-code is disabled, unable to force ECC check";
                             }
 #endif
                         }
@@ -921,6 +925,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
             // Try to correct errors with Q-code (only for 14-bit mode).
             if(out_data_block->isWordValid(STC007DataBlock::WORD_Q0)!=false)
             {
+                // Q-code is ok.
                 // Fix two samples with Q and P codes.
                 fix_result = fixByQ(out_data_block, first_bad, second_bad);
                 // Workaround for Q-fix for P-code.
@@ -989,7 +994,7 @@ uint8_t STC007Deinterleaver::processBlock(uint16_t line_shift)
                 // Can not check data because Q-code word is damaged.
                 if(first_bad==NO_ERR_INDEX)
                 {
-                    // No CRC marks were provided (just forced check).
+                    // No CRC marks were provided (just forced ECC check).
                     // Unable to check the data.
                     proc_state = STG_NO_CHECK;
                     // Re-calculate and fill in P and Q words.
@@ -2047,7 +2052,7 @@ uint8_t STC007Deinterleaver::fixByQ(STC007DataBlock *data_block, uint8_t first_b
 uint16_t STC007Deinterleaver::multMatrix(uint16_t *matrix, uint16_t vector)
 {
     uint16_t res_vec;
-    uint16_t temp_matrix[STC007Line::BITS_PER_WORD];  // Matrix container for Q-code calculations.
+    uint16_t temp_matrix[STC007Line::BITS_PER_WORD];    // Matrix container for Q-code calculations.
     res_vec = 0;
     for(uint8_t bit=0;bit<STC007Line::BITS_PER_WORD;bit++)
     {
