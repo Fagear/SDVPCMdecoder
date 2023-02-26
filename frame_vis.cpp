@@ -47,7 +47,7 @@ frame_vis::frame_vis(QWidget *parent) :
     settings_hdl = new QSettings(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);
     if(settings_hdl!=NULL)
     {
-        qInfo()<<"[VIS] Settings path:"<<settings_hdl->fileName();
+        //qInfo()<<"[VIS] Settings path:"<<settings_hdl->fileName();
         settings_hdl->sync();
     }
 

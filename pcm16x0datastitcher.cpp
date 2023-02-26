@@ -279,7 +279,7 @@ void PCM16X0DataStitcher::findFrameTrim()
             {
                 // Line contains Service line with "New file" tag.
                 file_start = true;
-                file_name = trim_buf[line_ind].file_path;
+                file_name = trim_buf[line_ind].getServFileName();
             }
             else if(trim_buf[line_ind].isServEndFile()!=false)
             {
@@ -1011,7 +1011,14 @@ int16_t PCM16X0DataStitcher::findZeroControlBitOffset(std::vector<PCM16X0SubLine
         {
             if(cnt_stat[i]>0)
             {
-                qInfo()<<"[L2B-16x0] At offset"<<ofs_stat[i]<<"found"<<cnt_stat[i]<<"zeroed Control Bits";
+                if(from_top==false)
+                {
+                    qInfo()<<"[L2B-16x0] At offset"<<ofs_stat[i]<<"found"<<cnt_stat[i]<<"zeroed Control Bits, searching from the bottom";
+                }
+                else
+                {
+                    qInfo()<<"[L2B-16x0] At offset"<<ofs_stat[i]<<"found"<<cnt_stat[i]<<"zeroed Control Bits, searching from the top";
+                }
             }
         }
 #endif
@@ -4466,9 +4473,14 @@ uint16_t PCM16X0DataStitcher::addLinesFromField(std::vector<PCM16X0SubLine> *fie
                 // Copy PCM line into queue.
                 copy_line = (*field_buf)[index];
                 copy_line.queue_order = (*last_q_order);
+                if(last_line_num!=NULL)
+                {
+                    // Overwrite line number.
+                    //copy_line.line_number = (*last_line_num);
+                }
                 conv_queue.push_back(copy_line);
                 (*last_q_order) = (*last_q_order)+1;
-                if((last_line_num!=NULL)&&((*field_buf)[index].line_part==PCM16X0SubLine::PART_LEFT))
+                if((last_line_num!=NULL)&&((*field_buf)[index].line_part==PCM16X0SubLine::PART_RIGHT))
                 {
                     // Save its line number.
                     (*last_line_num) = (*field_buf)[index].line_number;
@@ -4476,13 +4488,16 @@ uint16_t PCM16X0DataStitcher::addLinesFromField(std::vector<PCM16X0SubLine> *fie
                     (*last_line_num) = (*last_line_num)+2;
                 }
 #ifdef DI_EN_DBG_OUT
-                if(min_line_num>(*field_buf)[index].line_number)
+                if((log_level&LOG_FIELD_ASSEMBLY)!=0)
                 {
-                    min_line_num = (*field_buf)[index].line_number;
-                }
-                if(max_line_num<(*field_buf)[index].line_number)
-                {
-                    max_line_num = (*field_buf)[index].line_number;
+                    if(min_line_num>(*field_buf)[index].line_number)
+                    {
+                        min_line_num = (*field_buf)[index].line_number;
+                    }
+                    if(max_line_num<(*field_buf)[index].line_number)
+                    {
+                        max_line_num = (*field_buf)[index].line_number;
+                    }
                 }
 #endif
                 // Count number of added lines.
@@ -4543,13 +4558,16 @@ uint16_t PCM16X0DataStitcher::addFieldPadding(uint32_t in_frame, uint16_t line_c
         }
 
 #ifdef DI_EN_DBG_OUT
-        if(min_line_num>empty_line.line_number)
+        if((log_level&LOG_FIELD_ASSEMBLY)!=0)
         {
-            min_line_num = empty_line.line_number;
-        }
-        if(max_line_num<empty_line.line_number)
-        {
-            max_line_num = empty_line.line_number;
+            if(min_line_num>empty_line.line_number)
+            {
+                min_line_num = empty_line.line_number;
+            }
+            if(max_line_num<empty_line.line_number)
+            {
+                max_line_num = empty_line.line_number;
+            }
         }
 #endif
         for(uint8_t part_cnt=0;part_cnt<PCM16X0SubLine::PART_MAX;part_cnt++)
@@ -4913,40 +4931,42 @@ void PCM16X0DataStitcher::setBlockSampleRate(PCM16X0DataBlock *in_block)
 void PCM16X0DataStitcher::outputFileStart()
 {
     size_t queue_size;
+    FrameAsmPCM16x0 serv_descr;
+    // Report about new file for logging.
+    serv_descr.setServNewFile(file_name);
+    emit guiUpdFrameAsm(serv_descr);
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided, service tag discarded!";
+        return;
     }
-    else
+    PCMSamplePair service_pair;
+    service_pair.setServNewFile(file_name);
+    while(1)
     {
-        PCMSamplePair service_pair;
-        service_pair.setServNewFile(file_name);
-        while(1)
+        // Try to put service tag into the queue.
+        mtx_samples->lock();
+        queue_size = (out_samples->size()+1);
+        if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
         {
-            // Try to put service tag into the queue.
-            mtx_samples->lock();
-            queue_size = (out_samples->size()+1);
-            if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
-            {
-                // Put service pair in the output queue.
-                out_samples->push_back(service_pair);
-                mtx_samples->unlock();
+            // Put service pair in the output queue.
+            out_samples->push_back(service_pair);
+            mtx_samples->unlock();
 #ifdef DI_EN_DBG_OUT
-                if((log_level&LOG_PROCESS)!=0)
-                {
-                    qInfo()<<"[L2B-16x0] Service tag 'NEW FILE' written.";
-                }
-#endif
-                break;
-            }
-            else
+            if((log_level&LOG_PROCESS)!=0)
             {
-                mtx_samples->unlock();
-                QThread::msleep(20);
+                qInfo()<<"[L2B-16x0] Service tag 'NEW FILE' written.";
             }
+#endif
+            break;
         }
-        file_time.start();
+        else
+        {
+            mtx_samples->unlock();
+            QThread::msleep(20);
+        }
     }
+    file_time.start();
 }
 
 //------------------------ Output PCM data block into output queue (blocking).
@@ -4959,186 +4979,186 @@ void PCM16X0DataStitcher::outputDataBlock(PCM16X0DataBlock *in_block)
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided, result discarded!";
+        return;
     }
-    else
+    bool block_state, word_left_state, word_right_state;
+    bool word_left_fixed, word_right_fixed;
+    PCMSamplePair sample_pair;
+    while(1)
     {
-        bool block_state, word_left_state, word_right_state;
-        bool word_left_fixed, word_right_fixed;
-        PCMSamplePair sample_pair;
-        while(1)
+        // Try to put processed data block into the queue.
+        mtx_samples->lock();
+        queue_size = (out_samples->size()+1);
+        if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-3))
         {
-            // Try to put processed data block into the queue.
-            mtx_samples->lock();
-            queue_size = (out_samples->size()+1);
-            if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-3))
+            // Set emphasis state of the samples.
+            sample_pair.setEmphasis(in_block->hasEmphasis());
+            // Set sample rate.
+            sample_pair.setSampleRate(in_block->sample_rate);
+            // Output L0+R0 samples.
+            if(in_block->isDataBroken(PCM16X0DataBlock::SUBBLK_1)==false)
             {
-                // Set emphasis state of the samples.
-                sample_pair.setEmphasis(in_block->hasEmphasis());
-                // Set sample rate.
-                sample_pair.setSampleRate(in_block->sample_rate);
-                // Output L0+R0 samples.
-                if(in_block->isDataBroken(PCM16X0DataBlock::SUBBLK_1)==false)
+                // Set validity of the whole block and the samples.
+                block_state = in_block->isBlockValid();
+                if(block_state==false)
                 {
-                    // Set validity of the whole block and the samples.
-                    block_state = in_block->isBlockValid();
-                    if(block_state==false)
-                    {
-                        word_left_fixed = word_right_fixed = false;
-                    }
-                    else
-                    {
-                        word_left_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_L);
-                        word_right_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_R);
-                    }
-                    word_left_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_L);
-                    word_right_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_R);
+                    word_left_fixed = word_right_fixed = false;
                 }
                 else
                 {
-                    // Data block deemed to be "broken", no data can be taken as valid.
-                    block_state = false;
-                    word_left_state = word_right_state = false;
-                    word_left_fixed = word_right_fixed = false;
+                    word_left_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_L);
+                    word_right_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_R);
                 }
-                // Set data to [PCMSamplePair] object.
-                sample_pair.setSamplePair(in_block->getSample(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_L),
-                                          in_block->getSample(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_R),
-                                          block_state, block_state,
-                                          word_left_state, word_right_state,
-                                          word_left_fixed, word_right_fixed);
-                // Put sample pair in the output queue.
-                out_samples->push_back(sample_pair);
-                // Output L1+R1 samples.
-                if(in_block->isDataBroken(PCM16X0DataBlock::SUBBLK_2)==false)
-                {
-                    block_state = in_block->isBlockValid();
-                    if(block_state==false)
-                    {
-                        word_left_fixed = word_right_fixed = false;
-                    }
-                    else
-                    {
-                        word_left_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_L);
-                        word_right_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_R);
-                    }
-                    word_left_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_L);
-                    word_right_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_R);
-                }
-                else
-                {
-                    block_state = false;
-                    word_left_state = word_right_state = false;
-                    word_left_fixed = word_right_fixed = false;
-                }
-                sample_pair.setSamplePair(in_block->getSample(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_L),
-                                          in_block->getSample(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_R),
-                                          block_state, block_state,
-                                          word_left_state, word_right_state,
-                                          word_left_fixed, word_right_fixed);
-                out_samples->push_back(sample_pair);
-                // Output L2+R2 samples.
-                if(in_block->isDataBroken(PCM16X0DataBlock::SUBBLK_3)==false)
-                {
-                    block_state = in_block->isBlockValid();
-                    if(block_state==false)
-                    {
-                        word_left_fixed = word_right_fixed = false;
-                    }
-                    else
-                    {
-                        word_left_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_L);
-                        word_right_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_R);
-                    }
-                    word_left_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_L);
-                    word_right_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_R);
-                }
-                else
-                {
-                    block_state = false;
-                    word_left_state = word_right_state = false;
-                    word_left_fixed = word_right_fixed = false;
-                }
-                sample_pair.setSamplePair(in_block->getSample(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_L),
-                                          in_block->getSample(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_R),
-                                          block_state, block_state,
-                                          word_left_state, word_right_state,
-                                          word_left_fixed, word_right_fixed);
-                out_samples->push_back(sample_pair);
-                mtx_samples->unlock();
-                if(size_lock!=false)
-                {
-                    size_lock = false;
-#ifdef DI_EN_DBG_OUT
-                    if((log_level&LOG_PROCESS)!=0)
-                    {
-                        qInfo()<<"[L2B-16x0] Output PCM data blocks queue has some space, continuing...";
-                    }
-#endif
-                }
-                break;
+                word_left_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_L);
+                word_right_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_R);
             }
             else
             {
-                mtx_samples->unlock();
-                if(size_lock==false)
-                {
-                    size_lock = true;
-#ifdef DI_EN_DBG_OUT
-                    if((log_level&LOG_PROCESS)!=0)
-                    {
-                        qInfo()<<"[L2B-16x0] Output queue is at size limit ("<<(MAX_SAMPLEPAIR_QUEUE_SIZE-3)<<"), waiting...";
-                    }
-#endif
-                }
-                QThread::msleep(100);
+                // Data block deemed to be "broken", no data can be taken as valid.
+                block_state = false;
+                word_left_state = word_right_state = false;
+                word_left_fixed = word_right_fixed = false;
             }
+            // Set data to [PCMSamplePair] object.
+            sample_pair.setSamplePair(in_block->getSample(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_L),
+                                      in_block->getSample(PCM16X0DataBlock::SUBBLK_1, PCM16X0DataBlock::WORD_R),
+                                      block_state, block_state,
+                                      word_left_state, word_right_state,
+                                      word_left_fixed, word_right_fixed);
+            // Put sample pair in the output queue.
+            out_samples->push_back(sample_pair);
+            // Output L1+R1 samples.
+            if(in_block->isDataBroken(PCM16X0DataBlock::SUBBLK_2)==false)
+            {
+                block_state = in_block->isBlockValid();
+                if(block_state==false)
+                {
+                    word_left_fixed = word_right_fixed = false;
+                }
+                else
+                {
+                    word_left_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_L);
+                    word_right_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_R);
+                }
+                word_left_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_L);
+                word_right_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_R);
+            }
+            else
+            {
+                block_state = false;
+                word_left_state = word_right_state = false;
+                word_left_fixed = word_right_fixed = false;
+            }
+            sample_pair.setSamplePair(in_block->getSample(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_L),
+                                      in_block->getSample(PCM16X0DataBlock::SUBBLK_2, PCM16X0DataBlock::WORD_R),
+                                      block_state, block_state,
+                                      word_left_state, word_right_state,
+                                      word_left_fixed, word_right_fixed);
+            out_samples->push_back(sample_pair);
+            // Output L2+R2 samples.
+            if(in_block->isDataBroken(PCM16X0DataBlock::SUBBLK_3)==false)
+            {
+                block_state = in_block->isBlockValid();
+                if(block_state==false)
+                {
+                    word_left_fixed = word_right_fixed = false;
+                }
+                else
+                {
+                    word_left_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_L);
+                    word_right_fixed = in_block->isWordCRCOk(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_R);
+                }
+                word_left_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_L);
+                word_right_state = in_block->isWordValid(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_R);
+            }
+            else
+            {
+                block_state = false;
+                word_left_state = word_right_state = false;
+                word_left_fixed = word_right_fixed = false;
+            }
+            sample_pair.setSamplePair(in_block->getSample(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_L),
+                                      in_block->getSample(PCM16X0DataBlock::SUBBLK_3, PCM16X0DataBlock::WORD_R),
+                                      block_state, block_state,
+                                      word_left_state, word_right_state,
+                                      word_left_fixed, word_right_fixed);
+            out_samples->push_back(sample_pair);
+            mtx_samples->unlock();
+            if(size_lock!=false)
+            {
+                size_lock = false;
+#ifdef DI_EN_DBG_OUT
+                if((log_level&LOG_PROCESS)!=0)
+                {
+                    qInfo()<<"[L2B-16x0] Output PCM data blocks queue has some space, continuing...";
+                }
+#endif
+            }
+            break;
         }
-        // Output data block for visualization.
-        emit newBlockProcessed(*in_block);
+        else
+        {
+            mtx_samples->unlock();
+            if(size_lock==false)
+            {
+                size_lock = true;
+#ifdef DI_EN_DBG_OUT
+                if((log_level&LOG_PROCESS)!=0)
+                {
+                    qInfo()<<"[L2B-16x0] Output queue is at size limit ("<<(MAX_SAMPLEPAIR_QUEUE_SIZE-3)<<"), waiting...";
+                }
+#endif
+            }
+            QThread::msleep(100);
+        }
     }
+    // Output data block for visualization.
+    emit newBlockProcessed(*in_block);
 }
 
 //------------------------ Output service tag "File ended".
 void PCM16X0DataStitcher::outputFileStop()
 {
     size_t queue_size;
+    FrameAsmPCM16x0 serv_descr;
+    // Report about EOF for logging.
+    serv_descr.setServEndFile();
+    emit guiUpdFrameAsm(serv_descr);
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-16x0] Empty pointer provided, service tag discarded!";
+        return;
     }
-    else
+    PCMSamplePair service_pair;
+    service_pair.setServEndFile();
+    while(1)
     {
-        PCMSamplePair service_pair;
-        service_pair.setServEndFile();
-        while(1)
+        // Try to put service tag into the queue.
+        mtx_samples->lock();
+        queue_size = (out_samples->size()+1);
+        if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
         {
-            // Try to put service tag into the queue.
-            mtx_samples->lock();
-            queue_size = (out_samples->size()+1);
-            if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
-            {
-                // Put service pair in the output queue.
-                out_samples->push_back(service_pair);
-                mtx_samples->unlock();
+            // Put service pair in the output queue.
+            out_samples->push_back(service_pair);
+            mtx_samples->unlock();
 #ifdef DI_EN_DBG_OUT
-                if((log_level&LOG_PROCESS)!=0)
-                {
-                    qInfo()<<"[L2B-16x0] Service tag 'FILE END' written.";
-                }
-#endif
-                break;
-            }
-            else
+            if((log_level&LOG_PROCESS)!=0)
             {
-                mtx_samples->unlock();
-                QThread::msleep(20);
+                qInfo()<<"[L2B-16x0] Service tag 'FILE END' written.";
             }
+#endif
+            break;
         }
-        // Reset filename.
-        file_name.clear();
-        // Report time that file processing took.
-        qDebug()<<"[L2B-16x0] File processed in"<<file_time.elapsed()<<"msec";
+        else
+        {
+            mtx_samples->unlock();
+            QThread::msleep(20);
+        }
     }
+    // Reset filename.
+    file_name.clear();
+    // Report time that file processing took.
+    qDebug()<<"[L2B-16x0] File processed in"<<file_time.elapsed()<<"msec";
 }
 
 //------------------------ Perform deinterleave of a frame in [conv_queue].
@@ -5229,8 +5249,6 @@ void PCM16X0DataStitcher::performDeinterleave(uint8_t int_format)
             frasm_f1.odd_emphasis = frasm_f1.even_emphasis = pcm_block.emphasis;
             frasm_f1.ei_format = pcm_block.ei_format;
 
-            // TODO: implement [blocks_fix_bp] count
-
             // Check if data is not pure silence.
             if(pcm_block.isSilent()==false)
             {
@@ -5301,44 +5319,78 @@ void PCM16X0DataStitcher::performDeinterleave(uint8_t int_format)
 #endif
                 }
             }
+            // Report invalid sub-blocks.
+            if(pcm_block.isBlockValid(PCM16X0DataBlock::SUBBLK_1)==false)
+            {
+                // Data block is corrupted.
+                frasm_f1.blocks_drop++;
+            }
+            if(pcm_block.isBlockValid(PCM16X0DataBlock::SUBBLK_2)==false)
+            {
+                // Data block is corrupted.
+                frasm_f1.blocks_drop++;
+            }
+            if(pcm_block.isBlockValid(PCM16X0DataBlock::SUBBLK_3)==false)
+            {
+                // Data block is corrupted.
+                frasm_f1.blocks_drop++;
+            }
+            // Report per sub-block BROKEN data.
+            if(pcm_block.isDataBroken(PCM16X0DataBlock::SUBBLK_1)!=false)
+            {
+                // Data block is corrupted.
+                frasm_f1.blocks_broken++;
+            }
+            if(pcm_block.isDataBroken(PCM16X0DataBlock::SUBBLK_2)!=false)
+            {
+                // Data block is corrupted.
+                frasm_f1.blocks_broken++;
+            }
+            if(pcm_block.isDataBroken(PCM16X0DataBlock::SUBBLK_3)!=false)
+            {
+                // Data block is corrupted.
+                frasm_f1.blocks_broken++;
+            }
+            // Report P-corrections per sub-block if any.
+            if(pcm_block.isDataFixedByP(PCM16X0DataBlock::SUBBLK_1)!=false)
+            {
+                // Data is fixed by P-correction.
+                frasm_f1.blocks_fix_p++;
+            }
+            if(pcm_block.isDataFixedByP(PCM16X0DataBlock::SUBBLK_2)!=false)
+            {
+                // Data is fixed by P-correction.
+                frasm_f1.blocks_fix_p++;
+            }
+            if(pcm_block.isDataFixedByP(PCM16X0DataBlock::SUBBLK_3)!=false)
+            {
+                // Data is fixed by P-correction.
+                frasm_f1.blocks_fix_p++;
+            }
+            // Report Bit Picker fixes per sub-block if any.
+            if(pcm_block.isDataFixedByBP(PCM16X0DataBlock::SUBBLK_1)!=false)
+            {
+                // Data is fixed by Bit Picket.
+                frasm_f1.blocks_fix_bp++;
+            }
+            if(pcm_block.isDataFixedByBP(PCM16X0DataBlock::SUBBLK_2)!=false)
+            {
+                // Data is fixed by Bit Picket.
+                frasm_f1.blocks_fix_bp++;
+            }
+            if(pcm_block.isDataFixedByBP(PCM16X0DataBlock::SUBBLK_3)!=false)
+            {
+                // Data is fixed by Bit Picket.
+                frasm_f1.blocks_fix_bp++;
+            }
 
             if(pcm_block.isBlockValid()==false)
             {
-                if(pcm_block.isBlockValid(PCM16X0DataBlock::SUBBLK_1)==false)
-                {
-                    // Data block is corrupted.
-                    frasm_f1.blocks_drop++;
-                }
-                if(pcm_block.isBlockValid(PCM16X0DataBlock::SUBBLK_2)==false)
-                {
-                    // Data block is corrupted.
-                    frasm_f1.blocks_drop++;
-                }
-                if(pcm_block.isBlockValid(PCM16X0DataBlock::SUBBLK_3)==false)
-                {
-                    // Data block is corrupted.
-                    frasm_f1.blocks_drop++;
-                }
                 // Samples in data block are corrupted.
                 frasm_f1.samples_drop += pcm_block.getErrorsFixedAudio();
+#ifdef DI_EN_DBG_OUT
                 if(pcm_block.isDataBroken()!=false)
                 {
-                    if(pcm_block.isDataBroken(PCM16X0DataBlock::SUBBLK_1)!=false)
-                    {
-                        // Data block is corrupted.
-                        frasm_f1.blocks_broken++;
-                    }
-                    if(pcm_block.isDataBroken(PCM16X0DataBlock::SUBBLK_2)!=false)
-                    {
-                        // Data block is corrupted.
-                        frasm_f1.blocks_broken++;
-                    }
-                    if(pcm_block.isDataBroken(PCM16X0DataBlock::SUBBLK_3)!=false)
-                    {
-                        // Data block is corrupted.
-                        frasm_f1.blocks_broken++;
-                    }
-#ifdef DI_EN_DBG_OUT
                     if((log_level&LOG_PROCESS)!=0)
                     {
                         QString log_line;
@@ -5347,27 +5399,8 @@ void PCM16X0DataStitcher::performDeinterleave(uint8_t int_format)
                                          pcm_block.stop_line, pcm_block.stop_part);
                         qInfo()<<log_line;
                     }
+                }
 #endif
-                }
-            }
-            else
-            {
-                // Report P-corrections per sub-block if any.
-                if(pcm_block.isDataFixedByP(PCM16X0DataBlock::SUBBLK_1)!=false)
-                {
-                    // Data is fixed by P-correction.
-                    frasm_f1.blocks_fix_p++;
-                }
-                if(pcm_block.isDataFixedByP(PCM16X0DataBlock::SUBBLK_2)!=false)
-                {
-                    // Data is fixed by P-correction.
-                    frasm_f1.blocks_fix_p++;
-                }
-                if(pcm_block.isDataFixedByP(PCM16X0DataBlock::SUBBLK_3)!=false)
-                {
-                    // Data is fixed by P-correction.
-                    frasm_f1.blocks_fix_p++;
-                }
             }
 
             // Countdown for trailing invalid data blocks after "BROKEN" one.

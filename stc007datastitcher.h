@@ -139,6 +139,8 @@ and set field order and audio resolution by previous statistics.
 // TODO: try to pick best padding for failed stitches by minimum BROKEN blocks
 // TODO: don't mask first 32 lines in the failed stitch
 // TODO: set parameters according to Control Block, if detected
+// TODO: fix stray broken data after stop and restart
+// TODO: update to support single frame videos
 class STC007DataStitcher : public QObject
 {
     Q_OBJECT

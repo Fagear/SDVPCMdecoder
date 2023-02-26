@@ -23,6 +23,7 @@ Created: 2020-04
 #define MAINWINDOW_H
 
 #include <deque>
+#include <string>
 #include <thread>
 #include <queue>
 #ifdef _WIN32
@@ -103,6 +104,94 @@ Created: 2020-04
 #define TITLE_RENDER_BLOCKS (QObject::tr("Блоки данных"))
 
 #define DEBUG_MENU_OFF_HINT (QObject::tr("Для использования меню отладки запустите приложение из коммандной строки"))
+
+#define WL_VERSION              "1.0"
+#define WL_HEADER               QString(APP_EXEC+" v"+APP_VERSION+", work log v"+WL_VERSION)
+#define WL_SOURCE               QString("Source loaded: ")
+#define WL_PCM1_HELP_SIZE       20
+#define WL_PCM16X0_HELP_SIZE    23
+#define WL_STC007_HELP_SIZE     26
+
+static const std::string WL_PCM1_HELP[WL_PCM1_HELP_SIZE]
+{
+    "                  Horizontal coordinates state: [A] = auto-detected OK, [G] = guessed by stats <      > Field order: [TFF] = top (odd) field first, [BFF] = bottom (even) field first",
+    "                        Average (by frame) data stop horizontal data coordinate (in pixels) <  |      |  > Field order state: [F] = forced by user",
+    "                   Average (by frame) data start horizontal data coordinate (in pixels) <   |  |      |  |",
+    "                                             Width of the source frame (in pixels) <    |   |  |      |  |      > Average (by frame) odd field reference brightness level (0...255)",
+    "                                                                                   |    |   |  |      |  |      |   > Average (by frame) even field reference brightness level (0...255)",
+    "                                         Even field data stop line number <        |    |   |  |      |  |      |   |",
+    "                                    Even field data start line number <   |        |    |   |  |      |  |      |   |       > Odd field top padding (in lines)",
+    "                              Odd field data stop line number <       |   |        |    |   |  |      |  |      |   |       |   > Odd field bottom padding (in lines)",
+    "                         Odd field data start line number <   |       |   |        |    |   |  |      |  |      |   |       |   |       > Even field top padding (in lines)",
+    "                                                          |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   > Even field bottom padding (in lines)",
+    "                  Even field lines with valid CRC <       |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   |",
+    "                   Even field lines with data <   |       |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   |     > Total data block count (1 data block = 184 or 182 audio samples)",
+    "                   Even field total lines <   |   |       |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   |     |  > Data blocks with data corrected by Bit Picker (errors caused by frame sides cropping)",
+    "   Odd field lines with valid CRC <       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   |     |  |  > Data blocks with dropped/uncorrected samples (actual error count)",
+    "    Odd field lines with data <   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   |     |  |  |",
+    "    Odd field total lines <   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   |     |  |  |        > Audio sample rate for odd field",
+    "                          |   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   |     |  |  |        |     > Audio sample rate for even field",
+    "    Video standard <      |   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   |     |  |  |        |     |    > Emphasis presence for odd field",
+    "Frame number <     |      |   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |       |   |       |   |     |  |  |        |     |    | > Emphasis presence for even field",
+    "        _____|  ___|    __| __| __|     __| __| __|     __| __|     __| __|      __|  __| __|  |    __|  |    __| __|     __| __|     __| __|    _| _| _|    ____| ____|    | |",
+};
+
+static const std::string WL_PCM16x0_HELP[WL_PCM16X0_HELP_SIZE]
+{
+    "                                                                    Field order state: [F] = forced by user <      > Average (by frame) odd field reference brightness level (0...255)",
+    "                           Field order: [TFF] = top (odd) field first, [BFF] = bottom (even) field first <  |      |   > Average (by frame) even field reference brightness level (0...255)",
+    "                                                                                                         |  |      |   |",
+    "                     Horizontal coordinates state: [A] = auto-detected OK, [G] = guessed by stats <      |  |      |   |     > Padding state: [OK] = auto-detected OK, [SL] = too much silence to detect, [BD] = failed to detect",
+    "                           Average (by frame) data stop horizontal data coordinate (in pixels) <  |      |  |      |   |     |    > Odd field top padding (in lines)",
+    "                      Average (by frame) data start horizontal data coordinate (in pixels) <   |  |      |  |      |   |     |    |   > Odd field bottom padding (in lines)",
+    "                                                Width of the source frame (in pixels) <    |   |  |      |  |      |   |     |    |   |    > Even field top padding (in lines)",
+    "                                                                                      |    |   |  |      |  |      |   |     |    |   |    |   > Even field bottom padding (in lines)",
+    "                                            Even field data stop line number <        |    |   |  |      |  |      |   |     |    |   |    |   |",
+    "                                       Even field data start line number <   |        |    |   |  |      |  |      |   |     |    |   |    |   |       > Total data sub-block count (1 data block = 3 data sub-blocks, 1 sub-block = 2 audio samples)",
+    "                                 Odd field data stop line number <       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    > Data sub-blocks with data corrected by Bit Picker (errors caused by frame sides cropping)",
+    "                            Odd field data start line number <   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    > Data sub-blocks with data corrected by P-correction (1 error per data sub-block)",
+    "                                                             |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    > Data sub-blocks with data corrected with CWD assistance",
+    "                     Even field lines with valid CRC <       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    |    > Data sub-blocks with BROKEN data",
+    "                      Even field lines with data <   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    |    |    > Data sub-blocks with dropped/uncorrected samples (actual error count)",
+    "                      Even field total lines <   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    |    |    |",
+    "      Odd field lines with valid CRC <       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    |    |    |     > PCM-1630 data format: [SI] = SI format, [EI] = EI format",
+    "       Odd field lines with data <   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    |    |    |     |",
+    "       Odd field total lines <   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    |    |    |     |        > Audio sample rate for odd field",
+    "                             |   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    |    |    |     |        |     > Audio sample rate for even field",
+    "       Video standard <      |   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    |    |    |     |        |     |    > Emphasis presence for odd field",
+    "   Frame number <     |      |   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |   |       |    |    |    |    |    |     |        |     |    | > Emphasis presence for even field",
+    "           _____|  ___|    __| __| __|     __| __| __|     __| __|     __| __|      __|  __| __|  |    __|  |    __| __|    _|  __| __|  __| __|    ___| ___| ___| ___| ___| ___|    _|    ____| ____|    | |",
+};
+
+static const std::string WL_STC007_HELP[WL_STC007_HELP_SIZE]
+{
+    "                                                   Average (by frame) even field reference brightness level (0...255) <     > Inter-frame padding state: [OK] = auto-detected OK, [SL] = too much silence to detect, [BD] = failed to detect",
+    "                                                Average (by frame) odd field reference brightness level (0...255) <   |     |    > Inter-frame padding size (in lines)",
+    "                                                                                                                  |   |     |    |   > Frame-to-next padding state: [OK] = auto-detected OK, [SL] = too much silence to detect, [BD] = failed to detect",
+    "                   Field order state: [A] = auto-detected OK, [F] = forced by user, [G] = guessed by stats <      |   |     |    |   |    > Frame-to-next padding size (in lines)",
+    "                          Field order: [TFF] = top (odd) field first, [BFF] = bottom (even) field first <  |      |   |     |    |   |    |",
+    "                                                                                                        |  |      |   |     |    |   |    |      > Total data block count (1 data block = 6 audio samples)",
+    "                    Horizontal coordinates state: [A] = auto-detected OK, [G] = guessed by stats <      |  |      |   |     |    |   |    |      |   > Data blocks with data corrected by P-correction (1 error per data block)",
+    "                          Average (by frame) data stop horizontal data coordinate (in pixels) <  |      |  |      |   |     |    |   |    |      |   |   > Data blocks with data corrected by Q-correction (2 errors per data block)",
+    "                     Average (by frame) data start horizontal data coordinate (in pixels) <   |  |      |  |      |   |     |    |   |    |      |   |   |   > Data blocks with data corrected with CWD assistance",
+    "                                               Width of the source frame (in pixels) <    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   > Data blocks with BROKEN data",
+    "                                                                                     |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   > Data blocks with dropped/uncorrected samples (actual error count)",
+    "                                           Even field data stop line number <        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |",
+    "                                      Even field data start line number <   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        > Audio sample resolution for odd field: [14bit] = STC-007, [16bit] = PCM-F1",
+    "                                Odd field data stop line number <       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     > Audio sample resolution for even field: [14bit] = STC-007, [16bit] = PCM-F1",
+    "                           Odd field data start line number <   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |",
+    "                                                            |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     > Timestamp program index (0...63)",
+    "                    Even field lines with valid CRC <       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     |   > Timestamp hours (0...15)",
+    "                     Even field lines with data <   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     |   |  > Timestamp minutes (0...59)",
+    "                     Even field total lines <   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     |   |  |  > Timestamp seconds (0...59)",
+    "     Odd field lines with valid CRC <       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     |   |  |  |  > Timestamp field index (0...59)",
+    "      Odd field lines with data <   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     |   |  |  |  |",
+    "      Odd field total lines <   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     |   |  |  |  |        > Audio sample rate for odd field",
+    "                            |   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     |   |  |  |  |        |     > Audio sample rate for even field",
+    "      Video standard <      |   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     |   |  |  |  |        |     |    > Emphasis presence for odd field",
+    "  Frame number <     |      |   |   |       |   |   |       |   |       |   |        |    |   |  |      |  |      |   |     |    |   |    |      |   |   |   |   |   |        |     |     |   |  |  |  |        |     |    | > Emphasis presence for even field",
+    "          _____|  ___|    __| __| __|     __| __| __|     __| __|     __| __|      __|  __| __|  |    __|  |    __| __|    _|  __|  _|  __|    __| __| __| __| __| __|    ____| ____|    _|  _| _| _| _|    ____| ____|    | |",
+};
 
 namespace Ui {
 class MainWindow;
@@ -376,8 +465,12 @@ private:
     uint32_t stat_mask_cnt;
     uint32_t stat_processed_frame_cnt;
     uint32_t stat_line_cnt;
-    uint8_t vu_left;
-    uint8_t vu_right;
+    uint8_t vu_left;                        // Left audio channel level.
+    uint8_t vu_right;                       // Right audio channel level.
+
+    uint8_t wl_pcm1_help_idx;               // Help string index for PCM-1 work log.
+    uint8_t wl_pcm16x0_help_idx;            // Help string index for PCM-16x0 work log.
+    uint8_t wl_stc007_help_idx;             // Help string index for STC-007 work log.
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -497,6 +590,12 @@ private slots:
     void updateStatsVIPFrame(uint32_t);     // Update stats after VIP has read a frame.
     void updateStatsVideoTracking(FrameBinDescriptor);  // Update stats after VIP has spliced a frame.
     void updateStatsDroppedFrame();         // Update stats with new value for dropped frames.
+    void resetWorkLogHelpPCM1();
+    void resetWorkLogHelpPCM16X0();
+    void resetWorkLogHelpSTC007();
+    QString logHelpNextPCM1();
+    QString logHelpNextPCM16X0();
+    QString logHelpNextSTC007();
     QString logStatsFrameAsm(FrameAsmPCM1);   // Make a user-log string for the frame assembly data.
     QString logStatsFrameAsm(FrameAsmPCM16x0);   // Make a user-log string for the frame assembly data.
     QString logStatsFrameAsm(FrameAsmSTC007);   // Make a user-log string for the frame assembly data.

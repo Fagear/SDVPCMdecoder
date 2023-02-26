@@ -43,6 +43,7 @@ extern "C"
 #define DBG_QFUNCTION   QString(__FUNCTION__)
 #define DBG_QLINE       QString::number(__LINE__, 10)
 #define DBG_ANCHOR      QString("["+DBG_QFILE+": "+DBG_QFUNCTION+"(): #"+DBG_QLINE+"]")
+
 #define APP_ORG_NAME    QString("Fagear")
 #define APP_ORG_HTTP    QString("https://discord.gg/4GcefbPffX")
 #define APP_NAME        QString("Video PCM decoder")

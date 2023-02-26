@@ -21,6 +21,7 @@ fine_bin_set::fine_bin_set(QWidget *parent) :
     connect(ui->spbPickRight, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
     connect(ui->spbSearchWidth, SIGNAL(valueChanged(int)), this, SLOT(setChange()));
     connect(ui->cbxAllowNoMarker, SIGNAL(toggled(bool)), this, SLOT(setChange()));
+    connect(ui->cbxForceFirstBad, SIGNAL(toggled(bool)), this, SLOT(setChange()));
 
     connect(ui->btnClose, SIGNAL(clicked(bool)), this, SLOT(usrClose()));
     connect(ui->btnRevert, SIGNAL(clicked(bool)), this, SLOT(usrRevert()));
@@ -96,6 +97,7 @@ void fine_bin_set::blockInputs()
     ui->spbPickRight->setEnabled(false);
     ui->spbSearchWidth->setEnabled(false);
     ui->cbxAllowNoMarker->setEnabled(false);
+    ui->cbxForceFirstBad->setEnabled(false);
 }
 
 //------------------------ Block Save and Revert buttons.
@@ -136,6 +138,7 @@ void fine_bin_set::enableInputs()
     ui->spbPickLeft->setEnabled(true);
     ui->spbPickRight->setEnabled(true);
     ui->cbxAllowNoMarker->setEnabled(true);
+    ui->cbxForceFirstBad->setEnabled(true);
 }
 
 //------------------------ Unblock Save and Revert buttons.
@@ -208,6 +211,7 @@ void fine_bin_set::usrSave()
     new_set.right_bit_pick = (uint8_t)(ui->spbPickRight->value());
     new_set.mark_max_dist = (uint8_t)(ui->spbSearchWidth->value());
     new_set.en_good_no_marker = (bool)(ui->cbxAllowNoMarker->isChecked());
+    new_set.en_first_line_dup = (bool)(ui->cbxForceFirstBad->isChecked());
 
     // Block all inputs.
     blockInputs();
@@ -242,6 +246,7 @@ void fine_bin_set::newSettings(bin_preset_t in_set)
     ui->spbPickRight->setValue(new_set.right_bit_pick);
     ui->spbSearchWidth->setValue(new_set.mark_max_dist);
     ui->cbxAllowNoMarker->setChecked(new_set.en_good_no_marker);
+    ui->cbxForceFirstBad->setChecked(new_set.en_first_line_dup);
 
     // Enable inputs.
     enableInputs();

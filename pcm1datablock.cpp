@@ -198,6 +198,16 @@ bool PCM1DataBlock::isBlockValid()
     return valid;
 }
 
+//------------------------ Check if data block was repaired with Bit Picker.
+bool PCM1DataBlock::isDataFixedByBP()
+{
+    if(isBlockValid()==false)
+    {
+        return false;
+    }
+    return hasPickedWord();
+}
+
 //------------------------ Is audio sample near zero value?
 bool PCM1DataBlock::isNearSilence(uint8_t index)
 {

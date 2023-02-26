@@ -128,8 +128,8 @@ void PCM16X0Deinterleaver::setEIFormat()
 uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
 {
     bool use_vector, suppress_log;
-    uint8_t stage_count, bad_ptr, err_total, err_audio, fix_result;
-    uint16_t min_data_size, line1_ofs, line2_ofs, line3_ofs;
+    uint8_t stage_count, bad_ptr, pick_cnt, err_total, err_audio, fix_result;
+    uint16_t min_data_size, line1_ofs, line2_ofs, line3_ofs, pick_mask;
 
     use_vector = false;
 
@@ -242,6 +242,12 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
                     &((*input_deque)[line2_ofs]),
                     &((*input_deque)[line3_ofs]),
                     out_data_block);
+        // Count number of picked bits on the lines.
+        // This calculation assumes that only one of the lines can have picked bits at the left,
+        // the one from [PART_LEFT].
+        pick_cnt = (*input_deque)[line1_ofs].picked_bits_left+
+                   (*input_deque)[line2_ofs].picked_bits_left+
+                   (*input_deque)[line3_ofs].picked_bits_left;
     }
     else
     {
@@ -249,10 +255,15 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
                     &((*input_vector)[line2_ofs]),
                     &((*input_vector)[line3_ofs]),
                     out_data_block);
+        // Count number of picked bits on the lines.
+        // This calculation assumes that only one of the lines can have picked bits at the left,
+        // the one from [PART_LEFT].
+        pick_cnt = (*input_vector)[line1_ofs].picked_bits_left+
+                   (*input_vector)[line2_ofs].picked_bits_left+
+                   (*input_vector)[line3_ofs].picked_bits_left;
     }
     // Reset audio state.
     out_data_block->markAsOriginalData();
-
     // Cycle through sub-blocks.
     for(uint8_t blk=PCM16X0DataBlock::SUBBLK_1;blk<=PCM16X0DataBlock::SUBBLK_3;blk++)
     {
@@ -265,6 +276,8 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
         // Get error counts for the sub-block.
         err_total = out_data_block->getErrorsTotal(blk);
         err_audio = out_data_block->getErrorsAudio(blk);
+        // No need to mask P syndrome on the first run.
+        pick_mask = 0x0000;
 
         //suppress_log = !(((log_level&LOG_PROCESS)!=0)||((log_level&LOG_ERROR_CORR)!=0));
 
@@ -439,7 +452,7 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
                 {
                     // P-code word is available.
                     // Try to check parity with with P-code.
-                    fix_result = fixByP(out_data_block, blk, bad_ptr);
+                    fix_result = fixByP(out_data_block, blk, bad_ptr, pick_mask);
                     if(fix_result==FIX_BROKEN)
                     {
                         // Audio data is broken.
@@ -493,7 +506,7 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
                                     //suppress_log = false;
                                     if(suppress_log==false)
                                     {
-                                        qInfo()<<"[DI-16x0] BROKEN, audio sample at LINE_1 has picked bits, trying to recover...";
+                                        qInfo()<<"[DI-16x0] BROKEN, audio sample at LINE_1 has"<<pick_cnt<<"picked bits, trying to recover...";
                                     }
 #endif
                                     // Mark "valid" bit-picked sample as bad.
@@ -508,7 +521,7 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
                                     //suppress_log = false;
                                     if(suppress_log==false)
                                     {
-                                        qInfo()<<"[DI-16x0] BROKEN, audio sample at LINE_3 has picked bits, trying to recover...";
+                                        qInfo()<<"[DI-16x0] BROKEN, audio sample at LINE_3 has"<<pick_cnt<<"picked bits, trying to recover...";
                                     }
 #endif
                                     // Mark "valid" bit-picked sample as bad.
@@ -524,6 +537,13 @@ uint8_t PCM16X0Deinterleaver::processBlock(uint16_t line_sh, bool even_order)
 #endif
                                     proc_state = STG_BAD_BLOCK;
                                     out_data_block->markAsBroken();
+                                }
+                                if(pick_cnt>0)
+                                {
+                                    // Make a mask for P-syndrome.
+                                    pick_mask = PCM16X0SubLine::BITS_PER_WORD-pick_cnt;
+                                    pick_mask = (1<<pick_mask);
+                                    pick_mask--;
                                 }
                             }
                         }
@@ -783,7 +803,7 @@ uint16_t PCM16X0Deinterleaver::calcSyndromeP(PCM16X0DataBlock *data_block, uint8
 }
 
 //------------------------ Calculate syndrome for P-code and fix an error.
-uint8_t PCM16X0Deinterleaver::fixByP(PCM16X0DataBlock *data_block, uint8_t blk, uint8_t bad_ptr)
+uint8_t PCM16X0Deinterleaver::fixByP(PCM16X0DataBlock *data_block, uint8_t blk, uint8_t bad_ptr, uint16_t synd_mask)
 {
     bool suppress_log;
     uint16_t check, fix_word;
@@ -805,6 +825,10 @@ uint8_t PCM16X0Deinterleaver::fixByP(PCM16X0DataBlock *data_block, uint8_t blk, 
         else
         {
             log_line += QString::number(bad_ptr);
+        }
+        if(synd_mask!=0x0000)
+        {
+            log_line += ", syndrome mask: 0x"+QString::number(synd_mask, 16);
         }
         qInfo()<<log_line;
     }
@@ -853,18 +877,36 @@ uint8_t PCM16X0Deinterleaver::fixByP(PCM16X0DataBlock *data_block, uint8_t blk, 
     }
     else
     {
-        // Fix an error in the sample (flip errored bits in the word).
-        fix_word = check^data_block->getWord(blk, bad_ptr);
-#ifdef DI_EN_DBG_OUT
-        if(suppress_log==false)
+        // Check for bits that should be zero in the syndrome.
+        if((synd_mask&check)==0)
         {
-            log_line.sprintf("[DI-16x0] Syndrome for P-code: 0x%04x, bad sample at [%01u], fix: 0x%04x -> 0x%04x",
-                             check, bad_ptr, data_block->getWord(blk, bad_ptr), fix_word);
-            qInfo()<<log_line;
-        }
+            // Fix an error in the sample (flip errored bits in the word).
+            fix_word = check^data_block->getWord(blk, bad_ptr);
+#ifdef DI_EN_DBG_OUT
+            if(suppress_log==false)
+            {
+                log_line.sprintf("[DI-16x0] Syndrome for P-code: 0x%04x, bad sample at [%01u], fix: 0x%04x -> 0x%04x",
+                                 check, bad_ptr, data_block->getWord(blk, bad_ptr), fix_word);
+                qInfo()<<log_line;
+            }
 #endif
-        // Replace damaged word.
-        data_block->fixWord(blk, bad_ptr, fix_word);
-        return FIX_DONE;
+            // Replace damaged word.
+            data_block->fixWord(blk, bad_ptr, fix_word);
+            return FIX_DONE;
+        }
+        else
+        {
+            // Some bits in the syndrome are not zero that should be.
+            // Second attempt of fixing BROKEN block failed.
+#ifdef DI_EN_DBG_OUT
+            if(suppress_log==false)
+            {
+                log_line.sprintf("[DI-16x0] Parity syndrome (0x%04x) has too many bits set (mask 0x%04x), broken block!", check, synd_mask);
+                qInfo()<<log_line;
+            }
+#endif
+            // Data is broken.
+            return FIX_BROKEN;
+        }
     }
 }

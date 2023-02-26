@@ -289,7 +289,7 @@ void PCM1DataStitcher::findFrameTrim()
             {
                 // Line contains Service line with "New file" tag.
                 file_start = true;
-                file_name = trim_buf[line_ind].file_path;
+                file_name = trim_buf[line_ind].getServFileName();
             }
             else if(trim_buf[line_ind].isServEndFile()!=false)
             {
@@ -1229,40 +1229,42 @@ void PCM1DataStitcher::setBlockSampleRate(PCM1DataBlock *in_block)
 void PCM1DataStitcher::outputFileStart()
 {
     size_t queue_size;
+    FrameAsmPCM1 serv_descr;
+    // Report about new file for logging.
+    serv_descr.setServNewFile(file_name);
+    emit guiUpdFrameAsm(serv_descr);
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided, service tag discarded!";
+        return;
     }
-    else
+    PCMSamplePair service_pair;
+    service_pair.setServNewFile(file_name);
+    while(1)
     {
-        PCMSamplePair service_pair;
-        service_pair.setServNewFile(file_name);
-        while(1)
+        // Try to put service tag into the queue.
+        mtx_samples->lock();
+        queue_size = (out_samples->size()+1);
+        if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
         {
-            // Try to put service tag into the queue.
-            mtx_samples->lock();
-            queue_size = (out_samples->size()+1);
-            if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
-            {
-                // Put service pair in the output queue.
-                out_samples->push_back(service_pair);
-                mtx_samples->unlock();
+            // Put service pair in the output queue.
+            out_samples->push_back(service_pair);
+            mtx_samples->unlock();
 #ifdef DI_EN_DBG_OUT
-                if((log_level&LOG_PROCESS)!=0)
-                {
-                    qInfo()<<"[L2B-1] Service tag 'NEW FILE' written.";
-                }
-#endif
-                break;
-            }
-            else
+            if((log_level&LOG_PROCESS)!=0)
             {
-                mtx_samples->unlock();
-                QThread::msleep(20);
+                qInfo()<<"[L2B-1] Service tag 'NEW FILE' written.";
             }
+#endif
+            break;
         }
-        file_time.start();
+        else
+        {
+            mtx_samples->unlock();
+            QThread::msleep(20);
+        }
     }
+    file_time.start();
 }
 
 //------------------------ Output PCM data block into output queue (blocking).
@@ -1275,104 +1277,105 @@ void PCM1DataStitcher::outputDataBlock(PCM1DataBlock *in_block)
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided, result discarded!";
+        return;
     }
-    else
+    FrameAsmPCM1 serv_descr;
+    PCMSamplePair sample_pair;
+    for(uint8_t wrd=0;wrd<in_block->getWordCount();wrd+=2)
     {
-        PCMSamplePair sample_pair;
-        for(uint8_t wrd=0;wrd<in_block->getWordCount();wrd+=2)
+        while(1)
         {
-            while(1)
+            // Try to put processed words into the queue.
+            mtx_samples->lock();
+            queue_size = (out_samples->size()+1);
+            if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
             {
-                // Try to put processed words into the queue.
-                mtx_samples->lock();
-                queue_size = (out_samples->size()+1);
-                if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
+                // Set emphasis state of the samples.
+                sample_pair.setEmphasis(in_block->hasEmphasis());
+                // Set sample rate.
+                sample_pair.setSampleRate(in_block->sample_rate);
+                // Output L+R samples.
+                sample_pair.setSample(PCMSamplePair::CH_LEFT, in_block->getSample(wrd), in_block->isBlockValid(), in_block->isWordValid(wrd), false);
+                sample_pair.setSample(PCMSamplePair::CH_RIGHT, in_block->getSample(wrd+1), in_block->isBlockValid(), in_block->isWordValid(wrd+1), false);
+                // Put sample pair in the output queue.
+                out_samples->push_back(sample_pair);
+                mtx_samples->unlock();
+                if(size_lock!=false)
                 {
-                    // Set emphasis state of the samples.
-                    sample_pair.setEmphasis(in_block->hasEmphasis());
-                    // Set sample rate.
-                    sample_pair.setSampleRate(in_block->sample_rate);
-                    // Output L+R samples.
-                    sample_pair.setSample(PCMSamplePair::CH_LEFT, in_block->getSample(wrd), in_block->isBlockValid(), in_block->isWordValid(wrd), false);
-                    sample_pair.setSample(PCMSamplePair::CH_RIGHT, in_block->getSample(wrd+1), in_block->isBlockValid(), in_block->isWordValid(wrd+1), false);
-                    // Put sample pair in the output queue.
-                    out_samples->push_back(sample_pair);
-                    mtx_samples->unlock();
-                    if(size_lock!=false)
-                    {
-                        size_lock = false;
+                    size_lock = false;
 #ifdef DI_EN_DBG_OUT
-                        if((log_level&LOG_PROCESS)!=0)
-                        {
-                            qInfo()<<"[L2B-1] Output PCM data blocks queue has some space, continuing...";
-                        }
-#endif
+                    if((log_level&LOG_PROCESS)!=0)
+                    {
+                        qInfo()<<"[L2B-1] Output PCM data blocks queue has some space, continuing...";
                     }
-                    break;
+#endif
                 }
-                else
+                break;
+            }
+            else
+            {
+                mtx_samples->unlock();
+                if(size_lock==false)
                 {
-                    mtx_samples->unlock();
-                    if(size_lock==false)
-                    {
-                        size_lock = true;
+                    size_lock = true;
 #ifdef DI_EN_DBG_OUT
-                        if((log_level&LOG_PROCESS)!=0)
-                        {
-                            qInfo()<<"[L2B-1] Output queue is at size limit ("<<(MAX_SAMPLEPAIR_QUEUE_SIZE-1)<<"), waiting...";
-                        }
-#endif
+                    if((log_level&LOG_PROCESS)!=0)
+                    {
+                        qInfo()<<"[L2B-1] Output queue is at size limit ("<<(MAX_SAMPLEPAIR_QUEUE_SIZE-1)<<"), waiting...";
                     }
-                    QThread::msleep(100);
+#endif
                 }
+                QThread::msleep(100);
             }
         }
-        // Output data block for visualization.
-        emit newBlockProcessed(*in_block);
     }
+    // Output data block for visualization.
+    emit newBlockProcessed(*in_block);
 }
 
 //------------------------ Output service tag "File ended".
 void PCM1DataStitcher::outputFileStop()
 {
     size_t queue_size;
+    FrameAsmPCM1 serv_descr;
+    // Report about EOF for logging.
+    serv_descr.setServEndFile();
+    emit guiUpdFrameAsm(serv_descr);
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-1] Empty pointer provided, service tag discarded!";
+        return;
     }
-    else
+    PCMSamplePair service_pair;
+    service_pair.setServEndFile();
+    while(1)
     {
-        PCMSamplePair service_pair;
-        service_pair.setServEndFile();
-        while(1)
+        // Try to put service tag into the queue.
+        mtx_samples->lock();
+        queue_size = (out_samples->size()+1);
+        if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
         {
-            // Try to put service tag into the queue.
-            mtx_samples->lock();
-            queue_size = (out_samples->size()+1);
-            if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
-            {
-                // Put service pair in the output queue.
-                out_samples->push_back(service_pair);
-                mtx_samples->unlock();
+            // Put service pair in the output queue.
+            out_samples->push_back(service_pair);
+            mtx_samples->unlock();
 #ifdef DI_EN_DBG_OUT
-                if((log_level&LOG_PROCESS)!=0)
-                {
-                    qInfo()<<"[L2B-1] Service tag 'FILE END' written.";
-                }
-#endif
-                break;
-            }
-            else
+            if((log_level&LOG_PROCESS)!=0)
             {
-                mtx_samples->unlock();
-                QThread::msleep(20);
+                qInfo()<<"[L2B-1] Service tag 'FILE END' written.";
             }
+#endif
+            break;
         }
-        // Reset file name.
-        file_name.clear();
-        // Report time that file processing took.
-        qDebug()<<"[L2B-1] File processed in"<<file_time.elapsed()<<"msec";
+        else
+        {
+            mtx_samples->unlock();
+            QThread::msleep(20);
+        }
     }
+    // Reset file name.
+    file_name.clear();
+    // Report time that file processing took.
+    qDebug()<<"[L2B-1] File processed in"<<file_time.elapsed()<<"msec";
 }
 
 //------------------------ Perform deinterleave of one field in [conv_queue].
@@ -1424,8 +1427,11 @@ void PCM1DataStitcher::performDeinterleave()
             // Samples in data block are corrupted.
             frasm_f1.samples_drop += pcm_block.getErrorsAudio();
         }
-
-        // TODO: implement [blocks_fix_bp] count
+        if(pcm_block.isDataFixedByBP()!=false)
+        {
+            // Data in the data block was fixed with Bit Picker in Binarizer.
+            frasm_f1.blocks_fix_bp++;
+        }
 
 #ifdef DI_EN_DBG_OUT
         if((log_level&LOG_BLOCK_DUMP)!=0)

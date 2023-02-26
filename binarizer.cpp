@@ -17,8 +17,9 @@ bin_preset_t::bin_preset_t(const bin_preset_t &in_object)
     left_bit_pick = in_object.left_bit_pick;
     right_bit_pick = in_object.right_bit_pick;
     horiz_coords = in_object.horiz_coords;
-    en_coord_search = in_object.en_coord_search;
     en_force_coords = in_object.en_force_coords;
+    en_coord_search = in_object.en_coord_search;
+    en_first_line_dup = in_object.en_first_line_dup;
     en_good_no_marker = in_object.en_good_no_marker;
 }
 
@@ -36,8 +37,9 @@ bin_preset_t& bin_preset_t::operator= (const bin_preset_t &in_object)
     left_bit_pick = in_object.left_bit_pick;
     right_bit_pick = in_object.right_bit_pick;
     horiz_coords = in_object.horiz_coords;
-    en_coord_search = in_object.en_coord_search;
     en_force_coords = in_object.en_force_coords;
+    en_coord_search = in_object.en_coord_search;
+    en_first_line_dup = in_object.en_first_line_dup;
     en_good_no_marker = in_object.en_good_no_marker;
 
     return *this;
@@ -57,7 +59,9 @@ void bin_preset_t::reset()
     horiz_coords.clear();
     horiz_coords.setToZero();
     en_force_coords = false;
-    en_coord_search = en_good_no_marker = true;
+    en_coord_search = true;
+    en_first_line_dup = true;
+    en_good_no_marker = true;
 }
 
 Binarizer::Binarizer()
@@ -75,7 +79,7 @@ Binarizer::Binarizer()
     do_coord_search = true;
     do_start_mark_sweep = true;
     do_ref_lvl_sweep = false;
-    force_bit_picker = false;
+    force_bit_picker = true;
 
     proc_state = STG_REF_FIND;
     setMode(MODE_FAST);
@@ -4119,6 +4123,7 @@ void Binarizer::calcRefLevelBySweep(PCMLine *pcm_line)
 uint8_t Binarizer::searchPCM1Data(PCM1Line *pcm_line, CoordinatePair data_loc)
 {
     bool suppress_log;
+    bool bitpick_previous;
     uint8_t right_ofs, left_ofs;
     uint8_t stat_left_idx, stat_right_idx, valid_left_crcs, valid_right_crcs;
     //uint8_t step_min, step_max;
@@ -4211,6 +4216,7 @@ uint8_t Binarizer::searchPCM1Data(PCM1Line *pcm_line, CoordinatePair data_loc)
 #endif
 
     // Force calculation of number of cut bits even on valid CRCs.
+    bitpick_previous = force_bit_picker;
     force_bit_picker = true;
     // Override pixel shift and hysteresis depth according to binarization mode.
     // Tests indicate that minimal wiggle room for the search gives more valid CRCs (and faster).
@@ -4410,8 +4416,8 @@ uint8_t Binarizer::searchPCM1Data(PCM1Line *pcm_line, CoordinatePair data_loc)
             break;
         }
     }
-    // Disable forced Bit Picker for normal operation.
-    force_bit_picker = false;
+    // Reverse forced Bit Picker for normal operation.
+    force_bit_picker = bitpick_previous;
 
     // Check if any valid CRCs for found during left coordinate scan.
     if(valid_left_crcs>0)
@@ -4508,6 +4514,7 @@ uint8_t Binarizer::searchPCM1Data(PCM1Line *pcm_line, CoordinatePair data_loc)
 uint8_t Binarizer::searchPCM16X0Data(PCM16X0SubLine *pcm_line, CoordinatePair data_loc)
 {
     bool suppress_log, lock_right, lock_left, lock_min, lock_max;
+    bool bitpick_previous;
     uint8_t right_ofs, left_ofs;
     uint8_t step_min, step_max;
     uint8_t stat_left_idx, stat_right_idx;
@@ -4610,6 +4617,7 @@ uint8_t Binarizer::searchPCM16X0Data(PCM16X0SubLine *pcm_line, CoordinatePair da
 #endif
 
     // Force calculation of number of cut bits even on valid CRCs.
+    bitpick_previous = force_bit_picker;
     force_bit_picker = true;
     // Override pixel shift and hysteresis depth according to binarization mode.
     // Tests indicate that minimal wiggle room for the search gives more valid CRCs (and faster).
@@ -5174,8 +5182,8 @@ uint8_t Binarizer::searchPCM16X0Data(PCM16X0SubLine *pcm_line, CoordinatePair da
             break;
         }
     }
-    // Disable forced Bit Picker for normal operation.
-    force_bit_picker = false;
+    // Revert forced Bit Picker for normal operation.
+    force_bit_picker = bitpick_previous;
 
     // Check if any valid CRCs for found during left coordinate scan.
     if(valid_left_crcs>0)
@@ -7637,13 +7645,8 @@ uint8_t Binarizer::fillDataWords(PCMLine *fill_pcm_line, uint8_t ref_delta, uint
                 // Try to brute-force cut left and/or right pixels/bits with bit-picker.
                 pickCutBitsUpPCM1(temp_pcm_ptr, no_log);
             }
-            return STG_DATA_OK;
         }
-        else
-        {
-            // Error occured while filling data.
-            return bin_res;
-        }
+        return bin_res;
     }
     else if(fill_pcm_line->getPCMType()==PCMLine::TYPE_PCM16X0)
     {
@@ -7662,13 +7665,8 @@ uint8_t Binarizer::fillDataWords(PCMLine *fill_pcm_line, uint8_t ref_delta, uint
                 // Try to brute-force cut left or right pixels/bits with bit-picker.
                 pickCutBitsUpPCM16X0(temp_pcm_ptr, no_log);
             }
-            return STG_DATA_OK;
         }
-        else
-        {
-            // Error occured while filling data.
-            return bin_res;
-        }
+        return bin_res;
     }
     else if(fill_pcm_line->getPCMType()==PCMLine::TYPE_STC007)
     {

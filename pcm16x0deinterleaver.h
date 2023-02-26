@@ -138,7 +138,7 @@ private:
     void setWordData(PCM16X0SubLine *line1, PCM16X0SubLine *line2, PCM16X0SubLine *line3, PCM16X0DataBlock *out_data_block);
     static uint16_t calcPcode(PCM16X0DataBlock *data_block, uint8_t blk);
     static uint16_t calcSyndromeP(PCM16X0DataBlock *data_block, uint8_t blk);
-    uint8_t fixByP(PCM16X0DataBlock *data_block, uint8_t blk, uint8_t bad_ptr = PCM16X0Deinterleaver::NO_ERR_INDEX);
+    uint8_t fixByP(PCM16X0DataBlock *data_block, uint8_t blk, uint8_t bad_ptr = PCM16X0Deinterleaver::NO_ERR_INDEX, uint16_t synd_mask = 0x00);
 };
 
 #endif // PCM16X0DEINTERLEAVER_H

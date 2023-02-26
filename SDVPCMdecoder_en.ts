@@ -1711,14 +1711,14 @@ audio samples:</translation>
         <translation>Data blocks</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1505"/>
-        <location filename="mainwindow.cpp" line="3985"/>
-        <location filename="mainwindow.cpp" line="3997"/>
+        <location filename="mainwindow.cpp" line="1507"/>
+        <location filename="mainwindow.cpp" line="4164"/>
+        <location filename="mainwindow.cpp" line="4176"/>
         <source>Ошибка</source>
         <translation>Error</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1518"/>
+        <location filename="mainwindow.cpp" line="1520"/>
         <source>Открыть видео с PCM</source>
         <translation>Open video with PCM</translation>
     </message>
@@ -1727,74 +1727,74 @@ audio samples:</translation>
         <translation type="vanished">Video files (*.avi *.mkv *.mpg *.mp4)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1520"/>
+        <location filename="mainwindow.cpp" line="1522"/>
         <source>Видео-файлы (*.avi *.mkv *.mov *.mpg *.mp4 *.wmv)</source>
         <translation>Video files (*.avi *.mkv *.mov *.mpg *.mp4 *.wmv)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1703"/>
-        <location filename="mainwindow.cpp" line="1756"/>
+        <location filename="mainwindow.cpp" line="1706"/>
+        <location filename="mainwindow.cpp" line="1759"/>
         <source>Сброс настроек</source>
         <translation>Settings reset</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1704"/>
+        <location filename="mainwindow.cpp" line="1707"/>
         <source>Сброс настроек декодера</source>
         <translation>Reset decoder settings</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1705"/>
+        <location filename="mainwindow.cpp" line="1708"/>
         <source>Вернуть настройки к состоянию по умолчанию?</source>
         <translation>Reset settings to defaults?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1725"/>
+        <location filename="mainwindow.cpp" line="1728"/>
         <source>Сброс расположения</source>
         <translation>Reset positions</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1726"/>
+        <location filename="mainwindow.cpp" line="1729"/>
         <source>Сброс расположения окон визуализации</source>
         <translation>Reset visualization windows positions</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1727"/>
+        <location filename="mainwindow.cpp" line="1730"/>
         <source>Сбросить положения окон визуализации?</source>
         <translation>Reset all visualization windows positions?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1757"/>
+        <location filename="mainwindow.cpp" line="1760"/>
         <source>Сброс ВСЕХ настроек</source>
         <translation>Reset ALL settings</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1758"/>
+        <location filename="mainwindow.cpp" line="1761"/>
         <source>Вернуть ВСЕ настройки программы к состоянию по умолчанию?</source>
         <translation>Reset everything to defaults?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3979"/>
-        <location filename="mainwindow.cpp" line="3991"/>
+        <location filename="mainwindow.cpp" line="4158"/>
+        <location filename="mainwindow.cpp" line="4170"/>
         <source>Результат</source>
         <translation>Result</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3979"/>
+        <location filename="mainwindow.cpp" line="4158"/>
         <source>Тест CRCC пройден успешно.</source>
         <translation>CRCC test passed successfully.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3985"/>
+        <location filename="mainwindow.cpp" line="4164"/>
         <source>Тест CRCC не пройден! Подробности в отладочной консоли.</source>
         <translation>CRCC test failed! See debug console.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3991"/>
+        <location filename="mainwindow.cpp" line="4170"/>
         <source>Тест ECC пройден успешно.</source>
         <translation>ECC test passed successfully.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="3997"/>
+        <location filename="mainwindow.cpp" line="4176"/>
         <source>Тест ECC не пройден! Подробности в отладочной консоли.</source>
         <translation>ECC test failed! See debug console.</translation>
     </message>
@@ -1802,93 +1802,93 @@ audio samples:</translation>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="mainwindow.h" line="84"/>
-        <location filename="mainwindow.h" line="89"/>
+        <location filename="mainwindow.h" line="85"/>
+        <location filename="mainwindow.h" line="90"/>
         <source>не определён</source>
         <translation>not defined</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="85"/>
+        <location filename="mainwindow.h" line="86"/>
         <source>TFF, нечётное поле первое</source>
         <translation>TFF, odd field first</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="86"/>
+        <location filename="mainwindow.h" line="87"/>
         <source>BFF, чётное поле первое</source>
         <translation>BFF, even field first</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="87"/>
+        <location filename="mainwindow.h" line="88"/>
         <source> (форсировано)</source>
         <translation> (forced)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="90"/>
+        <location filename="mainwindow.h" line="91"/>
         <source>NTSC (525i), 245 строк с PCM в поле</source>
         <translation>NTSC (525i), 245 PCM lines per field</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="91"/>
+        <location filename="mainwindow.h" line="92"/>
         <source>PAL (625i), 294 строк с PCM в поле</source>
         <translation>PAL (625i), 294 PCM lines per field</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="81"/>
+        <location filename="mainwindow.h" line="82"/>
         <source>Формат SI</source>
         <translation>SI format</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="82"/>
+        <location filename="mainwindow.h" line="83"/>
         <source>Формат EI</source>
         <translation>EI format</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="92"/>
+        <location filename="mainwindow.h" line="93"/>
         <source> (форсирован)</source>
         <translation> (forced)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="94"/>
+        <location filename="mainwindow.h" line="95"/>
         <source>14 бит (STC-007)</source>
         <translation>14 bits (STC-007)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="95"/>
+        <location filename="mainwindow.h" line="96"/>
         <source>14 бит (неточно)</source>
         <translation>14 bits (not certain)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="96"/>
+        <location filename="mainwindow.h" line="97"/>
         <source>16 бит (неточно)</source>
         <translation>16 bits (not certain)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="97"/>
+        <location filename="mainwindow.h" line="98"/>
         <source>16 бит (PCM-F1)</source>
         <translation>16 bits (PCM-F1)</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="100"/>
+        <location filename="mainwindow.h" line="101"/>
         <source>Источник видео</source>
         <translation>Video source</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="101"/>
+        <location filename="mainwindow.h" line="102"/>
         <source>Бинаризированные кадры</source>
         <translation>Binarized frames</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="102"/>
+        <location filename="mainwindow.h" line="103"/>
         <source>Пересобранные кадры</source>
         <translation>Re-assembled frames</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="103"/>
+        <location filename="mainwindow.h" line="104"/>
         <source>Блоки данных</source>
         <translation>Data blocks</translation>
     </message>
     <message>
-        <location filename="mainwindow.h" line="105"/>
+        <location filename="mainwindow.h" line="106"/>
         <source>Для использования меню отладки запустите приложение из коммандной строки</source>
         <translation>Launch application from a command line to get access to the debug menu</translation>
     </message>
@@ -1898,7 +1898,7 @@ audio samples:</translation>
         <translation>Frame:</translation>
     </message>
     <message>
-        <location filename="config.h" line="49"/>
+        <location filename="config.h" line="50"/>
         <source>SDVPCM: декодер PCM аудио из SD видео</source>
         <translation>SDVPCM: SD video to PCM audio decoder</translation>
     </message>
@@ -2408,13 +2408,13 @@ audio samples:</translation>
         <translation>Fine binarizator settings</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="635"/>
-        <location filename="fine_bin_set.ui" line="654"/>
+        <location filename="fine_bin_set.ui" line="688"/>
+        <location filename="fine_bin_set.ui" line="735"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В форматах PCM-1 и PCM-16x0 нет маркеров для обнаружения положения PCM данных по горизонтали кадра, поэтому поиск данных может быть осуществлён только перебором смещений от краёв кадра.&lt;/p&gt;&lt;p&gt;Включение этой настройки позволяет автоматически определить начало и конец PCM данных, но может привести к ошибкам и щелчкам из-за коллизий CRC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;There are no markers in PCM-1 and PCM-16x0 formats to help detect horizontal position of PCM data in the frame and so data position search can only be done via brute-force sweeping through offsets from the sides of the frame.&lt;/p&gt;&lt;p&gt;Enabling this option allows to perform automatic data location search but can lead to errors and clicks due to CRC collisions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="657"/>
+        <location filename="fine_bin_set.ui" line="691"/>
         <source>Поиск PCM данных в строке (TBC для PCM-1/PCM-16x0):</source>
         <translation>PCM data position search (TBC for PCM-1/PCM-16x0):</translation>
     </message>
@@ -2484,9 +2484,10 @@ audio samples:</translation>
         <translation>Maximum binarization threshold level (8 bit):</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="482"/>
-        <location filename="fine_bin_set.ui" line="638"/>
-        <location filename="fine_bin_set.ui" line="682"/>
+        <location filename="fine_bin_set.ui" line="594"/>
+        <location filename="fine_bin_set.ui" line="738"/>
+        <location filename="fine_bin_set.ui" line="760"/>
+        <location filename="fine_bin_set.ui" line="826"/>
         <source>включить</source>
         <translation>enable</translation>
     </message>
@@ -2499,27 +2500,27 @@ audio samples:</translation>
         <translation type="vanished">Enable Bit Picker to brute-force pick bits that were cut from the left or the right until CRC is valid</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="379"/>
+        <location filename="fine_bin_set.ui" line="566"/>
         <source> %</source>
         <translation> %</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="582"/>
-        <location filename="fine_bin_set.ui" line="585"/>
-        <location filename="fine_bin_set.ui" line="607"/>
-        <location filename="fine_bin_set.ui" line="610"/>
+        <location filename="fine_bin_set.ui" line="526"/>
+        <location filename="fine_bin_set.ui" line="529"/>
+        <location filename="fine_bin_set.ui" line="707"/>
+        <location filename="fine_bin_set.ui" line="710"/>
         <source>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</source>
         <translation>Minimum number of adjacent valid CRCs per single line in full threshold sweep to validate the line</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="613"/>
+        <location filename="fine_bin_set.ui" line="713"/>
         <source>Минимальное число валидных CRC на строку:</source>
         <translation>Minimum number of valid CRCs per line:</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="348"/>
-        <location filename="fine_bin_set.ui" line="457"/>
-        <location filename="fine_bin_set.ui" line="588"/>
+        <location filename="fine_bin_set.ui" line="392"/>
+        <location filename="fine_bin_set.ui" line="423"/>
+        <location filename="fine_bin_set.ui" line="532"/>
         <source> шт.</source>
         <translation> pc.</translation>
     </message>
@@ -2528,126 +2529,141 @@ audio samples:</translation>
         <translation type="vanished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;It is possible to lose some data from the sides of the frame (from the left or the right) during capture process. Enabling this option can help recover lost bits by brute-force picking those until CRC is valid.&lt;/p&gt;&lt;p&gt;This allows to recover bits cut off from the sides of the frame but can lead to false-positive CRCs,  &amp;quot;broken&amp;quot; data blocks and loud pops.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="632"/>
-        <location filename="fine_bin_set.ui" line="651"/>
+        <location filename="fine_bin_set.ui" line="685"/>
+        <location filename="fine_bin_set.ui" line="732"/>
         <source>Включение автоматического определения начала и конца PCM данных, может привести к ошибкам и щелчкам из-за коллизий CRC</source>
         <translation>Enable automatic PCM data position search, can lead to errors and clicks due to CRC collisions</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="373"/>
-        <location filename="fine_bin_set.ui" line="398"/>
+        <location filename="fine_bin_set.ui" line="560"/>
+        <location filename="fine_bin_set.ui" line="773"/>
         <source>Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра</source>
         <translation>Width of search areas for PCM markers from the left and the right edges of the frame, in percentage  of the width of the frame</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="342"/>
-        <location filename="fine_bin_set.ui" line="345"/>
+        <location filename="fine_bin_set.ui" line="355"/>
+        <location filename="fine_bin_set.ui" line="358"/>
+        <location filename="fine_bin_set.ui" line="417"/>
         <location filename="fine_bin_set.ui" line="420"/>
-        <location filename="fine_bin_set.ui" line="423"/>
         <source>Максимально разрешённое количество бит данных, которое будет подобрано перебором с левого края строки при обнаружении обрезания полезных данных краем кадра</source>
         <translation>Maximum allowed number of data bits to be brute-force picked at the left edge of the line if frame crop will be detected</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="376"/>
-        <location filename="fine_bin_set.ui" line="401"/>
+        <location filename="fine_bin_set.ui" line="563"/>
+        <location filename="fine_bin_set.ui" line="776"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра.&lt;/p&gt;&lt;p&gt;Увеличение % позволяет автоматически обрезать более широкие поля кадра и компенсировать дрожание строки с большим размахом, но может привести к нахождению ложных координат с ложно-позитивной CRC и увеличить число &amp;quot;сломанных&amp;quot; блоков и щелчков.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Width of search areas for PCM markers from the left and the right edges of the frame, in percentage  of the width of the frame.&lt;/p&gt;&lt;p&gt;Increasing % can help automatically trim side frame borders and compensate for horizontal jitter but can lead to false-positive CRCs and increase number of &amp;quot;broken&amp;quot; data blocks and loud pops.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="404"/>
+        <location filename="fine_bin_set.ui" line="779"/>
         <source>Область поиска маркеров PCM от границ кадра (TBC для STC-007):</source>
         <translation>PCM markers search area from edges of the frame (TBC for STC-007):</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="426"/>
+        <location filename="fine_bin_set.ui" line="361"/>
         <source>Максимум подбираемых бит с левого края строки (PCM-1/PCM-16x0):</source>
         <translation>Maximum number of bits to be picked at the left edge of the line (PCM-1/PCM-16x0):</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="451"/>
-        <location filename="fine_bin_set.ui" line="454"/>
-        <location filename="fine_bin_set.ui" line="551"/>
-        <location filename="fine_bin_set.ui" line="554"/>
+        <location filename="fine_bin_set.ui" line="386"/>
+        <location filename="fine_bin_set.ui" line="389"/>
+        <location filename="fine_bin_set.ui" line="663"/>
+        <location filename="fine_bin_set.ui" line="666"/>
         <source>Максимально разрешённое количество бит данных, которое будет подобрано перебором с правого края строки при обнаружении обрезания полезных данных краем кадра</source>
         <translation>Maximum allowed number of data bits to be brute-force picked at the right edge of the line if frame crop will be detected</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="476"/>
-        <location filename="fine_bin_set.ui" line="479"/>
-        <location filename="fine_bin_set.ui" line="495"/>
-        <location filename="fine_bin_set.ui" line="498"/>
+        <location filename="fine_bin_set.ui" line="439"/>
+        <location filename="fine_bin_set.ui" line="442"/>
+        <location filename="fine_bin_set.ui" line="588"/>
+        <location filename="fine_bin_set.ui" line="591"/>
         <source>Запрет автоматического поиска данных по горизонтали и задание координат вручную</source>
         <translation>Disable automatic horizontal data coordinates search and define forced data coordinates</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="501"/>
+        <location filename="fine_bin_set.ui" line="445"/>
         <source>Принудительные горизонтальные координаты данных:</source>
         <translation>Forced horizontal data coordinates:</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="526"/>
-        <location filename="fine_bin_set.ui" line="529"/>
-        <location filename="fine_bin_set.ui" line="751"/>
-        <location filename="fine_bin_set.ui" line="754"/>
+        <location filename="fine_bin_set.ui" line="495"/>
+        <location filename="fine_bin_set.ui" line="498"/>
+        <location filename="fine_bin_set.ui" line="616"/>
+        <location filename="fine_bin_set.ui" line="619"/>
         <source>Заданное вручную смещение координаты начала данных по горизонтали (положительное - смещение к центру строки, отрицательное - за край строки)</source>
         <translation>User-defined manual horizontal data start coordinate offset (positive - towards the center of the line, negative - beyond the edge of the line)</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="532"/>
-        <location filename="fine_bin_set.ui" line="732"/>
+        <location filename="fine_bin_set.ui" line="476"/>
+        <location filename="fine_bin_set.ui" line="622"/>
         <source> пикс.</source>
         <translation> pixels</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="557"/>
+        <location filename="fine_bin_set.ui" line="669"/>
         <source>Максимум подбираемых бит с правого края строки (PCM-1/PCM-16x0):</source>
         <translation>Maximum number of bits to be picked at the right edge of the line (PCM-1/PCM-16x0):</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="676"/>
-        <location filename="fine_bin_set.ui" line="695"/>
+        <location filename="fine_bin_set.ui" line="333"/>
+        <location filename="fine_bin_set.ui" line="754"/>
         <source>Разрешить бинаризацию по найденным ранееe удачным параметрам без проверки наличия старт- и стоп-маркеров в строке</source>
         <translation>Allow binarization with know good parameters without checking for start and stop marker presence in the line</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="679"/>
-        <location filename="fine_bin_set.ui" line="698"/>
+        <location filename="fine_bin_set.ui" line="336"/>
+        <location filename="fine_bin_set.ui" line="757"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Разрешить бинаризацию по найденным ранее параметрам без проверки наличия старт- и стоп-маркеров в строке.&lt;/p&gt;&lt;p&gt;Позволяет лучше восстанавливать ВЧ и детали из видео с большим числом выпадений и ускоряет бинаризацию, но может привести к ложно-позитивным совпадениям CRC, &amp;quot;сломанным&amp;quot; блокам и щелчкам.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Allow binarization with know good parameters without checking for start and stop marker presence in the line.&lt;/p&gt;&lt;p&gt;Allows for better recovery of details and high frequencies on sources with many dropouts and speeds up binarization but can lead to false-positive CRCs and increase number of &amp;quot;broken&amp;quot; data blocks and loud pops.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="701"/>
+        <location filename="fine_bin_set.ui" line="339"/>
         <source>Бинаризация без проверки наличия маркеров (STC-007):</source>
         <translation>Don&apos;t check marker presence during binarization (STC-007):</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="726"/>
-        <location filename="fine_bin_set.ui" line="729"/>
-        <location filename="fine_bin_set.ui" line="773"/>
-        <location filename="fine_bin_set.ui" line="776"/>
+        <location filename="fine_bin_set.ui" line="470"/>
+        <location filename="fine_bin_set.ui" line="473"/>
+        <location filename="fine_bin_set.ui" line="641"/>
+        <location filename="fine_bin_set.ui" line="644"/>
         <source>Заданное вручную смещение координаты конца данных по горизонтали (положительное - смещение к центру строки, отрицательное - за край строки)</source>
         <translation>User-defined manual horizontal data stop coordinate offset (positive - towards the center of the line, negative - beyond the edge of the line)</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="757"/>
+        <location filename="fine_bin_set.ui" line="501"/>
         <source>Смещение начала данных от левого края строки:</source>
         <translation>Data starting offset from the left edge of the line:</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="779"/>
+        <location filename="fine_bin_set.ui" line="647"/>
         <source>Смещение конца данных от правого края строки:</source>
         <oldsource>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Смещение конца данных от правого края строки:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</oldsource>
         <translation>Data stopping offset from the right edge of the line:</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="819"/>
-        <location filename="fine_bin_set.ui" line="822"/>
+        <location filename="fine_bin_set.ui" line="795"/>
+        <location filename="fine_bin_set.ui" line="798"/>
+        <location filename="fine_bin_set.ui" line="820"/>
+        <location filename="fine_bin_set.ui" line="823"/>
+        <source>Принудительно считать первую валидную строку в поле невалидной, так как невозможно гарантировать, что она не является копией строки из неактивного региона</source>
+        <oldsource>Принудительно считать первую валидную строку в поле невалидной, так как невозможно гарантировать, что она не является копией строки из неактивного региона.</oldsource>
+        <translation>Force first valid line in the field to be invalid because it&apos;s impossible to guarantee that it is not a copy of a line from inactive region</translation>
+    </message>
+    <message>
+        <location filename="fine_bin_set.ui" line="801"/>
+        <source>Считать первую строку поля невалидной при активном детекторе повторных строк:</source>
+        <oldsource>Считать первую строку поля невалидной при активном детекторе повторных строк</oldsource>
+        <translation>Set first line in the field as invalid if repeating line detector is enabled:</translation>
+    </message>
+    <message>
+        <location filename="fine_bin_set.ui" line="863"/>
+        <location filename="fine_bin_set.ui" line="866"/>
         <source>Сброс настроек к оптимальным (по умолчанию)</source>
         <translation>Reset fine settings to optimal (by default)</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="838"/>
-        <location filename="fine_bin_set.ui" line="841"/>
+        <location filename="fine_bin_set.ui" line="882"/>
+        <location filename="fine_bin_set.ui" line="885"/>
         <source>Вернуть настройки на момент открытия окна настроек</source>
         <translation>Revert fine settings changes in the dialog</translation>
     </message>
@@ -2663,64 +2679,64 @@ audio samples:</translation>
         <translation>Data search (TBC) and validation</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="825"/>
+        <location filename="fine_bin_set.ui" line="869"/>
         <source>По умолчанию</source>
         <translation>By default</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="844"/>
+        <location filename="fine_bin_set.ui" line="888"/>
         <source>Отменить изменения</source>
         <translation>Revert to current</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="857"/>
-        <location filename="fine_bin_set.ui" line="860"/>
+        <location filename="fine_bin_set.ui" line="901"/>
+        <location filename="fine_bin_set.ui" line="904"/>
         <source>Применить все настройки из окна к бинаризатору</source>
         <translation>Apply all fine settings to binarizator</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="863"/>
+        <location filename="fine_bin_set.ui" line="907"/>
         <source>Сохранить</source>
         <translation>Save</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="876"/>
-        <location filename="fine_bin_set.ui" line="879"/>
+        <location filename="fine_bin_set.ui" line="920"/>
+        <location filename="fine_bin_set.ui" line="923"/>
         <source>Закрыть окно настроек</source>
         <translation>Close settings dialog</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.ui" line="882"/>
+        <location filename="fine_bin_set.ui" line="926"/>
         <source>Закрыть</source>
         <translation>Close</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.cpp" line="61"/>
+        <location filename="fine_bin_set.cpp" line="62"/>
         <source>Сохранение настроек</source>
         <translation>Saving settings</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.cpp" line="62"/>
+        <location filename="fine_bin_set.cpp" line="63"/>
         <source>Настройки не были сохранены</source>
         <translation>Settings were not saved</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.cpp" line="63"/>
+        <location filename="fine_bin_set.cpp" line="64"/>
         <source>Сохранить изменения перед закрытием диалога?</source>
         <translation>Do you want to save changes before closing the dialog?</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.cpp" line="165"/>
+        <location filename="fine_bin_set.cpp" line="168"/>
         <source>Сброс настроек</source>
         <translation>Fine settings reset</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.cpp" line="166"/>
+        <location filename="fine_bin_set.cpp" line="169"/>
         <source>Сброс настроек бинаризатора</source>
         <translation>Binarizator fine settings reset</translation>
     </message>
     <message>
-        <location filename="fine_bin_set.cpp" line="167"/>
+        <location filename="fine_bin_set.cpp" line="170"/>
         <source>Вернуть настройки к состоянию по умолчанию?</source>
         <translation>Reset fine settings to defaults?</translation>
     </message>

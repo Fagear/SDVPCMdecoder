@@ -15,16 +15,22 @@ TEMPLATE = app
 
 #LIBS += -L
 
-#QMAKE_CXXFLAGS += -O3 -march=pentium3m
-#QMAKE_CFLAGS += -O3 -march=pentium3m
-
 #QMAKE_CXXFLAGS += -fopenmp
 #QMAKE_LFLAGS += -fopenmp
-QMAKE_CXXFLAGS_RELEASE -= -O2
-QMAKE_CXXFLAGS_RELEASE += -O3 -march=pentium3m
+#QMAKE_CXXFLAGS_RELEASE -= -O2
+#QMAKE_CXXFLAGS_RELEASE += -march=pentium3m
+QMAKE_CXXFLAGS_RELEASE += -march=core2
+#QMAKE_CXXFLAGS_RELEASE += -march=nehalem
+#QMAKE_CXXFLAGS_RELEASE += -march=haswell
 
-QMAKE_CFLAGS_RELEASE -= -O2
-QMAKE_CFLAGS_RELEASE += -O3 -march=pentium3m
+#QMAKE_CFLAGS_RELEASE -= -O2
+#QMAKE_CFLAGS_RELEASE += -march=pentium3m
+QMAKE_CFLAGS_RELEASE += -march=core2
+#QMAKE_CFLAGS_RELEASE += -march=nehalem
+#QMAKE_CFLAGS_RELEASE += -march=haswell
+
+#QMAKE_CXXFLAGS_DEBUG += -pg
+#QMAKE_LFLAGS_DEBUG += -pg
 
 QMAKE_CXXFLAGS+= -D__STDC_CONSTANT_MACROS -fpermissive
 

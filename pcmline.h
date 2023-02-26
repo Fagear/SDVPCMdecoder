@@ -144,7 +144,6 @@ public:
     bool ref_level_sweeped;     // Reference level was found by full reference level sweeping.
     bool coords_sweeped;        // Data coordinates were found by sweeping ranges from starting points.
     bool data_by_ext_tune;      // Valid data (by CRC) was detected with provided external parameters.
-    std::string file_path;      // Path of decoded file (set with [SRVLINE_NEW_FILE]).
 
 protected:
     uint8_t help_stage;         // Stage of help output.
@@ -153,6 +152,7 @@ protected:
     bool coords_set;            // Data coordinates are set for the line.
     bool forced_bad;            // This line must have bad CRC even if data is good.
     uint8_t service_type;       // Type of the service line.
+    std::string file_path;      // Path of decoded file (set with [SRVLINE_NEW_FILE]).
 
 private:
     uint16_t pixel_start;           // Source video line first pixel.
@@ -201,6 +201,7 @@ public:
     virtual uint16_t getSourceCRC() = 0;
     virtual uint8_t getPCMType() = 0;       // Sub-class detection, should return value from enum above.
     virtual int16_t getSample(uint8_t index) = 0;
+    std::string getServFileName();
     bool canUseMarkers();
     bool hasBWSet();
     bool hasDataCoordSet();

@@ -316,6 +316,12 @@ uint16_t PCMLine::getCalculatedCRC()
     return calc_crc;
 }
 
+//------------------------ Get file name for [SRVLINE_NEW_FILE] service line.
+std::string PCMLine::getServFileName()
+{
+    return file_path;
+}
+
 //------------------------ Does this PCM line is of a type that uses markers to locate data?
 bool PCMLine::canUseMarkers()
 {

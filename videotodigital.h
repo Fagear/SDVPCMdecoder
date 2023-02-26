@@ -105,6 +105,7 @@ public:
     };
 
 private:
+    bin_preset_t fine_bin_preset;           // Preset for fine settings of binarization.
     Binarizer line_converter;               // Binarizator module.
     std::deque<VideoLine> *in_video;        // Input video line queue (shared).
     std::deque<PCM1Line> *out_pcm1;         // Output PCM PCM-1 line queue (shared).

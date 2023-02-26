@@ -28,6 +28,8 @@ MainWindow::MainWindow(QWidget *parent) :
     set_pcm_type = LIST_TYPE_PCM1;
     pcm1_ofs_diff = 0;
 
+    wl_pcm1_help_idx = wl_pcm16x0_help_idx = wl_stc007_help_idx = 0;
+
     clearStat();
 
     ui->lblVersion->setText("v"+QString(APP_VERSION)+" ("+QString(COMPILE_DATE)+")");
@@ -1663,6 +1665,7 @@ void MainWindow::clearStat()
     }
     stat_video_tracking.clear();
     flag_bad_stitch_cnt = flag_p_corr_cnt = flag_q_corr_cnt = flag_cwd_corr_cnt = flag_broken_cnt = flag_dropout_cnt = 0;
+    stat_ref_level = 0;
     stat_total_frame_cnt = stat_read_frame_cnt = stat_drop_frame_cnt = 0;
     stat_no_pcm_cnt = stat_crc_err_cnt = stat_dup_err_cnt = 0;
     stat_bad_stitch_cnt = 0;
@@ -3324,13 +3327,79 @@ void MainWindow::updateStatsDroppedFrame()
     stat_drop_frame_cnt++;
 }
 
+//------------------------ Reset help output for work log for PCM-1.
+void MainWindow::resetWorkLogHelpPCM1()
+{
+    wl_pcm1_help_idx = 0;
+}
+
+//------------------------ Reset help output for work log for PCM-16x0.
+void MainWindow::resetWorkLogHelpPCM16X0()
+{
+    wl_pcm16x0_help_idx = 0;
+}
+
+//------------------------ Reset help output for work log for STC-007.
+void MainWindow::resetWorkLogHelpSTC007()
+{
+    wl_stc007_help_idx = 0;
+}
+
+//------------------------ Output next help string for work log for PCM-1.
+QString MainWindow::logHelpNextPCM1()
+{
+    QString text_out;
+    if(wl_pcm1_help_idx<WL_PCM1_HELP_SIZE)
+    {
+        text_out = QString::fromStdString(WL_PCM1_HELP[wl_pcm1_help_idx]);
+        wl_pcm1_help_idx++;
+    }
+    else
+    {
+        text_out.clear();
+    }
+    return text_out;
+}
+
+//------------------------ Output next help string for work log for PCM-16x0.
+QString MainWindow::logHelpNextPCM16X0()
+{
+    QString text_out;
+    if(wl_pcm16x0_help_idx<WL_PCM16X0_HELP_SIZE)
+    {
+        text_out = QString::fromStdString(WL_PCM16x0_HELP[wl_pcm16x0_help_idx]);
+        wl_pcm16x0_help_idx++;
+    }
+    else
+    {
+        text_out.clear();
+    }
+    return text_out;
+}
+
+//------------------------ Output next help string for work log for STC-007.
+QString MainWindow::logHelpNextSTC007()
+{
+    QString text_out;
+    if(wl_stc007_help_idx<WL_STC007_HELP_SIZE)
+    {
+        text_out = QString::fromStdString(WL_STC007_HELP[wl_stc007_help_idx]);
+        wl_stc007_help_idx++;
+    }
+    else
+    {
+        text_out.clear();
+    }
+    return text_out;
+}
+
 //------------------------ Make a user-log string for the frame assembly data.
 QString MainWindow::logStatsFrameAsm(FrameAsmPCM1 asm_data)
 {
     QString frame_log, tmp_log;
     FrameBinDescriptor bin_data;
     // Log frame number.
-    frame_log.sprintf("F[%06u] ", asm_data.frame_number);
+    frame_log.sprintf("PCM-1 F[%06u] ", asm_data.frame_number);
     // Get binarization stats for the frame.
     bin_data = getBinDescriptorByFrameNo(asm_data.frame_number);
     if(bin_data.data_coord.isSourceDoubleWidth()!=false)
@@ -3365,16 +3434,24 @@ QString MainWindow::logStatsFrameAsm(FrameAsmPCM1 asm_data)
     // Log horizontal data coordinates.
     tmp_log.sprintf("H[0:%03u]", bin_data.line_length);
     frame_log += tmp_log;
-    if(bin_data.data_coord.isSourceDoubleWidth()==false)
+    if(bin_data.data_coord.areValid()==false)
     {
-        frame_log += "[???:???] ";
+        frame_log += "[???:???][G] ";
     }
     else
     {
-        tmp_log.sprintf("[%03d:%03d] ",
+        tmp_log.sprintf("[%03d:%03d]",
                         bin_data.data_coord.data_start,
                         bin_data.data_coord.data_stop);
         frame_log += tmp_log;
+        if(bin_data.data_coord.not_sure==false)
+        {
+            frame_log += "[A] ";
+        }
+        else
+        {
+            frame_log += "[G] ";
+        }
     }
     // Log field order.
     if(asm_data.field_order==FrameAsmDescriptor::ORDER_TFF)
@@ -3444,7 +3521,7 @@ QString MainWindow::logStatsFrameAsm(FrameAsmPCM16x0 asm_data)
     QString frame_log, tmp_log;
     FrameBinDescriptor bin_data;
     // Log frame number.
-    frame_log.sprintf("F[%06u] ", asm_data.frame_number);
+    frame_log.sprintf("PCM-16x0 F[%06u] ", asm_data.frame_number);
     // Get binarization stats for the frame.
     bin_data = getBinDescriptorByFrameNo(asm_data.frame_number);
     if(bin_data.data_coord.isSourceDoubleWidth()!=false)
@@ -3479,16 +3556,24 @@ QString MainWindow::logStatsFrameAsm(FrameAsmPCM16x0 asm_data)
     // Log horizontal data coordinates.
     tmp_log.sprintf("H[0:%03u]", bin_data.line_length);
     frame_log += tmp_log;
-    if(bin_data.data_coord.isSourceDoubleWidth()==false)
+    if(bin_data.data_coord.areValid()==false)
     {
-        frame_log += "[???:???] ";
+        frame_log += "[???:???][G] ";
     }
     else
     {
-        tmp_log.sprintf("[%03d:%03d] ",
+        tmp_log.sprintf("[%03d:%03d]",
                         bin_data.data_coord.data_start,
                         bin_data.data_coord.data_stop);
         frame_log += tmp_log;
+        if(bin_data.data_coord.not_sure==false)
+        {
+            frame_log += "[A] ";
+        }
+        else
+        {
+            frame_log += "[G] ";
+        }
     }
     // Log field order.
     if(asm_data.field_order==FrameAsmDescriptor::ORDER_TFF)
@@ -3580,7 +3665,7 @@ QString MainWindow::logStatsFrameAsm(FrameAsmSTC007 asm_data)
     QString frame_log, tmp_log;
     FrameBinDescriptor bin_data;
     // Log frame number.
-    frame_log.sprintf("F[%06u] ", asm_data.frame_number);
+    frame_log.sprintf("STC-007 F[%06u] ", asm_data.frame_number);
     // Get binarization stats for the frame.
     bin_data = getBinDescriptorByFrameNo(asm_data.frame_number);
     if(bin_data.data_coord.isSourceDoubleWidth()!=false)
@@ -3599,7 +3684,7 @@ QString MainWindow::logStatsFrameAsm(FrameAsmSTC007 asm_data)
     }
     else if(asm_data.odd_std_lines==LINES_PER_PAL_FIELD)
     {
-        frame_log += "PAL  ";
+        frame_log += " PAL ";
     }
     else
     {
@@ -3615,16 +3700,24 @@ QString MainWindow::logStatsFrameAsm(FrameAsmSTC007 asm_data)
     // Log horizontal data coordinates.
     tmp_log.sprintf("H[0:%03u]", bin_data.line_length);
     frame_log += tmp_log;
-    if(bin_data.data_coord.isSourceDoubleWidth()==false)
+    if(bin_data.data_coord.areValid()==false)
     {
-        frame_log += "[???:???] ";
+        frame_log += "[???:???][G] ";
     }
     else
     {
-        tmp_log.sprintf("[%03d:%03d] ",
+        tmp_log.sprintf("[%03d:%03d]",
                         bin_data.data_coord.data_start,
                         bin_data.data_coord.data_stop);
         frame_log += tmp_log;
+        if(bin_data.data_coord.not_sure==false)
+        {
+            frame_log += "[A] ";
+        }
+        else
+        {
+            frame_log += "[G] ";
+        }
     }
     // Log field order.
     if(asm_data.field_order==FrameAsmDescriptor::ORDER_TFF)
@@ -3708,11 +3801,11 @@ QString MainWindow::logStatsFrameAsm(FrameAsmSTC007 asm_data)
     // Log index/address information.
     if(asm_data.isAddressSet()==false)
     {
-        frame_log += "[I][--][--:--:--.--] ";
+        frame_log += "I[--][--:--:--.--] ";
     }
     else
     {
-        tmp_log.sprintf("[I][%02d][%02d:%02d:%02d.%02d] ",
+        tmp_log.sprintf("I[%02d][%02d:%02d:%02d.%02d] ",
                         asm_data.ctrl_index,
                         asm_data.ctrl_hour,
                         asm_data.ctrl_minute,
@@ -3746,6 +3839,37 @@ QString MainWindow::logStatsFrameAsm(FrameAsmSTC007 asm_data)
 //------------------------ Update stats and video processor with new frame assembling settings.
 void MainWindow::updateStatsFrameAsm(FrameAsmPCM1 new_trim)
 {
+    if(new_trim.hasServiceTag()!=false)
+    {
+        QString log_help;
+        if(new_trim.isServNewFile()!=false)
+        {
+            // Output log header.
+            qDebug()<<WL_HEADER;
+            log_help = WL_SOURCE+QString::fromStdString(new_trim.getServFileName());
+            qDebug()<<log_help;
+            // Reset help output.
+            resetWorkLogHelpPCM1();
+            // Dump help into the work log.
+            do
+            {
+                log_help = logHelpNextPCM1();
+                qDebug()<<log_help;
+            }
+            while(log_help.isEmpty()==false);
+        }
+        else if(new_trim.isServEndFile()!=false)
+        {
+            qDebug()<<"Source EOF";
+        }
+        // Skip updating counters if service tag detected.
+        return;
+    }
+    //if(ui->cbxWaveSave->isChecked()!=false)
+    {
+        qDebug()<<logStatsFrameAsm(new_trim);
+    }
+
     // Update GUI and video processor with new parameters.
     frame_asm_pcm1 = new_trim;
     frame_asm_pcm1.drawn = false;
@@ -3765,13 +3889,42 @@ void MainWindow::updateStatsFrameAsm(FrameAsmPCM1 new_trim)
     emit newFrameAssembled(frame_asm_pcm1.frame_number);
     // Report video standard information for PCM-1.
     emit newVideoStandard(FrameAsmDescriptor::VID_NTSC);
-
-    //qDebug()<<logStatsFrameAsm(new_trim);
 }
 
 //------------------------ Update stats and video processor with new frame assembling settings.
 void MainWindow::updateStatsFrameAsm(FrameAsmPCM16x0 new_trim)
 {
+    if(new_trim.hasServiceTag()!=false)
+    {
+        QString log_help;
+        if(new_trim.isServNewFile()!=false)
+        {
+            // Output log header.
+            qDebug()<<WL_HEADER;
+            log_help = WL_SOURCE+QString::fromStdString(new_trim.getServFileName());
+            qDebug()<<log_help;
+            // Reset help output.
+            resetWorkLogHelpPCM16X0();
+            // Dump help into the work log.
+            do
+            {
+                log_help = logHelpNextPCM16X0();
+                qDebug()<<log_help;
+            }
+            while(log_help.isEmpty()==false);
+        }
+        else if(new_trim.isServEndFile()!=false)
+        {
+            qDebug()<<"Source EOF";
+        }
+        // Skip updating counters if service tag detected.
+        return;
+    }
+    //if(ui->cbxWaveSave->isChecked()!=false)
+    {
+        qDebug()<<logStatsFrameAsm(new_trim);
+    }
+
     // Update GUI and video processor with new parameters.
     frame_asm_pcm16x0 = new_trim;
     frame_asm_pcm16x0.drawn = false;
@@ -3801,13 +3954,41 @@ void MainWindow::updateStatsFrameAsm(FrameAsmPCM16x0 new_trim)
     emit newVideoStandard(FrameAsmDescriptor::VID_NTSC);
     // Report the number of the assembled frame.
     emit newFrameAssembled(frame_asm_pcm16x0.frame_number);
-
-    //qDebug()<<logStatsFrameAsm(new_trim);
 }
 
 //------------------------ Update stats and video processor with new frame assembling settings.
 void MainWindow::updateStatsFrameAsm(FrameAsmSTC007 new_trim)
 {
+    if(new_trim.hasServiceTag()!=false)
+    {
+        QString log_help;
+        if(new_trim.isServNewFile()!=false)
+        {
+            // Output log header.
+            qDebug()<<WL_HEADER;
+            log_help = WL_SOURCE+QString::fromStdString(new_trim.getServFileName());
+            qDebug()<<log_help;
+            // Reset help output.
+            resetWorkLogHelpSTC007();
+            do
+            {
+                log_help = logHelpNextSTC007();
+                qDebug()<<log_help;
+            }
+            while(log_help.isEmpty()==false);
+        }
+        else if(new_trim.isServEndFile()!=false)
+        {
+            qDebug()<<"Source EOF";
+        }
+        // Skip updating counters if service tag detected.
+        return;
+    }
+    //if(ui->cbxWaveSave->isChecked()!=false)
+    {
+        qDebug()<<logStatsFrameAsm(new_trim);
+    }
+
     // Update GUI and video processor with new parameters.
     if(set_pcm_type==LIST_TYPE_STC007)
     {
@@ -3872,8 +4053,6 @@ void MainWindow::updateStatsFrameAsm(FrameAsmSTC007 new_trim)
     emit newVideoStandard(new_trim.video_standard);
     // Report the number of the assembled frame.
     emit newFrameAssembled(new_trim.frame_number);
-
-    //qDebug()<<logStatsFrameAsm(new_trim);
 }
 
 //------------------------ Update stats with new value for masked samples.

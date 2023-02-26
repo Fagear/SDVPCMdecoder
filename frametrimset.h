@@ -23,6 +23,7 @@ Created: 2020-05
 #define FRAMETRIMSET_H
 
 #include <stdint.h>
+#include <string>
 
 //------------------------ Coordinate pair handler.
 class CoordinatePair
@@ -112,7 +113,6 @@ public:
     void clear();
 };
 
-// TODO: add service tags
 //------------------------ Frame assembling information (base class).
 class FrameAsmDescriptor
 {
@@ -133,6 +133,14 @@ public:
         ORDER_TFF,          // Top Field First (Odd Field First).
         ORDER_BFF,          // Bottom Field First (Even Field First).
         ORDER_MAX
+    };
+
+    // Service tags for [service_type].
+    enum
+    {
+        SRV_NO,             // Regular PCM line with audio data.
+        SRV_NEW_FILE,       // New file opened (with path in [file_path]).
+        SRV_END_FILE,       // File ended.
     };
 
 public:
@@ -162,6 +170,8 @@ public:
 private:
     bool order_preset;              // Is field order preset externally?
     bool order_guessed;             // Is field order not detected and is guessed (by stats or other)?
+    uint8_t service_type;           // Type of the service tag.
+    std::string file_path;          // Path of decoded file (set with [SRV_NEW_FILE]).
 
 public:
     FrameAsmDescriptor();
@@ -170,6 +180,8 @@ public:
     void clear();
     void clearMisc();
     void clearAsmStats();
+    void setServNewFile(std::string path);
+    void setServEndFile();
     void presetOrderClear();
     void presetTFF();
     void presetBFF();
@@ -177,12 +189,19 @@ public:
     void setOrderTFF();
     void setOrderBFF();
     void setOrderGuessed(bool);
+    std::string getServFileName();
+    bool hasServiceTag();
+    bool isServNewFile();
+    bool isServEndFile();
     bool isOrderSet();
     bool isOrderPreset();
     bool isOrderGuessed();
     bool isOrderBFF();
     bool isOrderTFF();
     uint8_t getAvgRef();
+
+private:
+    void setServiceTag();
 };
 
 //------------------------ Frame assembling information for PCM-1.

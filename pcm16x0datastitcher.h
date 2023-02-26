@@ -96,6 +96,7 @@ and we'll have incorrectly working error correction and corrupted data in genera
 
 // TODO: SI/EI auto-detection
 // TODO: EI format field order auto-detection
+// TODO: investigate slow stitching on full frame captures
 class PCM16X0DataStitcher : public QObject
 {
     Q_OBJECT

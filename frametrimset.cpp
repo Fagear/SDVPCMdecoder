@@ -412,6 +412,8 @@ FrameAsmDescriptor::FrameAsmDescriptor(const FrameAsmDescriptor &in_object)
 
     order_preset = in_object.order_preset;
     order_guessed = in_object.order_guessed;
+    service_type = in_object.service_type;
+    file_path = in_object.file_path;
 }
 
 FrameAsmDescriptor& FrameAsmDescriptor::operator= (const FrameAsmDescriptor &in_object)
@@ -443,6 +445,8 @@ FrameAsmDescriptor& FrameAsmDescriptor::operator= (const FrameAsmDescriptor &in_
 
     order_preset = in_object.order_preset;
     order_guessed = in_object.order_guessed;
+    service_type = in_object.service_type;
+    file_path = in_object.file_path;
 
     return *this;
 }
@@ -468,6 +472,8 @@ void FrameAsmDescriptor::clearMisc()
     odd_emphasis = even_emphasis = false;
     order_preset = order_guessed = false;
     drawn = false;
+    service_type = SRV_NO;
+    file_path.clear();
     this->clearAsmStats();
 }
 
@@ -476,6 +482,24 @@ void FrameAsmDescriptor::clearAsmStats()
 {
     odd_ref = even_ref = 0;
     blocks_total = blocks_drop = samples_drop = 0;
+}
+
+//------------------------
+void FrameAsmDescriptor::setServNewFile(std::string path)
+{
+    // Convert this line into service line.
+    this->setServiceTag();
+    // Set source file path.
+    file_path = path;
+    service_type = SRV_NEW_FILE;
+}
+
+//------------------------
+void FrameAsmDescriptor::setServEndFile()
+{
+    // Convert this line into service line.
+    this->setServiceTag();
+    service_type = SRV_END_FILE;
 }
 
 //------------------------ Clear "preset" flag.
@@ -535,6 +559,42 @@ void FrameAsmDescriptor::setOrderGuessed(bool in_flag)
     {
         order_guessed = in_flag;
     }
+}
+
+//------------------------ Get file name for [SRV_NEW_FILE] service tag.
+std::string FrameAsmDescriptor::getServFileName()
+{
+    return file_path;
+}
+
+//------------------------ Check if descriptor has any service tag.
+bool FrameAsmDescriptor::hasServiceTag()
+{
+    if(service_type==SRV_NO)
+    {
+        return false;
+    }
+    return true;
+}
+
+//------------------------ Check if descriptor has service tag "new file opened".
+bool FrameAsmDescriptor::isServNewFile()
+{
+    if(service_type==SRV_NEW_FILE)
+    {
+        return true;
+    }
+    return false;
+}
+
+//------------------------ Check if descriptor has service tag "file ended".
+bool FrameAsmDescriptor::isServEndFile()
+{
+    if(service_type==SRV_END_FILE)
+    {
+        return true;
+    }
+    return false;
 }
 
 //------------------------ Check if field order is set.
@@ -616,6 +676,17 @@ uint8_t FrameAsmDescriptor::getAvgRef()
     return (uint8_t)temp_avg;
 }
 
+//------------------------ Convert into service tag.
+void FrameAsmDescriptor::setServiceTag()
+{
+    uint32_t frame_tmp;
+    // Temporary save frame number.
+    frame_tmp = frame_number;
+    // Clear all fields.
+    clear();
+    // Restore frame number.
+    frame_number = frame_tmp;
+}
 
 
 //------------------------ Frame assembling information for PCM-1.
@@ -668,6 +739,7 @@ void FrameAsmPCM1::clearMisc()
     FrameAsmDescriptor::clearMisc();
     // Clear own fields.
     odd_top_padding = odd_bottom_padding = even_top_padding = even_bottom_padding = 0;
+    this->clearAsmStats();
 }
 
 //------------------------ Reset only assembly statistics.

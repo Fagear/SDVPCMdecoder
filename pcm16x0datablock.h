@@ -157,7 +157,9 @@ public:
     void markAsBad(uint8_t blk, uint8_t line);
     bool canForceCheck();
     bool hasPickedLeft(uint8_t line);
+    bool hasPickedLeftBySub(uint8_t blk = SUBBLK_CNT);
     bool hasPickedCRC(uint8_t line);
+    bool hasPickedCRCBySub(uint8_t blk = SUBBLK_CNT);
     bool hasPickedWord(uint8_t blk, uint8_t word = WORD_CNT);
     bool hasPickedSample(uint8_t blk, uint8_t word = WORD_CNT);
     bool hasPickedParity(uint8_t blk);
@@ -168,6 +170,7 @@ public:
     bool isOrderEven();
     bool isBlockValid(uint8_t blk = SUBBLK_CNT);
     bool isDataFixedByP(uint8_t blk = SUBBLK_CNT);
+    bool isDataFixedByBP(uint8_t blk = SUBBLK_CNT);
     bool isDataFixed(uint8_t blk = SUBBLK_CNT);
     bool isDataBroken(uint8_t blk = SUBBLK_CNT);
     bool isNearSilence(uint8_t blk, uint8_t word);

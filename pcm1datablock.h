@@ -108,6 +108,7 @@ public:
     bool isWordCRCOk(uint8_t index);
     bool isWordValid(uint8_t index);
     bool isBlockValid();
+    bool isDataFixedByBP();
     bool isNearSilence(uint8_t index);
     bool isAlmostSilent();
     bool isSilent();

@@ -347,7 +347,7 @@ void STC007DataStitcher::findFramesTrim()
             {
                 // Line contains Service line with "New file" tag.
                 file_start = true;
-                file_name = trim_buf[line_ind].file_path;
+                file_name = trim_buf[line_ind].getServFileName();
             }
             else if(trim_buf[line_ind].isServEndFile()!=false)
             {
@@ -1065,6 +1065,7 @@ uint8_t STC007DataStitcher::getFieldResolution(std::vector<STC007Line> *field, u
         pad_checker.setResMode(STC007Deinterleaver::RES_MODE_14BIT);
         // Fill up data block, performing de-interleaving.
         pad_checker.processBlock(index);
+        padding_block.setM2Format(mode_m2);
         // Check data block state.
         //if((padding_block.isBlockValid()!=false)&&(padding_block.canForceCheck()!=false)&&(padding_block.isAlmostSilent()==false))
         if((padding_block.isBlockValid()!=false)&&(padding_block.canForceCheck()!=false)&&(padding_block.isSilent()==false))
@@ -1103,6 +1104,7 @@ uint8_t STC007DataStitcher::getFieldResolution(std::vector<STC007Line> *field, u
         pad_checker.setResMode(STC007Deinterleaver::RES_MODE_16BIT);
         // Fill up data block, performing de-interleaving.
         pad_checker.processBlock(index);
+        padding_block.setM2Format(mode_m2);
         // Check data block state.
         //if((padding_block.isBlockValid()!=false)&&(padding_block.canForceCheck()!=false)&&(padding_block.isAlmostSilent()==false))
         if((padding_block.isBlockValid()!=false)&&(padding_block.canForceCheck()!=false)&&(padding_block.isSilent()==false))
@@ -1474,7 +1476,12 @@ uint8_t STC007DataStitcher::tryPadding(std::vector<STC007Line> *field1, uint16_t
     line_num = (*field1)[f1_size-1].line_number;
     frame_num = (*field1)[f1_size-1].frame_number;
     // Insert padding lines.
+    empty_line.clear();
     empty_line.coords.setToZero();
+    // Set M2 format if required.
+    empty_line.setM2Format(mode_m2);
+    // Reset audio samples (M2 has different silent state).
+    empty_line.setSilent();
     for(uint16_t ind_pad=0;ind_pad<padding;ind_pad++)
     {
         // Set valid frame and line numbers.
@@ -1557,6 +1564,8 @@ uint8_t STC007DataStitcher::tryPadding(std::vector<STC007Line> *field1, uint16_t
             // Exit line cycle.
             break;
         }
+        // Set M2 sample mode is required to perform correct test for silence.
+        padding_block.setM2Format(mode_m2);
         // At least cycle run once.
         run_lock = true;
 
@@ -6474,40 +6483,42 @@ void STC007DataStitcher::setBlockSampleRate(STC007DataBlock *in_block)
 void STC007DataStitcher::outputFileStart()
 {
     size_t queue_size;
+    FrameAsmSTC007 serv_descr;
+    // Report about new file for logging.
+    serv_descr.setServNewFile(file_name);
+    emit guiUpdFrameAsm(serv_descr);
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty pointer provided, service tag discarded!";
+        return;
     }
-    else
+    PCMSamplePair service_pair;
+    service_pair.setServNewFile(file_name);
+    while(1)
     {
-        PCMSamplePair service_pair;
-        service_pair.setServNewFile(file_name);
-        while(1)
+        // Try to put service tag into the queue.
+        mtx_samples->lock();
+        queue_size = (out_samples->size()+1);
+        if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
         {
-            // Try to put service tag into the queue.
-            mtx_samples->lock();
-            queue_size = (out_samples->size()+1);
-            if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
-            {
-                // Put service pair in the output queue.
-                out_samples->push_back(service_pair);
-                mtx_samples->unlock();
+            // Put service pair in the output queue.
+            out_samples->push_back(service_pair);
+            mtx_samples->unlock();
 #ifdef DI_EN_DBG_OUT
-                if((log_level&LOG_PROCESS)!=0)
-                {
-                    qInfo()<<"[L2B-007] Service tag 'NEW FILE' written.";
-                }
-#endif
-                break;
-            }
-            else
+            if((log_level&LOG_PROCESS)!=0)
             {
-                mtx_samples->unlock();
-                QThread::msleep(20);
+                qInfo()<<"[L2B-007] Service tag 'NEW FILE' written.";
             }
+#endif
+            break;
         }
-        file_time.start();
+        else
+        {
+            mtx_samples->unlock();
+            QThread::msleep(20);
+        }
     }
+    file_time.start();
 }
 
 //------------------------ Output one sample pair from the data block into output queue.
@@ -6566,98 +6577,98 @@ void STC007DataStitcher::outputDataBlock(STC007DataBlock *in_block)
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty pointer provided, result discarded!";
+        return;
     }
-    else
+    while(1)
     {
-        while(1)
+        // Try to put processed data block into the queue.
+        mtx_samples->lock();
+        queue_size = (out_samples->size()+1);
+        if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-3))
         {
-            // Try to put processed data block into the queue.
-            mtx_samples->lock();
-            queue_size = (out_samples->size()+1);
-            if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-3))
-            {
-                // Output L0+R0 samples.
-                outputSamplePair(in_block, STC007DataBlock::WORD_L0, STC007DataBlock::WORD_R0);
-                // Output L1+R1 samples.
-                outputSamplePair(in_block, STC007DataBlock::WORD_L1, STC007DataBlock::WORD_R1);
-                // Output L2+R2 samples.
-                outputSamplePair(in_block, STC007DataBlock::WORD_L2, STC007DataBlock::WORD_R2);
-                mtx_samples->unlock();
+            // Output L0+R0 samples.
+            outputSamplePair(in_block, STC007DataBlock::WORD_L0, STC007DataBlock::WORD_R0);
+            // Output L1+R1 samples.
+            outputSamplePair(in_block, STC007DataBlock::WORD_L1, STC007DataBlock::WORD_R1);
+            // Output L2+R2 samples.
+            outputSamplePair(in_block, STC007DataBlock::WORD_L2, STC007DataBlock::WORD_R2);
+            mtx_samples->unlock();
 
-                if(size_lock!=false)
-                {
-                    size_lock = false;
-#ifdef DI_EN_DBG_OUT
-                    if((log_level&LOG_PROCESS)!=0)
-                    {
-                        qInfo()<<"[L2B-007] Output PCM data blocks queue has some space, continuing...";
-                    }
-#endif
-                }
-                break;
-            }
-            else
+            if(size_lock!=false)
             {
-                mtx_samples->unlock();
-                if(size_lock==false)
-                {
-                    size_lock = true;
+                size_lock = false;
 #ifdef DI_EN_DBG_OUT
-                    if((log_level&LOG_PROCESS)!=0)
-                    {
-                        qInfo()<<"[L2B-007] Output queue is at size limit ("<<(MAX_SAMPLEPAIR_QUEUE_SIZE-3)<<"), waiting...";
-                    }
-#endif
+                if((log_level&LOG_PROCESS)!=0)
+                {
+                    qInfo()<<"[L2B-007] Output PCM data blocks queue has some space, continuing...";
                 }
-                QThread::msleep(100);
+#endif
             }
+            break;
         }
-        // Output data block for visualization.
-        emit newBlockProcessed(*in_block);
+        else
+        {
+            mtx_samples->unlock();
+            if(size_lock==false)
+            {
+                size_lock = true;
+#ifdef DI_EN_DBG_OUT
+                if((log_level&LOG_PROCESS)!=0)
+                {
+                    qInfo()<<"[L2B-007] Output queue is at size limit ("<<(MAX_SAMPLEPAIR_QUEUE_SIZE-3)<<"), waiting...";
+                }
+#endif
+            }
+            QThread::msleep(100);
+        }
     }
+    // Output data block for visualization.
+    emit newBlockProcessed(*in_block);
 }
 
 //------------------------ Output service tag "File ended".
 void STC007DataStitcher::outputFileStop()
 {
     size_t queue_size;
+    FrameAsmSTC007 serv_descr;
+    // Report about EOF for logging.
+    serv_descr.setServEndFile();
+    emit guiUpdFrameAsm(serv_descr);
     if((out_samples==NULL)||(mtx_samples==NULL))
     {
         qWarning()<<DBG_ANCHOR<<"[L2B-007] Empty pointer provided, service tag discarded!";
+        return;
     }
-    else
+    PCMSamplePair service_pair;
+    service_pair.setServEndFile();
+    while(1)
     {
-        PCMSamplePair service_pair;
-        service_pair.setServEndFile();
-        while(1)
+        // Try to put service tag into the queue.
+        mtx_samples->lock();
+        queue_size = (out_samples->size()+1);
+        if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
         {
-            // Try to put service tag into the queue.
-            mtx_samples->lock();
-            queue_size = (out_samples->size()+1);
-            if(queue_size<(MAX_SAMPLEPAIR_QUEUE_SIZE-1))
-            {
-                // Put service pair in the output queue.
-                out_samples->push_back(service_pair);
-                mtx_samples->unlock();
+            // Put service pair in the output queue.
+            out_samples->push_back(service_pair);
+            mtx_samples->unlock();
 #ifdef DI_EN_DBG_OUT
-                if((log_level&LOG_PROCESS)!=0)
-                {
-                    qInfo()<<"[L2B-007] Service tag 'FILE END' written.";
-                }
-#endif
-                break;
-            }
-            else
+            if((log_level&LOG_PROCESS)!=0)
             {
-                mtx_samples->unlock();
-                QThread::msleep(20);
+                qInfo()<<"[L2B-007] Service tag 'FILE END' written.";
             }
+#endif
+            break;
         }
-        // Reset file name.
-        file_name.clear();
-        // Report time that file processing took.
-        qDebug()<<"[L2B-007] File processed in"<<file_time.elapsed()<<"msec";
+        else
+        {
+            mtx_samples->unlock();
+            QThread::msleep(20);
+        }
     }
+    // Reset file name.
+    file_name.clear();
+    // Report time that file processing took.
+    qDebug()<<"[L2B-007] File processed in"<<file_time.elapsed()<<"msec";
 }
 
 //------------------------ Perform deinterleave of a frame in [conv_queue].

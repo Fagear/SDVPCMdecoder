@@ -173,8 +173,9 @@ public:
     uint8_t left_bit_pick;      // Maximum number of recoverable by Bit Picker bits from the left side of the line (PCM-1/PCM-16x0).
     uint8_t right_bit_pick;     // Maximum number of recoverable by Bit Picker bits from the right side of the line (PCM-1/PCM-16x0).
     CoordinatePair horiz_coords;// Preset horizontal data coordinates.
-    bool en_coord_search;       // Enable PCM data coordinates sweep for PCM-1/PCM-16x0.
     bool en_force_coords;       // Enable forced horizontal data coordinates.
+    bool en_coord_search;       // Enable PCM data coordinates sweep for PCM-1/PCM-16x0.
+    bool en_first_line_dup;     // Force first valid line in the field to be bad if duplicated lines detection is enabled.
     bool en_good_no_marker;     // Allow valid CRCs without PCM markers.
 
 public:

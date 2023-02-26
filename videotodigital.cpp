@@ -14,6 +14,8 @@ VideoToDigital::VideoToDigital(QObject *parent) : QObject(parent)
     pcm_type = TYPE_STC007;
     pcm_sample_fmt = PCM_FMT_NOT_SET;
     binarization_mode = Binarizer::MODE_NORMAL;
+    fine_bin_preset.reset();
+    line_converter.setFineSettings(fine_bin_preset);
     signal_quality.clear();
     line_dump_help_done = false;
     coordinate_damper = true;
@@ -157,7 +159,6 @@ void VideoToDigital::prescanCoordinates(CoordinatePair *out_coords, uint8_t *out
     PCM16X0SubLine pcm16x0_line;
     STC007Line stc007_line;
     PCMLine *work_line;
-    bin_preset_t bin_set;
 
     suppress_log = ((log_level&(Binarizer::LOG_PROCESS))==0);
     //suppress_log = false;
@@ -171,10 +172,9 @@ void VideoToDigital::prescanCoordinates(CoordinatePair *out_coords, uint8_t *out
     }
 
     lines_cnt = frame_buf.size();
-    bin_set = line_converter.getCurrentFineSettings();
     if((lines_cnt<=COORD_CHECK_PARTS)
        ||(pcm_type==TYPE_STC007)||(pcm_type==TYPE_M2)
-       ||(bin_set.en_force_coords!=false))
+       ||(fine_bin_preset.en_force_coords!=false))
     {
 #ifdef LB_EN_DBG_OUT
         if(suppress_log==false)
@@ -183,7 +183,7 @@ void VideoToDigital::prescanCoordinates(CoordinatePair *out_coords, uint8_t *out
             {
                 qInfo()<<"[V2D] Unable to prescan, its disabled for STC-007";
             }
-            else if(bin_set.en_force_coords!=false)
+            else if(fine_bin_preset.en_force_coords!=false)
             {
                 qInfo()<<"[V2D] Unable to prescan, its disabled in fine binarization settings";
             }
@@ -669,30 +669,29 @@ void VideoToDigital::setFineSettings(bin_preset_t in_set)
     // Clear stats.
     reset_stats = true;
     // Set binarization fine settings.
-    line_converter.setFineSettings(in_set);
+    fine_bin_preset = in_set;
+    line_converter.setFineSettings(fine_bin_preset);
     // Report about new fine settings.
-    emit guiUpdFineSettings(in_set);
+    emit guiUpdFineSettings(fine_bin_preset);
 }
 
 //------------------------ Set fine binarization settings to defaults.
 void VideoToDigital::setDefaultFineSettings()
 {
-    bin_preset_t tmp_set;
     // Clear stats.
     reset_stats = true;
     // Reset binarization fine settings.
-    tmp_set = line_converter.getDefaultFineSettings();
-    line_converter.setFineSettings(tmp_set);
+    fine_bin_preset = line_converter.getDefaultFineSettings();
+    line_converter.setFineSettings(fine_bin_preset);
     // Report about new fine settings.
-    emit guiUpdFineSettings(tmp_set);
+    emit guiUpdFineSettings(fine_bin_preset);
 }
 
 //------------------------ Get current fine binarization settings.
 void VideoToDigital::requestCurrentFineSettings()
 {
-    bin_preset_t tmp_set;
-    tmp_set = line_converter.getCurrentFineSettings();
-    emit guiUpdFineSettings(tmp_set);
+    fine_bin_preset = line_converter.getCurrentFineSettings();
+    emit guiUpdFineSettings(fine_bin_preset);
 }
 
 //------------------------ Main processing loop.
@@ -705,13 +704,13 @@ void VideoToDigital::doBinarize()
     uint16_t line_in_field_cnt;
     uint16_t good_coords_in_field, pcm_lines_in_field;
     CoordinatePair frame_avg, target_coord, coord_delta;
-    std::deque<CoordinatePair> last_coord_stats;    // Last [COORD_HISTORY_DEPTH] lines' valid data coordinates history.
-    std::deque<CoordinatePair> frame_coord_stats;   // Queue of all valid data coordinates for the current frame.
-    std::deque<CoordinatePair> long_coord_stats;    // Last [COORD_LONG_HISTORY] frames' valid data coordinates history.
+    std::deque<CoordinatePair> last_valid_coord_list;   // Last [COORD_HISTORY_DEPTH] lines' valid data coordinates history.
+    std::deque<CoordinatePair> frame_valid_coord_list;  // Queue of all valid data coordinates for the current frame.
+    std::deque<CoordinatePair> frame_invalid_coord_list;// Queue of all invalid data coordinates for the current frame.
+    std::deque<CoordinatePair> long_valid_coords;       // Last [COORD_LONG_HISTORY] frames' valid data coordinates history.
     quint64 time_spent;
     VideoLine source_line;
 
-    bin_preset_t bin_set;
     PCM1Line pcm1_line;
     PCM16X0SubLine pcm16x0_line;
     STC007Line stc007_line;
@@ -780,22 +779,20 @@ void VideoToDigital::doBinarize()
                 {
                     reset_stats = false;
                     // Reset stats.
-                    last_coord_stats.clear();
-                    frame_coord_stats.clear();
-                    long_coord_stats.clear();
+                    last_valid_coord_list.clear();
+                    frame_valid_coord_list.clear();
+                    frame_invalid_coord_list.clear();
+                    long_valid_coords.clear();
                     target_coord.clear();
                     frame_avg.clear();
                     // Reset "good" parameters.
                     line_converter.setGoodParameters();
                 }
 
-                // Save fine settings for the current frame.
-                bin_set = line_converter.getCurrentFineSettings();
-
                 // Try to prepare some averaged target horizontal data coordinates.
                 frame_avg.clear();
                 // Check if forced horizontal data coordinates are set.
-                if(bin_set.en_force_coords==false)
+                if(fine_bin_preset.en_force_coords==false)
                 {
                     if(binarization_mode!=Binarizer::MODE_DRAFT)
                     {
@@ -808,7 +805,7 @@ void VideoToDigital::doBinarize()
                     {
                         // No valid coordinates with prescan.
                         // Take average from multi-frame stats.
-                        frame_avg = medianCoordinates(&long_coord_stats);
+                        frame_avg = medianCoordinates(&long_valid_coords);
                     }
                     else
                     {
@@ -1016,9 +1013,10 @@ void VideoToDigital::doBinarize()
                                 // New file has started or playback ended.
                                 line_in_field_cnt = 0;
                                 // Reset stats.
-                                last_coord_stats.clear();
-                                frame_coord_stats.clear();
-                                long_coord_stats.clear();
+                                last_valid_coord_list.clear();
+                                frame_valid_coord_list.clear();
+                                frame_invalid_coord_list.clear();
+                                long_valid_coords.clear();
                                 target_coord.clear();
 
                                 if((work_line->isServEndFile()!=false)||(frame_avg.areValid()==false))
@@ -1224,9 +1222,12 @@ void VideoToDigital::doBinarize()
                                         // and it is unsafe to check line copy against it.
                                         // Update "good" binarizing parameters (BW levels, ref. level, data coordinates) if CRC is OK.
                                         line_converter.setGoodParameters(work_line);
-                                        // Force bad state for the line.
-                                        work_line->setForcedBad();
-                                        force_bad_line = true;
+                                        if(fine_bin_preset.en_first_line_dup!=false)
+                                        {
+                                            // Force bad state for the line.
+                                            work_line->setForcedBad();
+                                            force_bad_line = true;
+                                        }
 #ifdef LB_EN_DBG_OUT
                                         if(((log_level&Binarizer::LOG_PROCESS)!=0)||((log_level&Binarizer::LOG_LINE_DUMP)!=0))
                                         {
@@ -1291,10 +1292,11 @@ void VideoToDigital::doBinarize()
 #endif
                                         }
                                     }
-                                }
+                                }   // check_line_copy!=false
                                 // Re-check if line is still valid.
                                 if(work_line->isCRCValidIgnoreForced()!=false)
                                 {
+                                    // Line is still valid.
 #ifdef LB_EN_DBG_OUT
                                     if((log_level&Binarizer::LOG_PROCESS)!=0)
                                     {
@@ -1305,30 +1307,30 @@ void VideoToDigital::doBinarize()
                                     }
 #endif
                                     // Add coordinates from valid data to the lists.
-                                    last_coord_stats.push_back(work_line->coords);
-                                    frame_coord_stats.push_back(work_line->coords);
+                                    last_valid_coord_list.push_back(work_line->coords);
+                                    frame_valid_coord_list.push_back(work_line->coords);
                                     // Keep sliding window at the limited size.
                                     if(work_line->getPCMType()==PCMLine::TYPE_PCM16X0)
                                     {
                                         // Keep all sub-lines in the history.
-                                        while(last_coord_stats.size()>(COORD_HISTORY_DEPTH*PCM16X0SubLine::SUBLINES_PER_LINE))
+                                        while(last_valid_coord_list.size()>(COORD_HISTORY_DEPTH*PCM16X0SubLine::SUBLINES_PER_LINE))
                                         {
-                                            last_coord_stats.pop_front();
+                                            last_valid_coord_list.pop_front();
                                         }
                                     }
                                     else
                                     {
-                                        while(last_coord_stats.size()>COORD_HISTORY_DEPTH)
+                                        while(last_valid_coord_list.size()>COORD_HISTORY_DEPTH)
                                         {
-                                            last_coord_stats.pop_front();
+                                            last_valid_coord_list.pop_front();
                                         }
                                     }
 
                                     // Check if coordinate damper is enabled and has collected enough data.
-                                    if((coordinate_damper!=false)&&(bin_set.en_force_coords==false)&&(last_coord_stats.size()>(COORD_HISTORY_DEPTH/2)))
+                                    if((coordinate_damper!=false)&&(fine_bin_preset.en_force_coords==false)&&(last_valid_coord_list.size()>(COORD_HISTORY_DEPTH/2)))
                                     {
                                         // Get last lines median coordinates.
-                                        target_coord = medianCoordinates(&last_coord_stats);
+                                        target_coord = medianCoordinates(&last_valid_coord_list);
                                         // Check if those are valid.
                                         if(target_coord.areValid()==false)
                                         {
@@ -1441,6 +1443,12 @@ void VideoToDigital::doBinarize()
                                     // Update line length if not set by valid lines yet.
                                     signal_quality.line_length = (uint16_t)source_line.pixel_data.size();
                                 }
+                                // Line is invalid.
+                                if(work_line->coords.areValid()!=false)
+                                {
+                                    // Save coordinates for fallback data coordinates for stats.
+                                    frame_invalid_coord_list.push_back(work_line->coords);
+                                }
                                 // Update last line data to compare next time.
                                 if(work_line->getPCMType()==PCMLine::TYPE_PCM1)
                                 {
@@ -1499,10 +1507,10 @@ void VideoToDigital::doBinarize()
 
                                     // Some data probably is there but CRC is invalid.
                                     CoordinatePair preset_coords;
-                                    if(bin_set.en_force_coords==false)
+                                    if(fine_bin_preset.en_force_coords==false)
                                     {
                                         // First, preset for median if last valid coordinates.
-                                        preset_coords = medianCoordinates(&last_coord_stats);
+                                        preset_coords = medianCoordinates(&last_valid_coord_list);
                                         // Check if those are valid.
                                         if(preset_coords.areValid()==false)
                                         {
@@ -1637,27 +1645,35 @@ void VideoToDigital::doBinarize()
 
                             // Get median coordinates for the frame.
                             // Overwrite pre-scan median, it will be recalculated at the start of the next frame.
-                            frame_avg = medianCoordinates(&frame_coord_stats);
+                            frame_avg = medianCoordinates(&frame_valid_coord_list);
                             if(frame_avg.areValid()!=false)
                             {
+                                // Save target data coordinates.
+                                signal_quality.data_coord = frame_avg;
                                 // Add filtered coordinates from the current frame to the multi-frame history.
-                                long_coord_stats.push_back(frame_avg);
-                                while(long_coord_stats.size()>COORD_LONG_HISTORY)
+                                long_valid_coords.push_back(frame_avg);
+                                while(long_valid_coords.size()>COORD_LONG_HISTORY)
                                 {
                                     // Remove oldest entry to keep history size in check.
-                                    long_coord_stats.pop_front();
+                                    long_valid_coords.pop_front();
                                 }
                             }
                             else
                             {
-                                // No valid coordinates for current frame, take median from last frames.
-                                frame_avg = medianCoordinates(&long_coord_stats);
+                                // No valid coordinates for current frame.
+                                frame_avg = medianCoordinates(&frame_invalid_coord_list);
+                                if(frame_avg.areValid()==false)
+                                {
+                                    // Take median from last frames.
+                                    frame_avg = medianCoordinates(&long_valid_coords);
+                                }
+                                // Save target data coordinates.
+                                signal_quality.data_coord = frame_avg;
                                 signal_quality.data_coord.not_sure = true;
                             }
                             // Reset frame coordinates stats.
-                            frame_coord_stats.clear();
-                            // Save target data coordinates.
-                            signal_quality.data_coord = frame_avg;
+                            frame_valid_coord_list.clear();
+                            frame_invalid_coord_list.clear();
                             // Measure time spent on the frame.
                             time_spent = time_per_frame.nsecsElapsed()/1000;
                             signal_quality.time_odd = time_spent;

@@ -1388,14 +1388,14 @@ void RenderPCM::renderNewBlock(PCM16X0DataBlock in_block)
         if(i==0)
         {
             // Draw left sub-block picked bits flag.
-            if(in_block.hasPickedSample(PCM16X0DataBlock::SUBBLK_1)!=false)
+            if(in_block.hasPickedLeftBySub(PCM16X0DataBlock::SUBBLK_1)!=false)
             {
                 // Sub-block has samples fixed with Bit Picker.
                 pixel_data = VIS_BIT1_BLU;
             }
-            else if(in_block.hasPickedWord(PCM16X0DataBlock::SUBBLK_1)!=false)
+            else if(in_block.hasPickedCRCBySub(PCM16X0DataBlock::SUBBLK_1)!=false)
             {
-                // Sub-block has words fixed with Bit Picker.
+                // Sub-block has CRC fixed with Bit Picker.
                 pixel_data = VIS_BIT0_BLU;
             }
         }
@@ -1411,12 +1411,11 @@ void RenderPCM::renderNewBlock(PCM16X0DataBlock in_block)
         else if(i==2)
         {
             // Draw left sub-block picked bits flag.
-            if(in_block.hasPickedWord(PCM16X0DataBlock::SUBBLK_2)!=false)
+            if(in_block.hasPickedCRCBySub(PCM16X0DataBlock::SUBBLK_2)!=false)
             {
-                // Sub-block has words fixed with Bit Picker.
+                // Sub-block has CRC fixed with Bit Picker.
                 pixel_data = VIS_BIT0_BLU;
             }
-
         }
         else if(i==3)
         {
@@ -1430,9 +1429,9 @@ void RenderPCM::renderNewBlock(PCM16X0DataBlock in_block)
         else if(i==4)
         {
             // Draw left sub-block picked bits flag.
-            if(in_block.hasPickedWord(PCM16X0DataBlock::SUBBLK_3)!=false)
+            if(in_block.hasPickedCRCBySub(PCM16X0DataBlock::SUBBLK_3)!=false)
             {
-                // Sub-block has words fixed with Bit Picker.
+                // Sub-block has CRC fixed with Bit Picker.
                 pixel_data = VIS_BIT0_BLU;
             }
         }

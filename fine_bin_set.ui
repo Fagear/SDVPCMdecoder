@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
-    <height>597</height>
+    <width>581</width>
+    <height>501</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -321,73 +321,8 @@
       <property name="verticalSpacing">
        <number>5</number>
       </property>
-      <item row="5" column="1">
-       <widget class="QSpinBox" name="spbPickLeft">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>75</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>Максимально разрешённое количество бит данных, которое будет подобрано перебором с левого края строки при обнаружении обрезания полезных данных краем кадра</string>
-        </property>
-        <property name="whatsThis">
-         <string>Максимально разрешённое количество бит данных, которое будет подобрано перебором с левого края строки при обнаружении обрезания полезных данных краем кадра</string>
-        </property>
-        <property name="suffix">
-         <string> шт.</string>
-        </property>
-        <property name="maximum">
-         <number>7</number>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="QSpinBox" name="spbSearchWidth">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>75</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра</string>
-        </property>
-        <property name="whatsThis">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра.&lt;/p&gt;&lt;p&gt;Увеличение % позволяет автоматически обрезать более широкие поля кадра и компенсировать дрожание строки с большим размахом, но может привести к нахождению ложных координат с ложно-позитивной CRC и увеличить число &amp;quot;сломанных&amp;quot; блоков и щелчков.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="suffix">
-         <string> %</string>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>25</number>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="0">
-       <widget class="QLabel" name="lblSearchWidth">
+      <item row="8" column="0">
+       <widget class="QLabel" name="lblAllowNoMarker">
         <property name="sizePolicy">
          <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -395,13 +330,13 @@
          </sizepolicy>
         </property>
         <property name="toolTip">
-         <string>Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра</string>
+         <string>Разрешить бинаризацию по найденным ранееe удачным параметрам без проверки наличия старт- и стоп-маркеров в строке</string>
         </property>
         <property name="whatsThis">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра.&lt;/p&gt;&lt;p&gt;Увеличение % позволяет автоматически обрезать более широкие поля кадра и компенсировать дрожание строки с большим размахом, но может привести к нахождению ложных координат с ложно-позитивной CRC и увеличить число &amp;quot;сломанных&amp;quot; блоков и щелчков.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Разрешить бинаризацию по найденным ранее параметрам без проверки наличия старт- и стоп-маркеров в строке.&lt;/p&gt;&lt;p&gt;Позволяет лучше восстанавливать ВЧ и детали из видео с большим числом выпадений и ускоряет бинаризацию, но может привести к ложно-позитивным совпадениям CRC, &amp;quot;сломанным&amp;quot; блокам и щелчкам.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
-         <string>Область поиска маркеров PCM от границ кадра (TBC для STC-007):</string>
+         <string>Бинаризация без проверки наличия маркеров (STC-007):</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -461,8 +396,8 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="QCheckBox" name="cbxForceCoords">
+      <item row="5" column="1">
+       <widget class="QSpinBox" name="spbPickLeft">
         <property name="enabled">
          <bool>false</bool>
         </property>
@@ -472,14 +407,23 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="toolTip">
-         <string>Запрет автоматического поиска данных по горизонтали и задание координат вручную</string>
+         <string>Максимально разрешённое количество бит данных, которое будет подобрано перебором с левого края строки при обнаружении обрезания полезных данных краем кадра</string>
         </property>
         <property name="whatsThis">
-         <string>Запрет автоматического поиска данных по горизонтали и задание координат вручную</string>
+         <string>Максимально разрешённое количество бит данных, которое будет подобрано перебором с левого края строки при обнаружении обрезания полезных данных краем кадра</string>
         </property>
-        <property name="text">
-         <string>включить</string>
+        <property name="suffix">
+         <string> шт.</string>
+        </property>
+        <property name="maximum">
+         <number>7</number>
         </property>
        </widget>
       </item>
@@ -499,206 +443,6 @@
         </property>
         <property name="text">
          <string>Принудительные горизонтальные координаты данных:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QSpinBox" name="spbLeftDataOfs">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>75</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>Заданное вручную смещение координаты начала данных по горизонтали (положительное - смещение к центру строки, отрицательное - за край строки)</string>
-        </property>
-        <property name="whatsThis">
-         <string>Заданное вручную смещение координаты начала данных по горизонтали (положительное - смещение к центру строки, отрицательное - за край строки)</string>
-        </property>
-        <property name="suffix">
-         <string> пикс.</string>
-        </property>
-        <property name="minimum">
-         <number>-75</number>
-        </property>
-        <property name="maximum">
-         <number>75</number>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="0">
-       <widget class="QLabel" name="lblPickRight">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Максимально разрешённое количество бит данных, которое будет подобрано перебором с правого края строки при обнаружении обрезания полезных данных краем кадра</string>
-        </property>
-        <property name="whatsThis">
-         <string>Максимально разрешённое количество бит данных, которое будет подобрано перебором с правого края строки при обнаружении обрезания полезных данных краем кадра</string>
-        </property>
-        <property name="text">
-         <string>Максимум подбираемых бит с правого края строки (PCM-1/PCM-16x0):</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QSpinBox" name="spbMinValidCRC">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>75</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
-        </property>
-        <property name="whatsThis">
-         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
-        </property>
-        <property name="suffix">
-         <string> шт.</string>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>50</number>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="lblMinValidCRC">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
-        </property>
-        <property name="whatsThis">
-         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
-        </property>
-        <property name="text">
-         <string>Минимальное число валидных CRC на строку:</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QCheckBox" name="cbxCoordSearch">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Включение автоматического определения начала и конца PCM данных, может привести к ошибкам и щелчкам из-за коллизий CRC</string>
-        </property>
-        <property name="whatsThis">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В форматах PCM-1 и PCM-16x0 нет маркеров для обнаружения положения PCM данных по горизонтали кадра, поэтому поиск данных может быть осуществлён только перебором смещений от краёв кадра.&lt;/p&gt;&lt;p&gt;Включение этой настройки позволяет автоматически определить начало и конец PCM данных, но может привести к ошибкам и щелчкам из-за коллизий CRC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="text">
-         <string>включить</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="lblCoordSearch">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Включение автоматического определения начала и конца PCM данных, может привести к ошибкам и щелчкам из-за коллизий CRC</string>
-        </property>
-        <property name="whatsThis">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В форматах PCM-1 и PCM-16x0 нет маркеров для обнаружения положения PCM данных по горизонтали кадра, поэтому поиск данных может быть осуществлён только перебором смещений от краёв кадра.&lt;/p&gt;&lt;p&gt;Включение этой настройки позволяет автоматически определить начало и конец PCM данных, но может привести к ошибкам и щелчкам из-за коллизий CRC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="text">
-         <string>Поиск PCM данных в строке (TBC для PCM-1/PCM-16x0):</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="1">
-       <widget class="QCheckBox" name="cbxAllowNoMarker">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Разрешить бинаризацию по найденным ранееe удачным параметрам без проверки наличия старт- и стоп-маркеров в строке</string>
-        </property>
-        <property name="whatsThis">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Разрешить бинаризацию по найденным ранее параметрам без проверки наличия старт- и стоп-маркеров в строке.&lt;/p&gt;&lt;p&gt;Позволяет лучше восстанавливать ВЧ и детали из видео с большим числом выпадений и ускоряет бинаризацию, но может привести к ложно-позитивным совпадениям CRC, &amp;quot;сломанным&amp;quot; блокам и щелчкам.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="text">
-         <string>включить</string>
-        </property>
-       </widget>
-      </item>
-      <item row="8" column="0">
-       <widget class="QLabel" name="lblAllowNoMarker">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>Разрешить бинаризацию по найденным ранееe удачным параметрам без проверки наличия старт- и стоп-маркеров в строке</string>
-        </property>
-        <property name="whatsThis">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Разрешить бинаризацию по найденным ранее параметрам без проверки наличия старт- и стоп-маркеров в строке.&lt;/p&gt;&lt;p&gt;Позволяет лучше восстанавливать ВЧ и детали из видео с большим числом выпадений и ускоряет бинаризацию, но может привести к ложно-позитивным совпадениям CRC, &amp;quot;сломанным&amp;quot; блокам и щелчкам.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="text">
-         <string>Бинаризация без проверки наличия маркеров (STC-007):</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -761,6 +505,130 @@
         </property>
        </widget>
       </item>
+      <item row="0" column="1">
+       <widget class="QSpinBox" name="spbMinValidCRC">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
+        </property>
+        <property name="suffix">
+         <string> шт.</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>50</number>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QSpinBox" name="spbSearchWidth">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра.&lt;/p&gt;&lt;p&gt;Увеличение % позволяет автоматически обрезать более широкие поля кадра и компенсировать дрожание строки с большим размахом, но может привести к нахождению ложных координат с ложно-позитивной CRC и увеличить число &amp;quot;сломанных&amp;quot; блоков и щелчков.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="suffix">
+         <string> %</string>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>25</number>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="cbxForceCoords">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Запрет автоматического поиска данных по горизонтали и задание координат вручную</string>
+        </property>
+        <property name="whatsThis">
+         <string>Запрет автоматического поиска данных по горизонтали и задание координат вручную</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QSpinBox" name="spbLeftDataOfs">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>Заданное вручную смещение координаты начала данных по горизонтали (положительное - смещение к центру строки, отрицательное - за край строки)</string>
+        </property>
+        <property name="whatsThis">
+         <string>Заданное вручную смещение координаты начала данных по горизонтали (положительное - смещение к центру строки, отрицательное - за край строки)</string>
+        </property>
+        <property name="suffix">
+         <string> пикс.</string>
+        </property>
+        <property name="minimum">
+         <number>-75</number>
+        </property>
+        <property name="maximum">
+         <number>75</number>
+        </property>
+       </widget>
+      </item>
       <item row="3" column="0">
        <widget class="QLabel" name="lblRightDataOfs">
         <property name="sizePolicy">
@@ -780,6 +648,182 @@
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="lblPickRight">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Максимально разрешённое количество бит данных, которое будет подобрано перебором с правого края строки при обнаружении обрезания полезных данных краем кадра</string>
+        </property>
+        <property name="whatsThis">
+         <string>Максимально разрешённое количество бит данных, которое будет подобрано перебором с правого края строки при обнаружении обрезания полезных данных краем кадра</string>
+        </property>
+        <property name="text">
+         <string>Максимум подбираемых бит с правого края строки (PCM-1/PCM-16x0):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="lblCoordSearch">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Включение автоматического определения начала и конца PCM данных, может привести к ошибкам и щелчкам из-за коллизий CRC</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В форматах PCM-1 и PCM-16x0 нет маркеров для обнаружения положения PCM данных по горизонтали кадра, поэтому поиск данных может быть осуществлён только перебором смещений от краёв кадра.&lt;/p&gt;&lt;p&gt;Включение этой настройки позволяет автоматически определить начало и конец PCM данных, но может привести к ошибкам и щелчкам из-за коллизий CRC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Поиск PCM данных в строке (TBC для PCM-1/PCM-16x0):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="lblMinValidCRC">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
+        </property>
+        <property name="whatsThis">
+         <string>Минимальное число соседних валидных CRC при полном переборе пороговых уровней для признания строки валидной</string>
+        </property>
+        <property name="text">
+         <string>Минимальное число валидных CRC на строку:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QCheckBox" name="cbxCoordSearch">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Включение автоматического определения начала и конца PCM данных, может привести к ошибкам и щелчкам из-за коллизий CRC</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В форматах PCM-1 и PCM-16x0 нет маркеров для обнаружения положения PCM данных по горизонтали кадра, поэтому поиск данных может быть осуществлён только перебором смещений от краёв кадра.&lt;/p&gt;&lt;p&gt;Включение этой настройки позволяет автоматически определить начало и конец PCM данных, но может привести к ошибкам и щелчкам из-за коллизий CRC.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QCheckBox" name="cbxAllowNoMarker">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Разрешить бинаризацию по найденным ранееe удачным параметрам без проверки наличия старт- и стоп-маркеров в строке</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Разрешить бинаризацию по найденным ранее параметрам без проверки наличия старт- и стоп-маркеров в строке.&lt;/p&gt;&lt;p&gt;Позволяет лучше восстанавливать ВЧ и детали из видео с большим числом выпадений и ускоряет бинаризацию, но может привести к ложно-позитивным совпадениям CRC, &amp;quot;сломанным&amp;quot; блокам и щелчкам.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="lblSearchWidth">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ширина областей поиска PCM-маркеров внутри строки от левого и правого края кадра, в процентах от ширины кадра.&lt;/p&gt;&lt;p&gt;Увеличение % позволяет автоматически обрезать более широкие поля кадра и компенсировать дрожание строки с большим размахом, но может привести к нахождению ложных координат с ложно-позитивной CRC и увеличить число &amp;quot;сломанных&amp;quot; блоков и щелчков.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Область поиска маркеров PCM от границ кадра (TBC для STC-007):</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QLabel" name="lblForceFirstBad">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Принудительно считать первую валидную строку в поле невалидной, так как невозможно гарантировать, что она не является копией строки из неактивного региона</string>
+        </property>
+        <property name="whatsThis">
+         <string>Принудительно считать первую валидную строку в поле невалидной, так как невозможно гарантировать, что она не является копией строки из неактивного региона</string>
+        </property>
+        <property name="text">
+         <string>Считать первую строку поля невалидной при активном детекторе повторных строк:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QCheckBox" name="cbxForceFirstBad">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Принудительно считать первую валидную строку в поле невалидной, так как невозможно гарантировать, что она не является копией строки из неактивного региона</string>
+        </property>
+        <property name="whatsThis">
+         <string>Принудительно считать первую валидную строку в поле невалидной, так как невозможно гарантировать, что она не является копией строки из неактивного региона</string>
+        </property>
+        <property name="text">
+         <string>включить</string>
         </property>
        </widget>
       </item>

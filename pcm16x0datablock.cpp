@@ -113,9 +113,9 @@ void PCM16X0DataBlock::setWord(uint8_t blk, uint8_t line, uint16_t in_word, bool
         {
             // Picked bits in the samples can only be in [SUBBLK_1].
             picked_left[line] = in_picked_left;
-            // Check CRC pick status only on left sub-block, it should be the same for all sub-blocks.
-            picked_crc[line] = in_picked_crc;
         }
+        // Check CRC pick status only on left sub-block, it should be the same for all sub-blocks.
+        picked_crc[line] = in_picked_crc;
     }
 }
 
@@ -307,12 +307,51 @@ bool PCM16X0DataBlock::hasPickedLeft(uint8_t line)
     return false;
 }
 
+//------------------------ Has left sample picked (during binarization) bits?
+bool PCM16X0DataBlock::hasPickedLeftBySub(uint8_t blk)
+{
+    if(blk>SUBBLK_1)
+    {
+        return false;
+    }
+    if((hasPickedLeft(LINE_1)==false)&&(hasPickedLeft(LINE_3)==false))
+    {
+        return false;
+    }
+    return true;
+}
+
 //------------------------ Has CRC picked (during binarization) bits?
 bool PCM16X0DataBlock::hasPickedCRC(uint8_t line)
 {
     if(line<LINE_CNT)
     {
         return picked_crc[line];
+    }
+    return false;
+}
+
+//------------------------ Has CRC picked (during binarization) bits?
+bool PCM16X0DataBlock::hasPickedCRCBySub(uint8_t blk)
+{
+    if(blk>=SUBBLK_CNT)
+    {
+        return false;
+    }
+    if(picked_crc[LINE_1]!=false)
+    {
+        return true;
+    }
+    if(picked_crc[LINE_3]!=false)
+    {
+        return true;
+    }
+    if(picked_crc[LINE_2]!=false)
+    {
+        if(isDataFixedByP(blk)!=false)
+        {
+            return true;
+        }
     }
     return false;
 }
@@ -383,7 +422,7 @@ bool PCM16X0DataBlock::hasPickedSample(uint8_t blk, uint8_t word)
     else
     {
         // Default path: check the whole sub-block.
-        if(blk==SUBBLK_1)
+        //if(blk==SUBBLK_1)
         {
             if((hasPickedLeft(LINE_1)!=false)||(hasPickedLeft(LINE_3)!=false))
             {
@@ -470,13 +509,11 @@ bool PCM16X0DataBlock::isOrderEven()
 //------------------------ Check if data block is valid.
 bool PCM16X0DataBlock::isBlockValid(uint8_t blk)
 {
-    bool valid;
-    valid = true;
     if(getErrorsFixedAudio(blk)>0)
     {
-        valid = false;
+        return false;
     }
-    return valid;
+    return true;
 }
 
 //------------------------ Check if data block was repaired by P-code.
@@ -496,6 +533,29 @@ bool PCM16X0DataBlock::isDataFixedByP(uint8_t blk)
         for(uint8_t i=0;i<SUBBLK_CNT;i++)
         {
             data_fixed = (data_fixed||(audio_state[i]==AUD_FIX_P));
+        }
+    }
+    return data_fixed;
+}
+
+//------------------------ Check if data block was repaired with Bit Picker.
+bool PCM16X0DataBlock::isDataFixedByBP(uint8_t blk)
+{
+    bool data_fixed;
+    data_fixed = false;
+    if(isBlockValid(blk)==false)
+    {
+        return false;
+    }
+    if(blk<SUBBLK_CNT)
+    {
+        data_fixed = (hasPickedLeftBySub(blk)||hasPickedCRCBySub(blk));
+    }
+    else
+    {
+        for(uint8_t i=0;i<SUBBLK_CNT;i++)
+        {
+            data_fixed = (data_fixed||hasPickedLeftBySub(blk)||hasPickedCRCBySub(blk));
         }
     }
     return data_fixed;
@@ -736,6 +796,17 @@ std::string PCM16X0DataBlock::dumpWordsString()
     uint8_t zero_char, one_char, bit_pos;
     std::string text_out;
 
+    // Indicate picked bits at the left.
+    text_out += DUMP_WBRL_OK;
+    if(hasPickedLeftBySub(SUBBLK_1)==false)
+    {
+        text_out += "-";
+    }
+    else
+    {
+        text_out += "P";
+    }
+    text_out += DUMP_WBRR_OK;
     // Cycle through sub-blocks.
     for(uint8_t blk=SUBBLK_1;blk<=SUBBLK_3;blk++)
     {
@@ -812,6 +883,17 @@ std::string PCM16X0DataBlock::dumpWordsString()
                 }
             }
         }
+        // Indicate picked bits at the right (CRC).
+        text_out += DUMP_WBRL_OK;
+        if(hasPickedCRCBySub(blk)==false)
+        {
+            text_out += "-";
+        }
+        else
+        {
+            text_out += "P";
+        }
+        text_out += DUMP_WBRR_OK;
         text_out += ' ';
     }
     return text_out;
@@ -837,7 +919,7 @@ std::string PCM16X0DataBlock::dumpContentString()
         text_out += "E] ";
     }
 
-    text_out += "16-BIT "+dumpWordsString();
+    text_out += dumpWordsString();
 
     sprintf(c_buf, "S[%05u] C[", sample_rate);
     text_out += c_buf;
