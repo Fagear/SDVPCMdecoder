@@ -203,6 +203,12 @@ void STC007Line::applyCRCStatePerWord()
     }
 }
 
+//------------------------ Get number of data bits in the line object.
+uint8_t STC007Line::getBitsPerObject()
+{
+    return BITS_PCM_DATA;
+}
+
 //------------------------ Get number of data bits in the source line by the standard.
 uint8_t STC007Line::getBitsPerSourceLine()
 {
@@ -311,12 +317,43 @@ int16_t STC007Line::getSample(uint8_t index)
             if(is_positive==false)
             {
                 // Fill all MSBs following negative sign.
-                data_word|=(1<<15)|(1<<14)|(1<<13);
+                data_word|=(1<<15)|(1<<14)|BIT_M2_RANGE_POS;
             }
         }
     }
 
     return (int16_t)data_word;
+}
+
+//------------------------ Get number of different bits from provided line.
+uint8_t STC007Line::getWordsDiffBitCount(STC007Line *in_line)
+{
+    if(in_line==NULL)
+    {
+        return 0;
+    }
+    uint8_t bit_cnt, diff_mask;
+    bit_cnt = 0;
+    // Cycle through all words.
+    for(uint8_t index=WORD_L_SH0;index<=WORD_Q_SH336;index++)
+    {
+        // XOR to detect differences in words.
+        diff_mask = words[index]^in_line->words[index];
+        if(diff_mask!=0)
+        {
+            // Words are not the same.
+            // Cycle through all bits of those words.
+            for(uint8_t bit=0;bit<=16;bit++)
+            {
+                // Count number of different bits.
+                if((diff_mask&(1<<bit))!=0)
+                {
+                    bit_cnt++;
+                }
+            }
+        }
+    }
+    return bit_cnt;
 }
 
 //------------------------ Get ID part of Control Block.
@@ -442,17 +479,14 @@ bool STC007Line::hasSameWords(STC007Line *in_line)
     {
         return false;
     }
-    else
+    for(uint8_t index=WORD_L_SH0;index<=WORD_Q_SH336;index++)
     {
-        for(uint8_t index=WORD_L_SH0;index<=WORD_Q_SH336;index++)
+        if(words[index]!=in_line->words[index])
         {
-            if(words[index]!=in_line->words[index])
-            {
-                return false;
-            }
+            return false;
         }
-        return true;
     }
+    return true;
 }
 
 //------------------------ Does this line contain Control Block structure (and no audio data)?
@@ -564,12 +598,17 @@ bool STC007Line::isNearSilence(uint8_t index)
 //------------------------ Are audio samples in both channels near zero?
 bool STC007Line::isAlmostSilent()
 {
-    // Check if both channels are close to silence.
-    if(((isNearSilence(WORD_L_SH0)!=false)||(isNearSilence(WORD_L_SH95)!=false)||(isNearSilence(WORD_L_SH190)!=false))&&
-        ((isNearSilence(WORD_R_SH48)!=false)||(isNearSilence(WORD_R_SH143)!=false)||(isNearSilence(WORD_R_SH238)!=false)))
+    uint8_t silent_words;
+    silent_words = 0;
+    // Check if any channel is close to silence.
+    for(uint8_t index=WORD_L_SH0;index<=WORD_R_SH238;index++)
     {
-        return true;
+        if(isNearSilence(index)!=false)
+        {
+            silent_words++;
+        }
     }
+    if(silent_words>=2) return true;
     return false;
 }
 

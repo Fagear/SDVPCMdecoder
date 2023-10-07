@@ -69,6 +69,7 @@ extern "C"
     #define TA_EN_DBG_OUT       1       // Enable debug console output in [SamplesToAudio] module.
     #define TW_EN_DBG_OUT       1       // Enable debug console output in [SamplesToWAV] module.
     //#define VIS_EN_DBG_OUT      1       // Enable debug console output in [RenderPCM] module.
+    //#define VIS_NEAR_SILENT     1       // Enable debug drawing of almost silent lines in [RenderPCM] module.
     #define TST_EN_DBG_OUT      1       // Enable debug console output in [PCMTester] module.
 #endif
 
@@ -85,8 +86,6 @@ extern "C"
 
 //#define LB_EN_PIXEL_DBG     1     // Enable boundaries check for pixel coordinate in [stc007binarizer] module.
 //#define LB_ROUNDED_DIVS     1     // Enable rounded integer divisions in [findVideoPixel()] in [stc007binarizer] module.
-
-#define AP_DEBUG_UNCOR_MONO     1   // Enable debug left-channel "uncorrected+corrected" output.
 
 #endif // CONFIG_H
 

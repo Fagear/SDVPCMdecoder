@@ -179,6 +179,7 @@ public:
     void setM2Format(bool in_set = false);
     void forceMarkersOk();
     void applyCRCStatePerWord();
+    uint8_t getBitsPerObject();
     uint8_t getBitsPerSourceLine();
     uint8_t getBitsBetweenDataCoordinates();
     uint8_t getLeftShiftZoneBit();
@@ -189,6 +190,7 @@ public:
     uint8_t getPCMType();
     uint16_t getWord(uint8_t index);
     int16_t getSample(uint8_t index);
+    uint8_t getWordsDiffBitCount(STC007Line *in_line = NULL);
     int16_t getCtrlID();
     int8_t getCtrlIndex();
     int8_t getCtrlHour();

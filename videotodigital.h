@@ -104,6 +104,11 @@ public:
         COORD_LONG_HISTORY = 16                     // Number of last frames to store averaged valid data coordinates for.
     };
 
+    enum
+    {
+        BIT_DIFF_THRES_DIV = 32                     // Divider for calculating bit-difference threshold from the last line.
+    };
+
 private:
     bin_preset_t fine_bin_preset;           // Preset for fine settings of binarization.
     Binarizer line_converter;               // Binarizator module.

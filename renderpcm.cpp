@@ -541,6 +541,13 @@ void RenderPCM::renderNewLine(PCM1Line in_line)
                     {
                         // Data in the line was ok after binarization.
                         *pixel_ptr = VIS_BIT0_BLK;
+#ifdef VIS_NEAR_SILENT
+                        if(in_line.isAlmostSilent()!=false)
+                        {
+                            // Data in the word was ok, but line is too close to silence.
+                            *pixel_ptr = VIS_BIT0_BLU;
+                        }
+#endif
                         if((line_bit<in_line.picked_bits_left)||
                            (line_bit>(PCM1Line::BITS_PCM_DATA-in_line.picked_bits_right-1)))
                         {
@@ -571,6 +578,13 @@ void RenderPCM::renderNewLine(PCM1Line in_line)
                     {
                         // Data in the line was ok after binarization.
                         *pixel_ptr = VIS_BIT1_GRY;
+#ifdef VIS_NEAR_SILENT
+                        if(in_line.isAlmostSilent()!=false)
+                        {
+                            // Data in the word was ok, but line is too close to silence.
+                            *pixel_ptr = VIS_BIT1_BLU;
+                        }
+#endif
                         if((line_bit<in_line.picked_bits_left)||
                            (line_bit>(PCM1Line::BITS_PCM_DATA-in_line.picked_bits_right-1)))
                         {
@@ -800,6 +814,13 @@ void RenderPCM::renderNewLine(PCM16X0SubLine in_line)
                     {
                         // Data in the sub-line was ok after binarization.
                         *pixel_ptr = VIS_BIT0_BLK;
+#ifdef VIS_NEAR_SILENT
+                        if(in_line.isAlmostSilent()!=false)
+                        {
+                            // Data in the word was ok, but line is too close to silence.
+                            *pixel_ptr = VIS_BIT0_BLU;
+                        }
+#endif
                         if((line_bit<in_line.picked_bits_left)||
                            (line_bit>(PCM16X0SubLine::BITS_PCM_DATA-in_line.picked_bits_right-1)))
                         {
@@ -830,6 +851,13 @@ void RenderPCM::renderNewLine(PCM16X0SubLine in_line)
                     {
                         // Data in the sub-line was ok after binarization.
                         *pixel_ptr = VIS_BIT1_GRY;
+#ifdef VIS_NEAR_SILENT
+                        if(in_line.isAlmostSilent()!=false)
+                        {
+                            // Data in the word was ok, but line is too close to silence.
+                            *pixel_ptr = VIS_BIT1_BLU;
+                        }
+#endif
                         if((line_bit<in_line.picked_bits_left)||
                            (line_bit>(PCM16X0SubLine::BITS_PCM_DATA-in_line.picked_bits_right-1)))
                         {
@@ -997,6 +1025,13 @@ void RenderPCM::renderNewLine(STC007Line in_line)
                 // Line is forced to be bad.
                 *pixel_ptr = VIS_BIT0_MGN;
             }
+#ifdef VIS_NEAR_SILENT
+            else if(in_line.isAlmostSilent()!=false)
+            {
+                // Data in the word was ok, but line is too close to silence.
+                *pixel_ptr = VIS_BIT0_BLU;
+            }
+#endif
             else if(in_line.isWordCRCOk(word)!=false)
             {
                 // Data in the word was ok after binarization.
@@ -1026,6 +1061,13 @@ void RenderPCM::renderNewLine(STC007Line in_line)
                 // Line is forced to be bad.
                 *pixel_ptr = VIS_BIT1_MGN;
             }
+#ifdef VIS_NEAR_SILENT
+            else if(in_line.isAlmostSilent()!=false)
+            {
+                // Data in the word was ok, but line is too close to silence.
+                *pixel_ptr = VIS_BIT1_BLU;
+            }
+#endif
             else if(in_line.isWordCRCOk(word)!=false)
             {
                 // Data in the word was ok after binarization.

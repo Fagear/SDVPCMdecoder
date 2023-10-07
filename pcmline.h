@@ -188,6 +188,7 @@ public:
     // STC-007: 137 bits (128 bits of data)
     // ArVid Audio: 156 bits (144 bits of data)
     // PCM-16x0: 193 bits (192 bits of data)
+    virtual uint8_t getBitsPerObject() = 0;
     virtual uint8_t getBitsPerSourceLine() = 0;
     virtual uint8_t getBitsBetweenDataCoordinates() = 0;        // Should NEVER return 0!
     uint8_t getPPB();

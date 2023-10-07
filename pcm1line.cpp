@@ -117,6 +117,12 @@ void PCM1Line::setWord(uint8_t index, uint16_t in_word)
     }
 }
 
+//------------------------ Get number of data bits in the line object.
+uint8_t PCM1Line::getBitsPerObject()
+{
+    return BITS_PCM_DATA;
+}
+
 //------------------------ Get number of data bits in the source line by the standard.
 uint8_t PCM1Line::getBitsPerSourceLine()
 {
@@ -226,6 +232,37 @@ int16_t PCM1Line::getSample(uint8_t index)
     return (int16_t)data_word;
 }
 
+//------------------------ Get number of different bits from provided line.
+uint8_t PCM1Line::getWordsDiffBitCount(PCM1Line *in_line)
+{
+    if(in_line==NULL)
+    {
+        return 0;
+    }
+    uint8_t bit_cnt, diff_mask;
+    bit_cnt = 0;
+    // Cycle through all words.
+    for(uint8_t index=WORD_L2;index<=WORD_R6;index++)
+    {
+        // XOR to detect differences in words.
+        diff_mask = words[index]^in_line->words[index];
+        if(diff_mask!=0)
+        {
+            // Words are not the same.
+            // Cycle through all bits of those words.
+            for(uint8_t bit=0;bit<=16;bit++)
+            {
+                // Count number of different bits.
+                if((diff_mask&(1<<bit))!=0)
+                {
+                    bit_cnt++;
+                }
+            }
+        }
+    }
+    return bit_cnt;
+}
+
 //------------------------ Does provided line have the same words?
 bool PCM1Line::hasSameWords(PCM1Line *in_line)
 {
@@ -233,17 +270,14 @@ bool PCM1Line::hasSameWords(PCM1Line *in_line)
     {
         return false;
     }
-    else
+    for(uint8_t index=WORD_L2;index<=WORD_R6;index++)
     {
-        for(uint8_t index=WORD_L2;index<=WORD_R6;index++)
+        if(words[index]!=in_line->words[index])
         {
-            if(words[index]!=in_line->words[index])
-            {
-                return false;
-            }
+            return false;
         }
-        return true;
     }
+    return true;
 }
 
 //------------------------ Does this line contain words with picked bits?
@@ -303,12 +337,12 @@ bool PCM1Line::isNearSilence(uint8_t index)
 {
     int16_t audio_sample;
     audio_sample = getSample(index);
-    // Allow 2 LSBs (2 LSBs in 14-bit word become 4 LSBs in 16-bit state) wiggle room.
-    if(audio_sample>=(int16_t)(1<<4))
+    // Allow 1 LSBs (1 LSBs in 14-bit word become 3 LSBs in 16-bit state) wiggle room.
+    if(audio_sample>=(int16_t)(1<<3))
     {
         return false;
     }
-    if(audio_sample<(0-(int16_t)(1<<4)))
+    if(audio_sample<(0-(int16_t)(1<<3)))
     {
         return false;
     }
@@ -318,13 +352,17 @@ bool PCM1Line::isNearSilence(uint8_t index)
 //------------------------ Are audio samples in both channels near zero?
 bool PCM1Line::isAlmostSilent()
 {
-    // Check if both channels are close to silence.
-    if(((isNearSilence(WORD_L2)!=false)||(isNearSilence(WORD_L4)!=false)||(isNearSilence(WORD_L6)!=false))&&
-        ((isNearSilence(WORD_R2)!=false)||(isNearSilence(WORD_R4)!=false)||(isNearSilence(WORD_R6)!=false)))
+    uint8_t silent_words;
+    silent_words = 0;
+    // Check if any channel is close to silence.
+    for(uint8_t index=WORD_L2;index<=WORD_R6;index++)
     {
-        return true;
+        if(isNearSilence(index)!=false)
+        {
+            silent_words++;
+        }
     }
-
+    if(silent_words>=2) return true;
     return false;
 }
 

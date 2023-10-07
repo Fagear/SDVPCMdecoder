@@ -117,6 +117,12 @@ void PCM16X0SubLine::setWord(uint8_t index, uint16_t in_word)
     }
 }
 
+//------------------------ Get number of data bits in the subline object.
+uint8_t PCM16X0SubLine::getBitsPerObject()
+{
+    return BITS_PCM_DATA;
+}
+
 //------------------------ Get number of data bits in the source line by the standard.
 uint8_t PCM16X0SubLine::getBitsPerSourceLine()
 {
@@ -196,6 +202,37 @@ int16_t PCM16X0SubLine::getSample(uint8_t index)
     return 0;
 }
 
+//------------------------ Get number of different bits from provided line.
+uint8_t PCM16X0SubLine::getWordsDiffBitCount(PCM16X0SubLine *in_line)
+{
+    if(in_line==NULL)
+    {
+        return 0;
+    }
+    uint8_t bit_cnt, diff_mask;
+    bit_cnt = 0;
+    // Cycle through all words.
+    for(uint8_t index=WORD_R1P1L1;index<=WORD_R3P3L3;index++)
+    {
+        // XOR to detect differences in words.
+        diff_mask = words[index]^in_line->words[index];
+        if(diff_mask!=0)
+        {
+            // Words are not the same.
+            // Cycle through all bits of those words.
+            for(uint8_t bit=0;bit<=16;bit++)
+            {
+                // Count number of different bits.
+                if((diff_mask&(1<<bit))!=0)
+                {
+                    bit_cnt++;
+                }
+            }
+        }
+    }
+    return bit_cnt;
+}
+
 //------------------------ Does provided line have the same words?
 bool PCM16X0SubLine::hasSameWords(PCM16X0SubLine *in_line)
 {
@@ -203,17 +240,14 @@ bool PCM16X0SubLine::hasSameWords(PCM16X0SubLine *in_line)
     {
         return false;
     }
-    else
+    for(uint8_t index=WORD_R1P1L1;index<=WORD_R3P3L3;index++)
     {
-        for(uint8_t index=WORD_R1P1L1;index<=WORD_R3P3L3;index++)
+        if(words[index]!=in_line->words[index])
         {
-            if(words[index]!=in_line->words[index])
-            {
-                return false;
-            }
+            return false;
         }
-        return true;
     }
+    return true;
 }
 
 //------------------------ Does this line contain words with picked bits?
@@ -276,9 +310,8 @@ bool PCM16X0SubLine::isNearSilence(uint8_t index)
 //------------------------ Are audio samples in both channels near zero?
 bool PCM16X0SubLine::isAlmostSilent()
 {
-    // Check if both channels are close to silence.
-    if(((isNearSilence(WORD_R1P1L1)!=false)&&(isNearSilence(WORD_L2P2R2)!=false))||
-        ((isNearSilence(WORD_L2P2R2)!=false)&&(isNearSilence(WORD_R3P3L3)!=false)))
+    // Check if any channel is close to silence.
+    if((isNearSilence(WORD_R1P1L1)!=false)||(isNearSilence(WORD_R3P3L3)!=false))
     {
         return true;
     }

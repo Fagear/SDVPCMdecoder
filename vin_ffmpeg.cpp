@@ -637,12 +637,15 @@ void VideoInFFMPEG::setSourceLocation(QString in_path)
         QFile file_check(in_path, this);
         if(file_check.exists()==false)
         {
+            qWarning()<<DBG_ANCHOR<<"[VIP] Requested file not found at the path:"<<in_path;
             emit mediaError(tr("Указанный файл источника не найден!"));
         }
-        else if((file_check.permissions()&QFileDevice::ReadUser)==0)
+        // Qt bugs out on Windows and returns only Owners flags
+        /*else if((file_check.permissions()&QFileDevice::ReadUser)==0)
         {
+            qWarning()<<DBG_ANCHOR<<"[VIP] Not enough permissions (0x"+QString::number(file_check.permissions(), 16)+") to open file for read:"<<in_path;
             emit mediaError(tr("Недостаточно прав для чтения файла источника!"));
-        }
+        }*/
         else
         {
             // Source is ready to be read.
@@ -1007,6 +1010,7 @@ void VideoInFFMPEG::runFrameDecode()
                         {
                             last_error_txt = tr("FFMPEG: Неизвестная ошибка чтения видео");
                         }
+                        qWarning()<<DBG_ANCHOR<<"[VIP] FFMPEG error occured, code:"<<evt_errcode;
                         emit mediaError(last_error_txt);
                     }
                 }

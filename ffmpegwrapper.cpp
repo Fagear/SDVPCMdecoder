@@ -732,7 +732,7 @@ void FFMPEGWrapper::slotOpenInput(QString path, QString class_type)
     }
 
     video_dec_ctx->flags |= AV_CODEC_FLAG_OUTPUT_CORRUPT;       // Allow processing corrupted streams.
-    video_dec_ctx->flags2 |= /*AV_CODEC_FLAG2_FAST|*/AV_CODEC_FLAG2_CHUNKS;
+    video_dec_ctx->flags2 |= AV_CODEC_FLAG2_FAST|AV_CODEC_FLAG2_CHUNKS;
     // Try to enable multithreaded single-frame decoding.
     if(QThread::idealThreadCount()>4)
     {

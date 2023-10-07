@@ -27,6 +27,10 @@ Q_DECLARE_METATYPE(FrameAsmPCM16x0)
 Q_DECLARE_METATYPE(FrameAsmSTC007)
 Q_DECLARE_METATYPE(PCMSamplePair)
 
+#ifdef _WIN32
+    extern Q_CORE_EXPORT int qt_ntfs_permission_lookup;
+#endif
+
 int main(int argc, char *argv[])
 {
 #ifdef _WIN32
@@ -79,6 +83,10 @@ int main(int argc, char *argv[])
     qInfo()<<"[M] Compiled with Qt"<<log_line;
     log_line = QString::fromLocal8Bit(qVersion());
     qInfo()<<"[M] Qt run-time version"<<log_line;
+
+#ifdef _WIN32
+    qt_ntfs_permission_lookup++;
+#endif
 
     QApplication a(argc, argv);
     //a.setStyle(QStyleFactory::create("Fusion"));

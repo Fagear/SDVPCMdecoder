@@ -1115,48 +1115,32 @@ void VideoToDigital::doBinarize()
                         else
                         {
                             // Current line does not contain service tag.
-                            // Count total number of video lines in the frame.
-                            if(even_line==false)
-                            {
-                                signal_quality.lines_odd++;
-                            }
-                            else
-                            {
-                                signal_quality.lines_even++;
-                            }
-
-                            bool count_has_pcm;
-                            count_has_pcm = false;
+                            bool count_has_pcm, count_has_data;
+                            count_has_pcm = count_has_data = false;
 
                             // Determine if current line should be count as having PCM data in it.
                             if(work_line->getPCMType()==PCMLine::TYPE_PCM1)
                             {
                                 // Check if line contains PCM data.
-                                if((work_line->isCRCValid()!=false)||(work_line->hasBWSet()!=false))
-                                {
-                                    // CRC is valid or at least BLACK and WHITE levels were found.
-                                    count_has_pcm = true;
-                                }
+                                count_has_data = (work_line->hasBWSet()!=false);
+                                // CRC is valid or at least BLACK and WHITE levels were found.
+                                count_has_pcm = ((work_line->isCRCValid()!=false)||count_has_data);
                             }
                             else if(work_line->getPCMType()==PCMLine::TYPE_PCM16X0)
                             {
                                 // Check if line contains PCM data.
-                                if((work_line->isCRCValid()!=false)||(work_line->hasBWSet()!=false))
-                                {
-                                    // CRC is valid or at least BLACK and WHITE levels were found.
-                                    count_has_pcm = true;
-                                }
+                                count_has_data = (work_line->hasBWSet()!=false);
+                                // CRC is valid or at least BLACK and WHITE levels were found.
+                                count_has_pcm = ((work_line->isCRCValid()!=false)||count_has_data);
                                 // Add number of the line into the PCM line object.
                                 pcm16x0_line.queue_order = line_in_field_cnt;
                             }
                             else if(work_line->getPCMType()==PCMLine::TYPE_STC007)
                             {
                                 // Check if line contains PCM data.
-                                if((work_line->isCRCValid()!=false)||(stc007_line.hasMarkers()!=false))
-                                {
-                                    // CRC is valid or at least PCM markers were found.
-                                    count_has_pcm = true;
-                                }
+                                count_has_data = (stc007_line.hasMarkers()!=false);
+                                // CRC is valid or at least PCM markers were found.
+                                count_has_pcm = ((work_line->isCRCValid()!=false)||count_has_data);
                                 // Set M2 sample format to correctly process silent samples.
                                 if(pcm_sample_fmt==PCM_FMT_M2)
                                 {
@@ -1171,16 +1155,6 @@ void VideoToDigital::doBinarize()
                             // Check if line contains PCM data.
                             if(count_has_pcm!=false)
                             {
-                                // Count lines with PCM.
-                                if(even_line==false)
-                                {
-                                    signal_quality.lines_pcm_odd++;
-                                }
-                                else
-                                {
-                                    signal_quality.lines_pcm_even++;
-                                }
-                                pcm_lines_in_field++;
                                 // Check if this line as right after the start of the field.
                                 if(field_state==FIELD_NEW)
                                 {
@@ -1239,34 +1213,45 @@ void VideoToDigital::doBinarize()
                                     {
                                         // Check if current line equals to previous one.
                                         // (that could indicate "too smart" VTR with full-line dropout compensator)
+                                        uint8_t bit_diff_cnt;
+                                        bit_diff_cnt = 0;
                                         bool same_words;
                                         same_words = false;
                                         // Determine if current line has the same data words as the last one.
                                         if(work_line->getPCMType()==PCMLine::TYPE_PCM1)
                                         {
                                             // Single line for PCM-1.
-                                            same_words = pcm1_line.hasSameWords(&last_pcm1_line);
+                                            bit_diff_cnt = pcm1_line.getWordsDiffBitCount(&last_pcm1_line);
+
+                                            //same_words = pcm1_line.hasSameWords(&last_pcm1_line);
+                                            same_words = (bit_diff_cnt<=(pcm1_line.getBitsPerObject()/BIT_DIFF_THRES_DIV));
                                         }
                                         else if(work_line->getPCMType()==PCMLine::TYPE_PCM16X0)
                                         {
                                             // Sub-lines for PCM-16x0.
                                             if(pcm16x0_line.line_part==PCM16X0SubLine::PART_LEFT)
                                             {
-                                                same_words = pcm16x0_line.hasSameWords(&last_pcm16x0_p0_line);
+                                                bit_diff_cnt = pcm16x0_line.getWordsDiffBitCount(&last_pcm16x0_p0_line);
+                                                //same_words = pcm16x0_line.hasSameWords(&last_pcm16x0_p0_line);
                                             }
                                             else if(pcm16x0_line.line_part==PCM16X0SubLine::PART_MIDDLE)
                                             {
-                                                same_words = pcm16x0_line.hasSameWords(&last_pcm16x0_p1_line);
+                                                bit_diff_cnt = pcm16x0_line.getWordsDiffBitCount(&last_pcm16x0_p1_line);
+                                                //same_words = pcm16x0_line.hasSameWords(&last_pcm16x0_p1_line);
                                             }
                                             else if(pcm16x0_line.line_part==PCM16X0SubLine::PART_RIGHT)
                                             {
-                                                same_words = pcm16x0_line.hasSameWords(&last_pcm16x0_p2_line);
+                                                bit_diff_cnt = pcm16x0_line.getWordsDiffBitCount(&last_pcm16x0_p2_line);
+                                                //same_words = pcm16x0_line.hasSameWords(&last_pcm16x0_p2_line);
                                             }
+                                            same_words = (bit_diff_cnt<=(pcm16x0_line.getBitsPerObject()/BIT_DIFF_THRES_DIV));
                                         }
                                         else if(work_line->getPCMType()==PCMLine::TYPE_STC007)
                                         {
                                             // Single line for STC-007.
-                                            same_words = stc007_line.hasSameWords(&last_stc007_line);
+                                            bit_diff_cnt = stc007_line.getWordsDiffBitCount(&last_stc007_line);
+                                            //same_words = stc007_line.hasSameWords(&last_stc007_line);
+                                            same_words = (bit_diff_cnt<=(stc007_line.getBitsPerObject()/BIT_DIFF_THRES_DIV));
                                         }
                                         // Check if line repeats and it is not silent.
                                         if((work_line->isAlmostSilent()==false)&&(same_words!=false))
@@ -1286,7 +1271,7 @@ void VideoToDigital::doBinarize()
                                             if((log_level&Binarizer::LOG_PROCESS)!=0)
                                             {
                                                 QString log_line;
-                                                log_line = "[V2D] Repeated line detected! At ["+QString::number(work_line->frame_number)+":"+QString::number(work_line->line_number)+"]";
+                                                log_line = "[V2D] Repeated line detected! Difference: "+QString::number(bit_diff_cnt)+" bits at ["+QString::number(work_line->frame_number)+":"+QString::number(work_line->line_number)+"]";
                                                 qInfo()<<log_line;
                                             }
 #endif
@@ -1395,39 +1380,16 @@ void VideoToDigital::doBinarize()
                                         signal_quality.lines_bad_even++;
                                     }
                                 }
-                                // Update last line for future comparisons.
-                                if(work_line->getPCMType()==PCMLine::TYPE_PCM1)
+                                if(work_line->getPCMType()==PCMLine::TYPE_PCM16X0)
                                 {
-                                    // Update stored last line.
-                                    last_pcm1_line = pcm1_line;
-                                    // Begining of the field has passed.
-                                    field_state = FIELD_INIT;
-                                }
-                                else if(work_line->getPCMType()==PCMLine::TYPE_PCM16X0)
-                                {
-                                    // Update stored last line.
-                                    if(pcm16x0_line.line_part==PCM16X0SubLine::PART_LEFT)
+                                    if(pcm16x0_line.line_part==PCM16X0SubLine::PART_RIGHT)
                                     {
-                                        // Last sub-line for the left part.
-                                        last_pcm16x0_p0_line = pcm16x0_line;
-                                    }
-                                    else if(pcm16x0_line.line_part==PCM16X0SubLine::PART_MIDDLE)
-                                    {
-                                        // Last sub-line for the middle part.
-                                        last_pcm16x0_p1_line = pcm16x0_line;
-                                    }
-                                    else if(pcm16x0_line.line_part==PCM16X0SubLine::PART_RIGHT)
-                                    {
-                                        // Last sub-line for the right part.
-                                        last_pcm16x0_p2_line = pcm16x0_line;
                                         // Begining of the field has passed.
                                         field_state = FIELD_INIT;
                                     }
                                 }
-                                else if(work_line->getPCMType()==PCMLine::TYPE_STC007)
+                                else
                                 {
-                                    // Update stored last line.
-                                    last_stc007_line = stc007_line;
                                     // Begining of the field has passed.
                                     field_state = FIELD_INIT;
                                 }
@@ -1435,9 +1397,7 @@ void VideoToDigital::doBinarize()
                             // Check if at least PCM was found with bad CRC.
                             else
                             {
-                                // CRC was invalid.
-                                bool count_bad_crc;
-                                count_bad_crc = false;
+                                // CRC was invalid after binarization.
                                 if(signal_quality.line_length==0)
                                 {
                                     // Update line length if not set by valid lines yet.
@@ -1449,51 +1409,9 @@ void VideoToDigital::doBinarize()
                                     // Save coordinates for fallback data coordinates for stats.
                                     frame_invalid_coord_list.push_back(work_line->coords);
                                 }
-                                // Update last line data to compare next time.
-                                if(work_line->getPCMType()==PCMLine::TYPE_PCM1)
-                                {
-                                    if(work_line->hasBWSet()!=false)
-                                    {
-                                        count_bad_crc = true;
-                                        // Update stored last line.
-                                        last_pcm1_line = pcm1_line;
-                                    }
-                                }
-                                else if(work_line->getPCMType()==PCMLine::TYPE_PCM16X0)
-                                {
-                                    if(work_line->hasBWSet()!=false)
-                                    {
-                                        count_bad_crc = true;
-                                        // Update stored last line.
-                                        if(pcm16x0_line.line_part==PCM16X0SubLine::PART_LEFT)
-                                        {
-                                            // Last sub-line for the left part.
-                                            last_pcm16x0_p0_line = pcm16x0_line;
-                                        }
-                                        else if(pcm16x0_line.line_part==PCM16X0SubLine::PART_MIDDLE)
-                                        {
-                                            // Last sub-line for the middle part.
-                                            last_pcm16x0_p1_line = pcm16x0_line;
 
-                                        }
-                                        else if(pcm16x0_line.line_part==PCM16X0SubLine::PART_RIGHT)
-                                        {
-                                            // Last sub-line for the right part.
-                                            last_pcm16x0_p2_line = pcm16x0_line;
-                                        }
-                                    }
-                                }
-                                else if(work_line->getPCMType()==PCMLine::TYPE_STC007)
-                                {
-                                    if(stc007_line.hasMarkers()!=false)
-                                    {
-                                        count_bad_crc = true;
-                                        // Update stored last line.
-                                        last_stc007_line = stc007_line;
-                                    }
-                                }
                                 // Check if any PCM data was registered.
-                                if(count_bad_crc!=false)
+                                if(count_has_data!=false)
                                 {
                                     // CRC was bad, count it.
                                     if(even_line==false)
@@ -1601,6 +1519,115 @@ void VideoToDigital::doBinarize()
                                 {
                                     // Reset preset BW levels.
                                     line_converter.setBWLevels();
+                                }
+                            }
+                            // Count total number of video lines in the frame.
+                            if(even_line==false)
+                            {
+                                signal_quality.lines_odd++;
+                            }
+                            else
+                            {
+                                signal_quality.lines_even++;
+                            }
+                            // Check if line contains PCM data.
+                            if(count_has_pcm!=false)
+                            {
+                                // Count lines with PCM.
+                                if(even_line==false)
+                                {
+                                    signal_quality.lines_pcm_odd++;
+                                }
+                                else
+                                {
+                                    signal_quality.lines_pcm_even++;
+                                }
+                                pcm_lines_in_field++;
+                                // Update last line data to compare next time.
+                                if(work_line->getPCMType()==PCMLine::TYPE_PCM1)
+                                {
+#ifdef LB_EN_DBG_OUT
+                                    if((log_level&Binarizer::LOG_LINE_DUMP)!=0)
+                                    {
+                                        QString log_line;
+                                        log_line = "[V2D] Different bits from previous line: ";
+                                        log_line += QString::number(pcm1_line.getWordsDiffBitCount(&last_pcm1_line));
+                                        qInfo()<<log_line;
+                                    }
+#endif
+                                    // Update stored last line.
+                                    last_pcm1_line = pcm1_line;
+                                }
+                                else if(work_line->getPCMType()==PCMLine::TYPE_PCM16X0)
+                                {
+                                    // Update stored last line.
+                                    if(pcm16x0_line.line_part==PCM16X0SubLine::PART_LEFT)
+                                    {
+#ifdef LB_EN_DBG_OUT
+                                        if((log_level&Binarizer::LOG_LINE_DUMP)!=0)
+                                        {
+                                            QString log_line;
+                                            log_line = "[V2D] Different bits from previous line: ";
+                                            log_line += QString::number(pcm16x0_line.getWordsDiffBitCount(&last_pcm16x0_p0_line));
+                                            qInfo()<<log_line;
+                                        }
+#endif
+                                        // Last sub-line for the left part.
+                                        last_pcm16x0_p0_line = pcm16x0_line;
+                                    }
+                                    else if(pcm16x0_line.line_part==PCM16X0SubLine::PART_MIDDLE)
+                                    {
+#ifdef LB_EN_DBG_OUT
+                                        if((log_level&Binarizer::LOG_LINE_DUMP)!=0)
+                                        {
+                                            QString log_line;
+                                            log_line = "[V2D] Different bits from previous line: ";
+                                            log_line += QString::number(pcm16x0_line.getWordsDiffBitCount(&last_pcm16x0_p1_line));
+                                            qInfo()<<log_line;
+                                        }
+#endif
+                                        // Last sub-line for the middle part.
+                                        last_pcm16x0_p1_line = pcm16x0_line;
+
+                                    }
+                                    else if(pcm16x0_line.line_part==PCM16X0SubLine::PART_RIGHT)
+                                    {
+#ifdef LB_EN_DBG_OUT
+                                        if((log_level&Binarizer::LOG_LINE_DUMP)!=0)
+                                        {
+                                            QString log_line;
+                                            log_line = "[V2D] Different bits from previous line: ";
+                                            log_line += QString::number(pcm16x0_line.getWordsDiffBitCount(&last_pcm16x0_p2_line));
+                                            qInfo()<<log_line;
+                                        }
+#endif
+                                        // Last sub-line for the right part.
+                                        last_pcm16x0_p2_line = pcm16x0_line;
+                                    }
+                                }
+                                else if(work_line->getPCMType()==PCMLine::TYPE_STC007)
+                                {
+#ifdef LB_EN_DBG_OUT
+                                    if((log_level&Binarizer::LOG_LINE_DUMP)!=0)
+                                    {
+                                        uint8_t diff_cnt;
+                                        QString log_line;
+                                        diff_cnt = stc007_line.getWordsDiffBitCount(&last_stc007_line);
+                                        log_line = "[V2D] Different bits from previous line: ";
+                                        log_line += QString::number(diff_cnt);
+                                        if(diff_cnt<(stc007_line.getBitsBetweenDataCoordinates()/16))
+                                        {
+                                            log_line += " (dupliwarn!)";
+                                            if(stc007_line.isCRCValid()!=false)
+                                            {
+                                                log_line += "(ALARMA!)";
+                                            }
+                                        }
+                                        qInfo()<<log_line;
+                                    }
+#endif
+                                    // Update stored last line.
+                                    last_stc007_line = stc007_line;
                                 }
                             }
                             line_in_field_cnt++;

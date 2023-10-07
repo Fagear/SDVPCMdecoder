@@ -1,9 +1,5 @@
 ﻿#include "audioprocessor.h"
 
-#ifdef _WIN32
-    extern Q_CORE_EXPORT int qt_ntfs_permission_lookup;
-#endif
-
 AudioProcessor::AudioProcessor(QObject *parent) : QObject(parent)
 {
     in_samples = NULL;
@@ -37,10 +33,6 @@ AudioProcessor::AudioProcessor(QObject *parent) : QObject(parent)
     connect(&sc_output, SIGNAL(livePlayback(bool)), this, SLOT(livePlayUpdate(bool)));
     connect(&wav_output, SIGNAL(fileError(QString)), this, SLOT(redirectError(QString)));
     connect(this, SIGNAL(reqTimerRestart()), this, SLOT(restartFlushTimer()));
-
-#ifdef _WIN32
-    qt_ntfs_permission_lookup++;
-#endif
 }
 
 //------------------------ Set pointer to shared input/output data.

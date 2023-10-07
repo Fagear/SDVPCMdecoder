@@ -116,6 +116,7 @@ public:
     void setSourceCRC(uint16_t in_crc = 0);
     void setSilent();
     void setWord(uint8_t index, uint16_t in_word);
+    uint8_t getBitsPerObject();
     uint8_t getBitsPerSourceLine();
     uint8_t getBitsBetweenDataCoordinates();
     uint8_t getLeftShiftZoneBit();
@@ -126,6 +127,7 @@ public:
     uint8_t getPCMType();
     uint16_t getWord(uint8_t index);
     int16_t getSample(uint8_t index);
+    uint8_t getWordsDiffBitCount(PCM1Line *in_line = NULL);
     bool hasSameWords(PCM1Line *in_line = NULL);
     bool hasPickedWords();
     bool hasPickedLeft();
