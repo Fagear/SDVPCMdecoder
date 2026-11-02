@@ -77,7 +77,7 @@ capt_sel::~capt_sel()
 //------------------------ Dialog about to appear.
 int capt_sel::exec()
 {
-    qInfo()<<"[CSEL] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[CSEL] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 
     // Register all demuxers.
     avdevice_register_all();

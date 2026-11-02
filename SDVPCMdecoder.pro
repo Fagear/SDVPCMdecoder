@@ -4,7 +4,6 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl winextras
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets multimedia concurrent
 
@@ -19,13 +18,13 @@ TEMPLATE = app
 #QMAKE_LFLAGS += -fopenmp
 #QMAKE_CXXFLAGS_RELEASE -= -O2
 #QMAKE_CXXFLAGS_RELEASE += -march=pentium3m
-QMAKE_CXXFLAGS_RELEASE += -march=core2
+QMAKE_CXXFLAGS_RELEASE += 
 #QMAKE_CXXFLAGS_RELEASE += -march=nehalem
 #QMAKE_CXXFLAGS_RELEASE += -march=haswell
 
 #QMAKE_CFLAGS_RELEASE -= -O2
 #QMAKE_CFLAGS_RELEASE += -march=pentium3m
-QMAKE_CFLAGS_RELEASE += -march=core2
+QMAKE_CFLAGS_RELEASE += 
 #QMAKE_CFLAGS_RELEASE += -march=nehalem
 #QMAKE_CFLAGS_RELEASE += -march=haswell
 
@@ -137,3 +136,5 @@ TRANSLATIONS += SDVPCMdecoder_en.ts SDVPCMdecoder_pl.ts
 CODECFORSRC = UTF-8
 
 unix|win32: LIBS += -L$$PWD/lib/ -lavdevice -lavformat -lavcodec -lavutil -lswscale
+QT += opengl
+QMAKE_LIBDIR += /opt/homebrew/lib

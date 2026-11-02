@@ -1622,7 +1622,7 @@ void AudioProcessor::processAudio()
 {
     uint8_t ext_tw_log_lvl, ext_ta_log_lvl;
 #ifdef AP_EN_DBG_OUT
-    qInfo()<<"[AP] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[AP] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 #endif
     // Check working pointers.
     if((in_samples==NULL)||(mtx_samples==NULL))

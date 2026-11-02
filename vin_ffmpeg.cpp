@@ -818,7 +818,7 @@ void VideoInFFMPEG::runFrameDecode()
 {
     QElapsedTimer timer;
 
-    qInfo()<<"[VIP] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[VIP] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
     // Check working pointers.
     if((out_lines==NULL)||(mtx_lines==NULL))
     {

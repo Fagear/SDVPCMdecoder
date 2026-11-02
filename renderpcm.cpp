@@ -20,7 +20,7 @@ RenderPCM::RenderPCM(QObject *parent)
     img_data = new QImage(640, 480, QImage::Format_RGB32);
     img_data->fill(Qt::black);
 
-    qInfo()<<"[REN] Created, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[REN] Created, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 }
 
 RenderPCM::~RenderPCM()
@@ -42,7 +42,7 @@ void RenderPCM::resetFrame()
 //------------------------ Report thread ID.
 void RenderPCM::dumpThreadDebug()
 {
-    qInfo()<<"[REN] Current thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[REN] Current thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 }
 
 //------------------------ Enable/disable frame pacing for live playback.

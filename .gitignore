@@ -51,3 +51,7 @@ compile_commands.json
 
 # QtCreator local machine specific files for imported projects
 *creator.user*
+build_log*.txt
+make_*.txt
+*.app/
+.DS_Store

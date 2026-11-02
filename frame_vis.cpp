@@ -51,7 +51,7 @@ frame_vis::frame_vis(QWidget *parent) :
         settings_hdl->sync();
     }
 
-    qInfo()<<"[VIS] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[VIS] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 }
 
 frame_vis::~frame_vis()

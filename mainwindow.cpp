@@ -60,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
     timUIUpdate.setInterval(TIM_GUI_INT);
     connect(&timUIUpdate, SIGNAL(timeout()), this, SLOT(updateGUIByTimer()));
 
-    qInfo()<<"[M] GUI thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId())<<", starting processing threads...";
+    qInfo()<<"[M] GUI thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId())<<", starting processing threads...";
 
     // Initialize settings storage.
     QSettings settings_hdl(QSettings::IniFormat, QSettings::UserScope, APP_ORG_NAME, APP_INI_NAME);

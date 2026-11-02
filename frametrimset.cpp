@@ -60,7 +60,7 @@ CoordinatePair& CoordinatePair::operator- (const CoordinatePair &in_object)
 }
 
 //------------------------ Compare operator to support std::sort().
-bool CoordinatePair::operator< (const CoordinatePair &in_object)
+bool CoordinatePair::operator< (const CoordinatePair &in_object) const
 {
     // 1st, sort by [data_start] field from min to max.
     if(data_start<in_object.data_start)
@@ -309,7 +309,7 @@ bool FieldStitchStats::operator== (const FieldStitchStats &in_object)
 }
 
 //------------------------ Compare operator to support std::sort().
-bool FieldStitchStats::operator< (const FieldStitchStats &in_object)
+bool FieldStitchStats::operator< (const FieldStitchStats &in_object) const
 {
     // 1th, sort by [broken] field from min to max.
     if(broken<in_object.broken)

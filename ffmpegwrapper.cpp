@@ -325,7 +325,7 @@ void FFMPEGWrapper::freeFrameConverter()
 //------------------------ Dump thread ID.
 void FFMPEGWrapper::slotLogStart()
 {
-    qInfo()<<"[FFWR] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[FFWR] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 }
 
 //------------------------ Get list of compatible video capture devices.

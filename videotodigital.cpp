@@ -721,7 +721,7 @@ void VideoToDigital::doBinarize()
     //ArVidLine arvid_line;
 
 #ifdef LB_EN_DBG_OUT
-    qInfo()<<"[V2D] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[V2D] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 #endif
 
     work_line = NULL;
