@@ -1,3 +1,6 @@
+#ifndef AVFMT_FLAG_SHORTEST
+#define AVFMT_FLAG_SHORTEST 0
+#endif
 #include "ffmpegwrapper.h"
 
 //------------------------
@@ -870,7 +873,7 @@ void FFMPEGWrapper::slotGetNextFrame()
             // Check is drop detection is enabled.
             if(detect_drops!=false)
             {
-                //qDebug()<<"[FFWR] DTS:"<<dec_frame->pkt_dts<<"| Last DTS:"<<last_dts<<"| Duration:"<<dec_frame->pkt_duration<<"| Stamp:"<<dec_frame->best_effort_timestamp<<"| Base:"<<((float)dec_frame->time_base.num/dec_frame->time_base.den);
+                //qDebug()<<"[FFWR] DTS:"<<dec_frame->pkt_dts<<"| Last DTS:"<<last_dts<<"| Duration:"<<dec_frame->duration<<"| Stamp:"<<dec_frame->best_effort_timestamp<<"| Base:"<<((float)dec_frame->time_base.num/dec_frame->time_base.den);
                 // Frame dropout detector is active.
                 if(dts_detected==false)
                 {
@@ -883,17 +886,17 @@ void FFMPEGWrapper::slotGetNextFrame()
                 else
                 {
                     // Calculate DTS difference between current and last frames.
-                    dts_diff = (dec_frame->pkt_dts-last_dts)-dec_frame->pkt_duration;
+                    dts_diff = (dec_frame->pkt_dts-last_dts)-dec_frame->duration;
                 }
                 // Save new "last DTS".
                 last_dts = dec_frame->pkt_dts;
                 // Check if current DTS is one step after the previous one.
-                if((dts_diff>0)&&(dec_frame->pkt_duration>0))
+                if((dts_diff>0)&&(dec_frame->duration>0))
                 {
                     uint32_t missed_frames;
                     // Calculate how many frames were missed.
-                    missed_frames = (uint32_t)dts_diff/dec_frame->pkt_duration;
-                    //qDebug()<<"[FFWR] Droped"<<missed_frames<<"frames! DTS:"<<dec_frame->pkt_dts<<"Diff.:"<<dts_diff<<"| Duration:"<<dec_frame->pkt_duration;
+                    missed_frames = (uint32_t)dts_diff/dec_frame->duration;
+                    //qDebug()<<"[FFWR] Droped"<<missed_frames<<"frames! DTS:"<<dec_frame->pkt_dts<<"Diff.:"<<dts_diff<<"| Duration:"<<dec_frame->duration;
                     // Limit maximum number of dropped frames.
                     if(missed_frames>DUMMY_CNT_MAX)
                     {

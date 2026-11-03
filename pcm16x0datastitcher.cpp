@@ -5671,7 +5671,7 @@ void PCM16X0DataStitcher::doFrameReassemble()
     while(finish_work==false)
     {
         // Process Qt events.
-        QApplication::processEvents();
+        QCoreApplication::processEvents();
         //qDebug()<<"[DBG] Start loop";
         if(format_changed!=false)
         {

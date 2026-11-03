@@ -55,3 +55,19 @@ build_log*.txt
 make_*.txt
 *.app/
 .DS_Store
+
+# Build artifacts & binaries
+Makefile
+SDVPCMdecoder
+SDVPCMdecoder.app/
+# macOS & OS files
+.AppleDouble
+.LSOverride
+# Legacy header backups
+*_legacy_bak/
+# Logs and temporary files
+*.log
+*.txt
+*.out
+*.ini
+*.html

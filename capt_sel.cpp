@@ -108,7 +108,7 @@ void capt_sel::stopCapture()
 {
     // Close current capture if any.
     emit closeDevice();
-    QApplication::processEvents();
+    QCoreApplication::processEvents();
 }
 
 //------------------------ Clear preview area.

@@ -7273,7 +7273,7 @@ void STC007DataStitcher::doFrameReassemble()
     while(finish_work==false)
     {
         // Process Qt events.
-        QApplication::processEvents();
+        QCoreApplication::processEvents();
 
         if(finish_work!=false)
         {

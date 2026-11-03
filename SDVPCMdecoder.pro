@@ -1,3 +1,9 @@
+
+# Force Homebrew FFmpeg 7 headers ahead of system SDK headers
+QMAKE_CXXFLAGS += -isystem /opt/homebrew/include
+QMAKE_CFLAGS += -isystem /opt/homebrew/include
+INCLUDEPATH = /opt/homebrew/include $$INCLUDEPATH
+
 #-------------------------------------------------
 #
 # Project created by QtCreator 2020-04-06T04:15:14
