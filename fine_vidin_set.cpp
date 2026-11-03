@@ -23,7 +23,7 @@ fine_vidin_set::fine_vidin_set(QWidget *parent) :
     blockInputs();
     blockSave();
 
-    qInfo()<<"[FVIN] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[FVIN] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 }
 
 fine_vidin_set::~fine_vidin_set()

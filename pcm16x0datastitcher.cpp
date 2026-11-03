@@ -5657,7 +5657,7 @@ void PCM16X0DataStitcher::doFrameReassemble()
     PCM16X0SubLine cur_line;
 
 #ifdef DI_EN_DBG_OUT
-    qInfo()<<"[L2B-16x0] Launched, PCM-16x0 thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[L2B-16x0] Launched, PCM-16x0 thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 #endif
     // Check working pointers.
     if((in_lines==NULL)||(mtx_lines==NULL))
@@ -5671,7 +5671,7 @@ void PCM16X0DataStitcher::doFrameReassemble()
     while(finish_work==false)
     {
         // Process Qt events.
-        QApplication::processEvents();
+        QCoreApplication::processEvents();
         //qDebug()<<"[DBG] Start loop";
         if(format_changed!=false)
         {

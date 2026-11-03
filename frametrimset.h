@@ -50,7 +50,7 @@ public:
     bool operator== (const CoordinatePair &in_object);
     bool operator!= (const CoordinatePair &in_object);
     CoordinatePair& operator- (const CoordinatePair &in_object);
-    bool operator< (const CoordinatePair &in_object);
+    bool operator< (const CoordinatePair &in_object) const;
     void clear();
     bool setCoordinates(int16_t in_start, int16_t in_stop);
     void setToZero();
@@ -109,7 +109,7 @@ public:
     FieldStitchStats& operator= (const FieldStitchStats &);
     bool operator!= (const FieldStitchStats &);
     bool operator== (const FieldStitchStats &);
-    bool operator< (const FieldStitchStats &);
+    bool operator< (const FieldStitchStats &) const;
     void clear();
 };
 

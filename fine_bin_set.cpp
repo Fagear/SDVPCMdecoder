@@ -32,7 +32,7 @@ fine_bin_set::fine_bin_set(QWidget *parent) :
     blockInputs();
     blockSave();
 
-    qInfo()<<"[FBIN] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[FBIN] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 }
 
 fine_bin_set::~fine_bin_set()

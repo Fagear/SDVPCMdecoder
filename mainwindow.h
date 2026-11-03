@@ -41,7 +41,9 @@ Created: 2020-04
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
+#ifdef Q_OS_WIN
 #include <QWinTaskbarProgress>
+#endif
 #include <QtWidgets>
 #include "about_wnd.h"
 #include "audioprocessor.h"

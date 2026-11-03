@@ -130,7 +130,7 @@ bool VideoInFFMPEG::waitForOutQueue(uint16_t line_count)
             }
         }
         // Process events.
-        QApplication::processEvents();
+        QCoreApplication::processEvents();
         if(finish_work==false)
         {
 #ifdef VIP_EN_DBG_OUT
@@ -579,9 +579,9 @@ void VideoInFFMPEG::processFrame()
         for(int32_t dummy_idx=0;dummy_idx<dummy_cnt;dummy_idx++)
         {
             // Insert a dummy in the output.
-            // Note: [insertDummyFrame()] can call [QApplication::processEvents()] and slot [receiveFrame()] will alter [evt_frames].
+            // Note: [insertDummyFrame()] can call [QCoreApplication::processEvents()] and slot [receiveFrame()] will alter [evt_frames].
             insertDummyFrame();
-            QApplication::processEvents();
+            QCoreApplication::processEvents();
             if((event_usr&(EVT_USR_LOAD|EVT_USR_STOP|EVT_USR_UNLOAD))!=0)
             {
                 break;
@@ -599,7 +599,7 @@ void VideoInFFMPEG::processFrame()
         evt_frames.pop_front();
         evt_double.pop_front();
         // Splice new frame into individual video lines.
-        // Note: [spliceFrame()] can call [QApplication::processEvents()] and slot [receiveFrame()] will alter [evt_frames] and [evt_double].
+        // Note: [spliceFrame()] can call [QCoreApplication::processEvents()] and slot [receiveFrame()] will alter [evt_frames] and [evt_double].
         spliceFrame(&task_img, img_double);
     }
 }
@@ -818,7 +818,7 @@ void VideoInFFMPEG::runFrameDecode()
 {
     QElapsedTimer timer;
 
-    qInfo()<<"[VIP] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[VIP] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
     // Check working pointers.
     if((out_lines==NULL)||(mtx_lines==NULL))
     {
@@ -873,7 +873,7 @@ void VideoInFFMPEG::runFrameDecode()
     while(finish_work==false)
     {
         // Process Qt events (collect event flags).
-        QApplication::processEvents();
+        QCoreApplication::processEvents();
         if(finish_work!=false)
         {
             // Break the loop and do nothing if got shutdown event.

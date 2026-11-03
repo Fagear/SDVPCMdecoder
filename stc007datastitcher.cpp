@@ -7258,7 +7258,7 @@ void STC007DataStitcher::doFrameReassemble()
     frasm_f0.video_standard = frasm_f1.video_standard = frasm_f2.video_standard = FrameAsmDescriptor::VID_UNKNOWN;
 
 #ifdef DI_EN_DBG_OUT
-    qInfo()<<"[L2B-007] Launched, STC-007 thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[L2B-007] Launched, STC-007 thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 #endif
     // Check working pointers.
     if((in_lines==NULL)||(mtx_lines==NULL))
@@ -7273,7 +7273,7 @@ void STC007DataStitcher::doFrameReassemble()
     while(finish_work==false)
     {
         // Process Qt events.
-        QApplication::processEvents();
+        QCoreApplication::processEvents();
 
         if(finish_work!=false)
         {

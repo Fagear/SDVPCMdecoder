@@ -22,7 +22,7 @@ fine_deint_set::fine_deint_set(QWidget *parent) :
     blockInputs();
     blockSave();
 
-    qInfo()<<"[FASM] Launched, thread:"<<this->thread()<<"ID"<<QString::number((uint)QThread::currentThreadId());
+    qInfo()<<"[FASM] Launched, thread:"<<this->thread()<<"ID"<<QString::number((quintptr)QThread::currentThreadId());
 }
 
 fine_deint_set::~fine_deint_set()
